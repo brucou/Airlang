@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>
+<html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>
+<html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>
+<html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+    <!-- global stylesheets -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/screen.css">
+    <link href='http://fonts.googleapis.com/css?family=Enriqueta:400,700' rel='stylesheet' type='text/css'>
+
+    <!-- module stylesheets -->
+    <link href="css/tooltip_iframe.css" rel="stylesheet" type="text/css">
+
+    <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+</head>
+<body>
+<!--[if lt IE 7]>
+<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a
+        href="El incendio de un edifico durante los choques en Odesa deja 31 muertos.html://browsehappy.com/">upgrade
+    your browser</a> to improve your experience.</p>
+<![endif]-->
+
+<!-- Add your site or application content here -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.min.js"><\/script>')</script>
+<script src="js/vendor/can.jquery.dev.js"></script>
+<script src="js/vendor/introspect.js"></script>
+<!--  to get name of parameters a function is called with-->
+<script src="js/vendor/cache.js"></script>
+<!--  necessary for tooltip functionality -->
+<script src="js/vendor/xregexp-min.js"></script>
+<script src="js/vendor/xregexp-unicode-base.js"></script>
+<script src="js/vendor/xregexp-unicode-categories.js"></script>
+
+<!--  common libraries defining global funcionalities and variables -->
+<script src="js/lib/plugins.js"></script>
+<script src="js/lib/debug.js"></script>
+<script src="js/lib/text_handling.js"></script>
+<script src="js/lib/fake_data.js"></script>
+
+<!--  modules are managed with require.js -->
+<script data-main="js/lib/main.js" src="js/vendor/require-2.1.14.js"></script>
+
+<!--  view templates -->
+<!--  shell for now -->
+<script id="tpl-reader-tool-stub" type="text/mustache">
+<select id="url_param">
+
+    <option value=""></option>
+    <!--
+        <option value="http://www.lemonde.fr/pixels/article/2014/06/03/accueillir-snowden-en-france-les-points-cles-du-debat_4431332_4408996.html">
+        Le monde
+    </option>
+        <option value="http://internacional.elpais.com/internacional/2014/06/03/actualidad/1401797293_595478.html">El Pais
+    </option>
+        <!--  -->
+        <option value="http://mobile.nytimes.com/2014/06/07/sports/tennis/novak-djokovic-and-rafael-nadal-in-french-open-final.html">
+        nytimes
+    </option>
+    <option value="http://www.theguardian.com/media/2014/jun/06/twitter-trolls-abuse-olympic-swimmer-rebecca-adlington">
+        The Guardian
+    </option>
+    <option value="http://stackoverflow.com/questions/6743912/get-the-pure-text-without-html-element-by-javascript">
+        stackflow
+    </option>
+    <option value="http://www.learningjquery.com/2008/12/peeling-away-the-jquery-wrapper/">learningjQuery</option>
+    <option value="http://en.wikipedia.org/wiki/Perranzabuloe">wikipedia</option>
+    <option value="http://en.wikipedia.org/wiki/World_population">wikipedia pop</option>
+
+    <option
+            value="http://ekonomika.idnes.cz/platba-kartou-a-hotovosti-zahranici-d7j-/ekonomika.aspx?c=A140625_211824_ekonomika_maq#utm_source=sph.idnes&utm_medium=richtext&utm_content=top6">
+        idnes.cz
+    </option>
+    <option
+            value="http://ekonomika.idnes.cz/shaangu-koupe-ekol-0no-/ekonomika.aspx?c=A140704_215639_ekonomika_maq">
+        ekonomika
+    </option>
+    <option
+            value="http://prazsky.denik.cz/zpravy_region/lenka-mrazova-dokonalost-je-moje-hodnota-20140627.html">
+        denik
+    </option>
+    <option
+            value="http://www.courrierinternational.com/article/2014/06/20/ukraine-un-plan-de-paix-lourd-de-menaces">
+        courrier international
+    </option>
+    <option
+            value="http://sip.denik.cz/sex-a-vztahy/sokujici-zjisteni-cesi-jsou-v-sexu-suverenne-nejlepsi-na-svete-20140706.html">
+        denik 2
+    </option>
+    <option value="http://www.w3schools.com/html/html_tables.asp">w3schools table</option>
+    <option value="http://perishablepress.com/perfect-pre-tags/">code pre</option>
+    <option value="http://www.wordreference.com/czen/p%C5%99ijmout">dict czech</option>
+    <option
+            value="http://ekonomika.idnes.cz/koruna-je-nejslabsi-od-brezna-2009-k-dolaru-je-na-dvouletem-minimu-pvb-/ekonomika
+    .aspx?c=A140805_171821_ekonomika_spi">finance idnes
+    </option>
+    </option>
+    <option
+            value="https://de.airbnb.com/s/Prague--Czech-Republic?cdn_spdy=1&checkin=08.08.2014&checkout=10.08.2014&guests=2&location=Prague%2C+Czech+Republic&ne_lat=50.11553907262407&ne_lng=14.473795724489719&page=2&search_by_map=true&sw_lat=50.05397840672632&sw_lng=14.40186960754636&zoom=13">
+        2nd page DE AirBnB
+    </option>
+    <option
+            value="http://zpravy.idnes.cz/britsky-premier-cameron-vyzyva-k-lepsi-obrane-nato-fxf-/zpr_nato.aspx?c=A140805_170157_zpr_nato_inc#utm_source=sph.idnes&utm_medium=richtext&utm_content=top6">britain idnes</option>
+<option value="http://www.praha3.cz/noviny/akce-mestske-casti/vinohradske-vinobrani-nabidne-produkty.html">Wine
+</option>
+<option value="http://ona.idnes.cz/jak-prestat-kourit-a-nepribrat-dza-/zdravi.aspx?c=A140912_114509_zdravi_pet">Ona
+</option>
+
+
+</select>
+
+<span id="url">{{url_to_load}}</span>
+<div id="error_message"> {{{ error_message }}} </div>
+<div id="content">{{{ webpage_readable }}}</div>
+
+</script>
+<!--  ----------- -->
+
+<!-- Template for the translating tooltip -->
+<script id="tpl-translate-tooltip" type="text/mustache">
+
+<div id="reader-tool-tooltip"
+class='transover-tooltip'
+     style="top: {{top}};
+         left: {{left}};
+         width:{{width}};
+         height:{{height}};
+         display: {{display}};
+             text-align: {{text_align}};
+             position: fixed;
+             white-space : nowrap;
+         ">
+{{{ tooltip_html_content }}}
+</div>
+
+</script>
+<!--  ----------- -->
+
+<!-- Application container -->
+<div id="reader_tool">
+</div>
+<!--  ----------- -->
+
+</body>
+</html>

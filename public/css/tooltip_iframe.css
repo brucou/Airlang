@@ -1,0 +1,55 @@
+table {
+    border-collapse: collapse;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+    font-size: 12px;
+}
+
+td {
+    padding: 0.5rem;
+    text-align: left;
+    white-space: nowrap;
+    width: 100%;
+}
+
+th {
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+tbody {
+    vertical-align: middle;
+}
+
+tbody tr:nth-child(odd) {
+    background: #eee;
+}
+
+tbody tr:hover {
+    background: yellow;
+}
+
+tbody tr .sample_sentence_from {
+    font-size: 0.8em;
+    background: #ee0;
+}
+
+.transover-tooltip {
+    border: 1px solid rgb(204, 204, 204);
+    box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    z-index: 2147483647;
+    background: rgb(252, 247, 217);
+}
+
+.sample_sentence_to {
+    font-weight: bold;
+}
+
+.translation {
+    font-family: Arial, Helmet, Freesans, sans-serif;
+    font-size: 0.9em;
+    color: #333;
+}

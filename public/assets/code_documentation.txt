@@ -1,0 +1,27 @@
+@param {type} full text explanation
+@returns {type} full text explanation
+@name
+@function (type)
+
+AND ALSO
+TODO: MUST be done items, in the present and immediate future
+nice to have: not prioritary, not intended for immediate action
+improvement: features who represent an improvement over current functionalities (perfomance, quality, features etc.)
+issue: pending issue that is intended to be solved in the near future
+limitation: - can be for example accepted range for parameters or memory or etc.
+known bug: pending issues related to testing and that will be fixed in the longer future. Typically for resistant issues
+note: just a comment that is singled out from the rest of the text
+dependency: - list of dependencies for the function, can be env. variables, global variable, external DS etc. Can be
+specified by using require as they have to be loaded
+side-effect:
+test code: // TEST CODE begin of block and /////// end of block
+
+TOOLS
+cf docco for automatic generation of doc from sources.
+
+PRINCIPLES:
+- all functions have to be documented at their beginning
+- inside-function comments must be updated to reflect modification of the function they relate to
+- All TODOs must be at the top of the file
+- All comments should be in immediate context and doc should be there
+

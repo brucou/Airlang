@@ -1,0 +1,35 @@
+{
+   "name"        : "bootstrap",
+   "version"     : "0.0.1",
+   "private"     : true,
+   "scripts"     : {
+      "start": "node app"
+   },
+   "dependencies": {
+      "chai"                   : "1.9.1",
+      "karma"                  : "0.12.19",
+      "karma-chai"             : "0.1.0",
+      "karma-mocha"            : "0.1.4",
+      "karma-chrome-launcher"  : "0.1.4",
+      "karma-requirejs"        : "0.2.2",
+      "karma-sinon"            : "1.0.3",
+      "karma-htmlfile-reporter": "0.1.2",
+      "karma-mocha-reporter"   : "0.2.8",
+      "karma-html-reporter"    : "latest",
+      "karma-coverage"         : "0.2.4",
+      "karma-jasmine"          : "0.1.5",
+      /*
+       chai": "latest",
+       "sinon": "latest",
+       "karma-mp3-reporter": "latest",
+       */
+      "mocha"                  : "1.20.1",
+      "sinon"                  : "1.10.2",
+      "express"                : "4.4.3",
+      "jade"                   : "*",
+      "socket.io"              : "1.0.6",
+      "pg"                     : "3.3.0",
+      "underscore"             : "*",
+      "underscore.string"      : "*"
+   }
+}

@@ -1,0 +1,12 @@
+CanJS : Careful!
+- bug, I needed to put a value {{{}}} to null before changing it
+- it can be tricky to understand how the live binding works : always test it first
+- EJS and mustache have different conventions and offers different possibilities (helpers in mustache, data in EJS)
+- Investigate the Can.Model.List even if it is mostly linked to CRUD Rest functionalities (vs. socket.io)
+- it is actually kind of hard to mentalize all the information in the views that is reused back in the code (controller)
+- - this includes ids, classes, etc. That means that the views has to be documented??...
+- - - meaning documentation will have be to sync with changed in view...
+- start always with index.html, then make the way through looking up the scripts that are being loaded...
+- TO TEST : if {RT.var} works as well, e.g. if the {} mechanism in event selector allow for . indirection
+- - would allow to be used in conjunction with require.js instead of declaring model in window like in examples so far
+- When a model is defined, and a new operation is performed, a 'created' event is launched with the model as a source
