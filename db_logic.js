@@ -16,7 +16,7 @@ var
 
 const conString = "postgres://postgres:Italska184a@localhost/postgres"; // connection string
 
-process.env.DATABASE_URL = conString;
+process.env.DATABASE_URL = process.env.DATABASE_URL || conString;
 
 function initialize_database () {
   pgClient = new pg.Client(conString);
