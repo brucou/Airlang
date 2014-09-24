@@ -1,2 +1,13 @@
+-- see the logs
+heroku logs
+
+-- get info like name of database
+heroku pg:info
 heroku addons:add heroku-postgresql:hobby-dev
 heroku addons:add pgbackups
+
+-- creating database dump in local
+pg_dump -Fc --no-acl --no-owner -h localhost -U postgres > pg.db.2014.09.24.dump
+
+-- In order for PG Backups to access and import your dump file you will need to upload it somewhere with an HTTP-accessible URL.
+heroku pgbackups:restore HEROKU_POSTGRESQL_CRIMSON_URL 'https://copy.com/X3EvjcgctsbJ' --confirm stormy-temple-1902
