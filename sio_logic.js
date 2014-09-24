@@ -104,7 +104,8 @@ var sio_onGet_translation_info = function (msg, callback) {
 
 var initialize_socket_cnx = function (server) {
   io = require('socket.io').listen(server); //TODO: check that I can do it after starting the listen server 3000
-  return io;
+  console.log("socket initialized");
+   return io;
 };
 
 var set_frequent_word_list = function (listImportantWords) {

@@ -41,7 +41,9 @@ function initialize_server () {
   http = require('http');
   express = require('express');
   app = express();
-  // Set the view engine
+   console.log("port:", process.env.PORT);
+   app.set('port', (process.env.PORT || 5000));
+   // Set the view engine
   app.set('view engine', 'jade');
   // Where to find the view files
   app.set('views', __dirname + '/views'); //__dirname : directory in which the currently executing script resides
