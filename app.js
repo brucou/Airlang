@@ -42,6 +42,7 @@ function initialize_server () {
   express = require('express');
   app = express();
    console.log("port:", process.env.PORT);
+
    app.set('port', (process.env.PORT || 5000));
    // Set the view engine
   app.set('view engine', 'jade');

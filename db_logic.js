@@ -19,7 +19,9 @@ const conString = "postgres://postgres:Italska184a@localhost/postgres"; // conne
 process.env.DATABASE_URL = process.env.DATABASE_URL || conString;
 
 function initialize_database () {
-  pgClient = new pg.Client(process.env.DATABASE_URL);
+  console.log("database URL", process.env.DATABASE_URL);
+
+   pgClient = new pg.Client(process.env.DATABASE_URL);
   pgClient.connect(function (err) {
     if (err) {
       console.error('could not connect to postgres', err);
