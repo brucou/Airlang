@@ -2,6 +2,12 @@
 @returns {type} full text explanation
 @name
 @function (type)
+OR
+- Purpose   :
+- Arguments :
+- Settings  :
+- Returns   :
+- Action    :
 
 AND ALSO
 TODO: MUST be done items, in the present and immediate future

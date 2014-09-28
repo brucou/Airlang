@@ -5,7 +5,6 @@
 // make article_readable faking
 /**
  * Declaring all values under a single namespace
- * @type {{}}
  */
 
 function FAKE (fn_callee, context) {

@@ -41,7 +41,7 @@ define(['jquery',
         'utils'],
       function ($, MUSTACHE, DS, RM, RV, UT) {
 
-         var TC = TC || {};
+         var TC = {};
 
          TC.rtTranslateView = can.view('tpl-translate-tooltip');
 
