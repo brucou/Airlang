@@ -31,71 +31,87 @@ var U = require('./utils');
 var SIO = require('./sio_logic');
 var DB = require('./db_logic');
 
+LOG.trace(SIO, 'SIO');
+LOG.trace(DB, 'DB');
+
 const RPC_NAMESPACE = '/rpc';
 
 const PREFIX_DIR_SERVER = '';
 const PREFIX_DIR_CLIENT = '.';
 
 function initialize_server () {
-  var srver;
-  http = require('http');
-  express = require('express');
-  app = express();
+   var srver;
+   http = require('http');
+   express = require('express');
+   app = express();
    console.log("port:", process.env.PORT);
 
    app.set('port', (process.env.PORT || 5000));
    // Set the view engine
-  app.set('view engine', 'jade');
-  // Where to find the view files
-  app.set('views', __dirname + '/views'); //__dirname : directory in which the currently executing script resides
+   app.set('view engine', 'jade');
+   // Where to find the view files
+   app.set('views', __dirname + '/views'); //__dirname : directory in which the currently executing script resides
 
-  app.use(express.static(__dirname + "/public")); //we point to the home directory of the project to get any files there
+   app.use(express.static(__dirname + "/public")); //we point to the home directory of the project to get any files there
 
-  // A route for the home page - will render a view
-  app.get('/', function (req, res) {// won't execute as the static file loader of express will use index.html instead
-    res.render('hello');
-  });
+   // A route for the home page - will render a view
+   app.get(
+      '/', function (req, res) {// won't execute as the static file loader of express will use index.html instead
+         LOG.write(LOG.TAG.INFO, "entered routing of /");
+         res.render('hello');
+      });
 
-  srver = require('http').createServer(app);
+   srver = require('http').createServer(app);
 
-  srver.listen(3000, function () {
-    console.log('App started');
-  });
+   srver.listen(
+      3000, function () {
+         console.log('App started');
+      });
 
-  return srver;
+   return srver;
 }
 
 function initialize_string_lib () {
-  // Import Underscore.string to separate object, because there are conflict functions (include, reverse, contains)
-  _.str = require('underscore.string');
-  // Mix in non-conflict functions to Underscore namespace if you want
-  _.mixin(_.str.exports());
-  // All functions, include conflict, will be available through _.str object
-  _.str.include('Underscore.string', 'string'); // => true
+   LOG.entry('initialize_string_lib');
+   // Import Underscore.string to separate object, because there are conflict functions (include, reverse, contains)
+   _.str = require('underscore.string');
+   // Mix in non-conflict functions to Underscore namespace if you want
+   _.mixin(_.str.exports());
+   // All functions, include conflict, will be available through _.str object
+   _.str.include('Underscore.string', 'string'); // => true
+   LOG.exit('initialize_string_lib');
 }
 
 initialize_string_lib();
 server = initialize_server();
+LOG.write(LOG.TAG.INFO, "done : sent request for server initialization");
 io = SIO.initialize_socket_cnx(server);
 DB.initialize_database();
+LOG.write(LOG.TAG.INFO, "done : sent request for database initialization");
 
 // io.set('log level', 2); for socket.io before 1.0
-io.on('connect', function (socket) {
-  console.log('Client connected no namespace');
-});
+io.on(
+   'connect', function (socket) {
+      console.log('Client connected no namespace');
+   });
 
-io.of(RPC_NAMESPACE).on('connect', function (socket) {
-  console.log('Client connected');
+io.of(RPC_NAMESPACE).on(
+   'connect', function (socket) {
+      LOG.entry('connect on namespace ' + RPC_NAMESPACE);
+      console.log('Client connected');
 
-  socket.on('highlight_important_words', SIO.sio_onHighlight_important_words);
+      socket.on('highlight_important_words', SIO.sio_onHighlight_important_words);
 
-  socket.on('get_translation_info', SIO.sio_onGet_translation_info);
+      socket.on('get_translation_info', SIO.sio_onGet_translation_info);
+      LOG.exit('connect on namespace ' + RPC_NAMESPACE);
+   });
 
-});
-
-io.on('disconnect', function (socket) {
-  console.log('Client disconnected');
-  DB.close_connection();
-});
+io.on(
+   'disconnect', function (socket) {
+      LOG.entry('disconnect');
+      console.log('Client disconnected');
+      DB.close_connection();
+      LOG.exit('disconnect');
+   });
 
 
