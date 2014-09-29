@@ -42,6 +42,8 @@ var DBG = {
    DETAIL              : "DETAIL" //!!! This must be the name of the property under config
 };
 
+DBG.inspect = function (obj) {return obj;}; // node already has a console.log which use inspect
+
 DBG.setConfig = function setConfig (tag, bool_flag, by_default) {
    DBG.CONFIG[tag] = {DETAIL: bool_flag, BY_DEFAULT: by_default.by_default};
    return setConfig; // for chaining
@@ -163,6 +165,10 @@ DBG.logForceWrite = function logForceWrite (tag, text, arg) {
 /**
  * Helper function already contained in utils
  */
+DBG.set_inspect_function = function set_inspect_function() {
+   if ('undefined' !== typeof UT) {DBG.inspect = UT.inspect};
+}
+
 DBG.lastElemArray = function lastElemArray (array) {
    return array[array.length - 1];
 }
@@ -361,7 +367,8 @@ function create_proxy (fn_orig, fn_name, module_name) {
 }
 
 DBG.LOG_RETURN_VALUE = function (obj) {
-   logWrite(DBG.TAG.DEBUG, "Returns : ", DBG.shorten(UT.inspect(obj)));
+   DBG.set_inspect_function();
+   logWrite(DBG.TAG.DEBUG, "Returns : ", DBG.shorten(DBG.inspect(obj)));
 };
 
 DBG.LOG_INPUT_VALUE = function (arg_list_txt /* argument list*/) {
@@ -370,6 +377,7 @@ DBG.LOG_INPUT_VALUE = function (arg_list_txt /* argument list*/) {
     *                Ex: function ($el, ev) -> arg_list_txt should be '$el, ev'
     * argument_list: actual arguments passed to the function corresponding to arg_list_txt
     */
+   DBG.set_inspect_function();
    const ARG_SEP = ',';
    var arity = arguments.length;
    if (arity === 0) {
@@ -394,7 +402,7 @@ DBG.LOG_INPUT_VALUE = function (arg_list_txt /* argument list*/) {
    logWrite(DBG.TAG.DEBUG, "Called with:");
    arg_list.forEach(
       function (value, index, array) {
-         logWrite(DBG.TAG.DEBUG, arg_list[index], DBG.shorten(UT.inspect(args[index])));
+         logWrite(DBG.TAG.DEBUG, arg_list[index], DBG.shorten(DBG.inspect(args[index])));
       });
 };
 /////////////// TRACE functionalities
