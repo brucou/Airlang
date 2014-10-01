@@ -34,25 +34,22 @@ var DB = require('./db_logic');
 LOG.trace(SIO, 'SIO');
 LOG.trace(DB, 'DB');
 
-const RPC_NAMESPACE = '/rpc';
-
-const PREFIX_DIR_SERVER = '';
+const PREFIX_DIR_SERVER = '../server';
 const PREFIX_DIR_CLIENT = '.';
 
 function initialize_server () {
-   var srver;
-   http = require('http');
    express = require('express');
    app = express();
+
    console.log("port:", process.env.PORT);
 
-   app.set('port', (process.env.PORT || 5000));
+   app.set('port', (process.env.PORT || 3000));
    // Set the view engine
    app.set('view engine', 'jade');
    // Where to find the view files
    app.set('views', __dirname + '/views'); //__dirname : directory in which the currently executing script resides
 
-   app.use(express.static(__dirname + "/public")); //we point to the home directory of the project to get any files there
+   app.use(express.static(__dirname + "public/")); //we point to the home directory of the project to get any files there
 
    // A route for the home page - will render a view
    app.get(
@@ -61,12 +58,7 @@ function initialize_server () {
          res.render('hello');
       });
 
-   srver = require('http').createServer(app);
-
-   srver.listen(
-      3000, function () {
-         console.log('App started');
-      });
+   var srver = require('http').Server(app);
 
    return srver;
 }
@@ -84,34 +76,19 @@ function initialize_string_lib () {
 
 initialize_string_lib();
 server = initialize_server();
-LOG.write(LOG.TAG.INFO, "done : sent request for server initialization");
+LOG.write(LOG.TAG.INFO, "done : server initialized");
+
 io = SIO.initialize_socket_cnx(server);
+SIO.init_listeners ();
+LOG.write(LOG.TAG.INFO, "done : sockets listenener initialized");
+
+server.listen(
+   app.get('port'), function () {
+      console.log('done : app started');
+   });
+
 DB.initialize_database();
 LOG.write(LOG.TAG.INFO, "done : sent request for database initialization");
 
 // io.set('log level', 2); for socket.io before 1.0
-io.on(
-   'connect', function (socket) {
-      console.log('Client connected no namespace');
-   });
-
-io.of(RPC_NAMESPACE).on(
-   'connect', function (socket) {
-      LOG.entry('connect on namespace ' + RPC_NAMESPACE);
-      console.log('Client connected');
-
-      socket.on('highlight_important_words', SIO.sio_onHighlight_important_words);
-
-      socket.on('get_translation_info', SIO.sio_onGet_translation_info);
-      LOG.exit('connect on namespace ' + RPC_NAMESPACE);
-   });
-
-io.on(
-   'disconnect', function (socket) {
-      LOG.entry('disconnect');
-      console.log('Client disconnected');
-      DB.close_connection();
-      LOG.exit('disconnect');
-   });
-
 

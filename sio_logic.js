@@ -1,17 +1,18 @@
 /**
  * Created by bcouriol on 15/09/14.
  */
+var SIO= {};
 var LOG = require('./debug');
 var DB = require('./db_logic');
 var Util = require('util');
-var
-   io;
+var io;
+const RPC_NAMESPACE = '/rpc';
 
 // kept there for now
 // TODO : create a query object or file? with an init module for sio which gets the query from the query module
 var queryIsOneWordImportant = "select to_tsvector('cs', '%s') @@ to_tsquery('cs', '%s') as highlit_text";
 
-exports.process_qryHighlightImportantWords = function process_qryHighlightImportantWords (err, result, callback) {
+SIO.process_qryHighlightImportantWords = function process_qryHighlightImportantWords (err, result, callback) {
    //TODO: change to err, result the callback
    //LOG.entry('process_qryHighlightImportantWords');
    if (err) {
@@ -30,7 +31,7 @@ exports.process_qryHighlightImportantWords = function process_qryHighlightImport
    }
 };
 
-exports.sio_onHighlight_important_words = function sio_onHighlight_important_words (msg, callback) {
+SIO.sio_onHighlight_important_words = function sio_onHighlight_important_words (msg, callback) {
    LOG.write(LOG.TAG.INFO, 'highlight_important_words message received', msg);
    //cf. https://github.com/brianc/node-postgres/wiki/Client#method-query-parameterized
 
@@ -55,11 +56,11 @@ exports.sio_onHighlight_important_words = function sio_onHighlight_important_wor
 
    pgClient.query(
       qryHighlightImportantWords, [msg, freq_word_list],
-      function (err, result) {exports.process_qryHighlightImportantWords(err, result, callback);});
+      function (err, result) {SIO.process_qryHighlightImportantWords(err, result, callback);});
    LOG.write(LOG.TAG.INFO, 'query sent to database server, waiting for callback');
 };
 
-exports.sio_onGet_translation_info = function sio_onGet_translation_info (msg, callback) {
+SIO.sio_onGet_translation_info = function sio_onGet_translation_info (msg, callback) {
    console.log('get_translation_info message received: ', msg);
    // $1 : dictionary (here cspell)
    // $2 : the word to be lemmatize
@@ -107,12 +108,45 @@ exports.sio_onGet_translation_info = function sio_onGet_translation_info (msg, c
 
 };
 
-exports.initialize_socket_cnx = function initialize_socket_cnx (server) {
-   io = require('socket.io').listen(server); //TODO: check that I can do it after starting the listen server 3000
+SIO.initialize_socket_cnx = function initialize_socket_cnx (server) {
+   io = require('socket.io')(server);
    LOG.write(LOG.TAG.INFO, "socket initialized");
    return io;
 };
 
-exports.set_frequent_word_list = function set_frequent_word_list (listImportantWords) {
+SIO.init_listeners = function init_listeners () {
+   if ('undefined' === typeof io) {
+      throw 'io (socket connection) has not been initialized yet';
+   }
+
+   io.on(
+      'connect', function (socket) {
+         console.log('Client connected no namespace');
+      });
+
+   io.of(RPC_NAMESPACE).on(
+      'connect', function (socket) {
+         LOG.entry('connect on namespace ' + RPC_NAMESPACE);
+         console.log('Client connected');
+
+         socket.on('highlight_important_words', SIO.sio_onHighlight_important_words);
+
+         socket.on('get_translation_info', SIO.sio_onGet_translation_info);
+         LOG.exit('connect on namespace ' + RPC_NAMESPACE);
+      });
+
+   io.on(
+      'disconnect', function (socket) {
+         LOG.entry('disconnect');
+         console.log('Client disconnected');
+         DB.close_connection();
+         LOG.exit('disconnect');
+      });
+
+};
+
+SIO.set_frequent_word_list = function set_frequent_word_list (listImportantWords) {
    qryImportantWords = listImportantWords;
 };
+
+module.exports = SIO;
