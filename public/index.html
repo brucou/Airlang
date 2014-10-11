@@ -21,11 +21,11 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/screen.css">
     <link href='http://fonts.googleapis.com/css?family=Enriqueta:400,700' rel='stylesheet' type='text/css'>
-
     <!-- module stylesheets -->
     <link href="css/tooltip_iframe.css" rel="stylesheet" type="text/css">
 
     <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+
 </head>
 <body>
 <!--[if lt IE 7]>
@@ -34,7 +34,26 @@
     your browser</a> to improve your experience.</p>
 <![endif]-->
 
-<!-- Add your site or application content here -->
+<!-- Require module configuration -->
+<script>
+    // you can register settings like this before require.js is loaded
+    var require = {
+        //By default load any module IDs from js/lib
+        baseUrl: './js/lib',
+        //except, if the module ID starts with "app",
+        //load it from the js/app directory. paths
+        //config is relative to the baseUrl, and
+        //never includes a ".js" extension since
+        //the paths config could be for a directory.
+        paths  : {
+            jquery  : '../vendor/jquery-1.10.2.min',
+            cache   : '../vendor/cache',
+            mustache: '../vendor/mustache',
+            css     : '../../css',
+            assets  : '../../assets',
+            socketio: '/socket.io/socket.io'}
+    };
+    </script>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>   -->
 <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.js"><\/script>')</script>
 <script src="js/vendor/can.jquery.dev.js"></script>
@@ -53,8 +72,10 @@
 <script src="js/lib/fake_data.js"></script>
 
 <!--  modules are managed with require.js -->
-<script data-main="js/lib/main.js" src="js/vendor/require-2.1.14.js"></script>
+<script data-main="main.js" src="js/vendor/require-2.1.14.js"></script>
+<!-- <script src="js/vendor/require-2.1.14.js"></script>-->
 
+<!--  ----------- -->
 <!--  view templates -->
 <!--  shell for now -->
 <script id="tpl-reader-tool-stub" type="text/mustache">
@@ -152,7 +173,6 @@ class='transover-tooltip'
 <!-- Application container -->
 <div id="reader_tool">
 </div>
-<!--  ----------- -->
 
 </body>
 </html>

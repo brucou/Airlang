@@ -1,0 +1,111 @@
+Main screen
+
+Feature module
+Welcome page
+
+Reader tool has its own div
+Modules are independant of each other
+But they share common objects (from the shell)
+such objects could be : user data (identity, history of actions/operations), environment data (language, display, 
+output terminal, etc.), or a clipboard, or a notes functionality that can be attached to each app
+If modules have to communicate, they do so via a pub/sub mechanism (similar to Android intent mechanism)
+A mechanism is needed to persist this data on the server
+
+Transversal capabilities:
+- clipboard
+- notes
+
+Reader tool application:
+ - includes the reader tool itself
+ - but also historical data about past reads
+     + urls who have been asked
+     + success in fetching them
+     + (words, actions) performed; actions can be translation, can be synonyms, etc.
+ - - 
+- config tool
+    + choice of dictionaries/language
+    + activation / desactivation of features
+    + display view/skins
+
+Could gather all config for all module in one file default_config.js
+
+------------ General principles
+Cf. Single Page Applications
+- A shell module, one ring to lead them all
+- accompanied by decoupled features modules
+- css namespace with dashes (-)
+
+------------ Reader tool functional design
+
+-- Function highlighting words in a text
+--  - Name : 
+--  - Purpose   : highlight words in a text 
+--  - Input : text without formatting | array of highlighting filters
+--  - Output : string representating the highlit text
+Config : highlighting filters
+- Example :
+- - filter 1 : word that is being learnt
+- - filter 2 : word that is important
+- - filter 3 : stop word
+- - default_filter (pass all) : all words which have not been filtered
+- Filtering mechanism :
+- - filters are applied in a specifiable order (cf. full text search - dictionary - postgres)
+- - each filter marks the words to be highlighted -> mark data structure
+- - each filter has a highlighting function who takes the words filtered in and output a highlit set of words
+- - - For example : dělat  =>  <span class = 'spa-rt-hl-important'> dělat </span>
+- - -               dělat  =>  *dělat*
+- - filter 0 can be configured to do nothing (identity function)
+- - filter have marker words which marks a portion of the text as commented out (begin and end need to be different tokens)
+- - filters leaves untouched 'commented out' sections of the text
+- - - For example : Jenže na zakázce *XX na provoz XX* obrazovek v metru  =>   **Jenže** na zakázce *XX na provoz XX* obrazovek **v metru**
+- - - Marker words : BEGIN : *XX ; END : XX*
+- - - - Note : Marker words are token by themselves and do not modify the words in the text, just get added to it
+
+-- - Algorithm : 
+-- - -   A. Filters can be executed in parallel on the same input text, with the marked data structure 
+       resulting later merged in the order specified
+         B. Or they can also be executed sequentially, with the function commenting out the words which 
+       were hightlit by each previously executed filter
+
+I choose A. as it seems easier to implement. Option B. seems to require some operation transformation logic. 
+Also, on the right architecture, it can take advantage of database connection clusters or multi-core CPU.
+
+
+1. Tokenizer :   text => [token] (word array)
+2. For each filter, apply it : 
+   - filter : [token]  =>  [{token, action}]
+   - - Def :
+   - - Iterate on [token]
+   - - - Get comments indexes
+   - - - Reduce array of token
+   - - - Apply proper filter function
+   - - - Reconstitute full output
+Basically the operation is : 
+identify_comment_tokens  :  [token]  =>  [pos, [{tokens_commented, 'comment'}]]
+remove [tokens_commented] at pos from [{token}] |  filter  =>  [{token, action}] (action = filter.highlight | default_filter.highlight) 
+                                                |  insert [{tokens_commented, 'comment'}] at pos in [{token, action}]
+ . So now we have [filter], [token]  =>  [ [{token, action}]_token ]_filter
+3. Supposing the filter array is ordered by order of importance, e.g. filter:0 takes precedence over filter:1 
+ . Note default_filter is not in that array
+   - [ [{token, action}]_token ]_filter  =>  [ {token, [action]_filter}  ]_token   (function transposition) 
+   - [ {token, [action]_filter}  ]_token  =>  [{token, action_final}]_token where :
+   - - action_final = [action].reduce ((action_a, action_b) -> action_a !== default_filter  ?  action_a  :  action_b)
+4. Presentar token finales
+ . [{token, action_final}]  =>  [token_filtered] 
+                                where token_filtered :  token  =>  action_final(token)
+5. Presentar texto final  (output)
+ . Detokenizer :   [token_filtered]  =>  text (string from array, for instance array.join(" ")
+Note : The filter function cannot change token nor token indices, only can associate an action. So be careful when using 
+       ts_headline with stopSel and startSel
+       Detokenizer o Tokenizer = Id !!
+
+
+[ [ {property,value} ]_prop ]_obj  =>  [ {property, [value]_obj} ]_prop
+cf. https://github.com/JasonKaz/json-transpose/blob/master/json-transpose.js
+
+
+- 
+- Arguments :
+- Settings  :
+- Returns   :
+- Action    :

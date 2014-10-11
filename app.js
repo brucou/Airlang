@@ -49,7 +49,7 @@ function initialize_server () {
    // Where to find the view files
    app.set('views', __dirname + '/views'); //__dirname : directory in which the currently executing script resides
 
-   app.use(express.static(__dirname + "public/")); //we point to the home directory of the project to get any files there
+   app.use(express.static(__dirname + "/public/")); //we point to the home directory of the project to get any files there
 
    // A route for the home page - will render a view
    app.get(

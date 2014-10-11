@@ -100,3 +100,5 @@ function disaggregate_input(sWords) {
    }).replace(/\s+/g, ' ').trim().split(' ');
 }
 
+function wrap (text, wrap_char) { return [wrap_char, text, wrap_char].join(""); }
+

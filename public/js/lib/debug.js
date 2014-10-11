@@ -94,25 +94,33 @@ function logExit (context) {
 }
 
 DBG.logForceEntry = function logForceEntry (context) {
-   var tag = DBG.TAG.TRACE;
-   var cfg_tag_ctxt = DBG.CONFIG[tag][context];
-   var cfg_tag_detail = DBG.CONFIG[tag][DBG.DETAIL];
-   DBG.CONFIG[tag][context] = true;
-   DBG.CONFIG[tag][DBG.DETAIL] = true;
+   if (FORCE_TRACE) {
+      var tag = DBG.TAG.TRACE;
+      var cfg_tag_ctxt = DBG.CONFIG[tag][context];
+      var cfg_tag_detail = DBG.CONFIG[tag][DBG.DETAIL];
+      DBG.CONFIG[tag][context] = true;
+      DBG.CONFIG[tag][DBG.DETAIL] = true;
+   }
    logEntry(context);
-   DBG.CONFIG[tag][context] = cfg_tag_ctxt;
-   DBG.CONFIG[tag][DBG.DETAIL] = cfg_tag_detail;
-}
+   if (FORCE_TRACE) {
+      DBG.CONFIG[tag][context] = cfg_tag_ctxt;
+      DBG.CONFIG[tag][DBG.DETAIL] = cfg_tag_detail;
+   }
+};
 
 DBG.logForceExit = function logForceExit (context) {
-   var tag = DBG.TAG.TRACE;
-   var cfg_tag_ctxt = DBG.CONFIG[tag][context];
-   var cfg_tag_detail = DBG.CONFIG[tag][DBG.DETAIL];
-   DBG.CONFIG[tag][context] = true;
-   DBG.CONFIG[tag][DBG.DETAIL] = true;
+   if (FORCE_TRACE) {
+      var tag = DBG.TAG.TRACE;
+      var cfg_tag_ctxt = DBG.CONFIG[tag][context];
+      var cfg_tag_detail = DBG.CONFIG[tag][DBG.DETAIL];
+      DBG.CONFIG[tag][context] = true;
+      DBG.CONFIG[tag][DBG.DETAIL] = true;
+   }
    logExit(context);
-   DBG.CONFIG[tag][context] = cfg_tag_ctxt;
-   DBG.CONFIG[tag][DBG.DETAIL] = cfg_tag_detail;
+   if (FORCE_TRACE) {
+      DBG.CONFIG[tag][context] = cfg_tag_ctxt;
+      DBG.CONFIG[tag][DBG.DETAIL] = cfg_tag_detail;
+   }
 }
 
 function logWrite (tag, text, arg) {
@@ -165,8 +173,11 @@ DBG.logForceWrite = function logForceWrite (tag, text, arg) {
 /**
  * Helper function already contained in utils
  */
-DBG.set_inspect_function = function set_inspect_function() {
-   if ('undefined' !== typeof UT) {DBG.inspect = UT.inspect};
+DBG.set_inspect_function = function set_inspect_function () {
+   if ('undefined' !== typeof UT) {
+      DBG.inspect = UT.inspect
+   }
+   ;
 }
 
 DBG.lastElemArray = function lastElemArray (array) {
@@ -299,7 +310,8 @@ function trace (module, module_name) {
          if (!is_trace_allowed(property, fn_name)) {
             console.log("not allowed on ", property, " ", fn_name);
             continue;
-         } else {
+         }
+         else {
             module[property] = create_proxy(fn_orig, fn_name, module_name);
          }
       }
@@ -325,7 +337,9 @@ trace.config = function config (property, fn_name, trace_allowed) {
 
 function is_trace_allowed (property, fn_name) {
    fn_name = fn_name.trim();
-   if (trace.rules_array && trace.rules_array[property] && 'undefined' !== typeof trace.rules_array[property][fn_name]) {
+   if (trace.rules_array && trace.rules_array[property] && 'undefined'
+      !== typeof trace.rules_array[property][fn_name])
+   {
       return trace.rules_array[property][fn_name];
    }
    else {
@@ -349,7 +363,8 @@ function create_proxy (fn_orig, fn_name, module_name) {
             "DBG.logForceExit(display_name);" +
             "return returnValue;" +
             "});");
-   } else {
+   }
+   else {
       fn_proxy = function proxyy () {
          DBG.logForceEntry(display_name);
          var returnValue = fn_orig.apply(this, arguments);
@@ -362,6 +377,7 @@ function create_proxy (fn_orig, fn_name, module_name) {
    // and also the prototype of original function
    DBG.extend(fn_proxy, fn_orig);
    fn_proxy.prototype = fn_orig.prototype;
+   fn_proxy.displayName = display_name;
 
    return fn_proxy;
 }
@@ -387,7 +403,8 @@ DBG.LOG_INPUT_VALUE = function (arg_list_txt /* argument list*/) {
    if (arity === 1) {
       // then the first parameter should be an empty chain
       if (arg_list_txt.trim().length !== 0) {
-         throw "When logging arguments passed to function: A non-empty list of args (" + arg_list_txt + ") is passed but no arguments to correspond for it";
+         throw "When logging arguments passed to function: A non-empty list of args (" + arg_list_txt
+            + ") is passed but no arguments to correspond for it";
       }
       logWrite(DBG.TAG.DEBUG, "Called without arguments");
    }

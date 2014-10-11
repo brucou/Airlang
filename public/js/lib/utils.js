@@ -236,8 +236,9 @@ define(['data_struct'], function (DS) {
       // Provide a hook for user-specified inspect functions.
       // Check that value is an object with an inspect function on it
       if (ctx.customInspect && value && typeof value.inspect === 'function' && // Filter out the util module, it's inspect function is special
-         value.inspect !== exports.inspect && // Also filter out any prototype objects using the circular check.
-         !(value.constructor && value.constructor.prototype === value)) {
+          value.inspect !== exports.inspect && // Also filter out any prototype objects using the circular check.
+          !(value.constructor && value.constructor.prototype === value))
+      {
          return String(value.inspect(recurseTimes));
       }
 
@@ -341,6 +342,10 @@ define(['data_struct'], function (DS) {
       return hash;
    }
 
+   function injectArray (aSource, aToInject, pos) {
+      return aSource.splice.apply(aSource, [pos, 0].concat(aToInject));
+   }
+
    function isRegExp (re) {
       return typeof re === 'object' && objectToString(re) === '[object RegExp]';
    }
@@ -348,7 +353,7 @@ define(['data_struct'], function (DS) {
    function isFunction (object) {
 
       return !!(object && typeof object.constructor !== "undefined" && typeof object.call !== "undefined" &&
-         typeof object.apply !== "undefined");
+                typeof object.apply !== "undefined");
 
       // return typeof obj === 'function' && toString.call(obj) == '[object Function]';
       // this is a more precise version but slower
@@ -386,7 +391,7 @@ define(['data_struct'], function (DS) {
 
          case 'string':
             var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '').replace(/'/g, "\\'").replace(/\\"/g, '"') +
-               '\'';
+                         '\'';
             return ctx.stylize(simple, 'string');
 
          case 'number':
@@ -607,12 +612,12 @@ define(['data_struct'], function (DS) {
       this.internalStore = {};
       this.secondaryStore = [];
       this.jsObjectInternals =
-         ["__proto__", "__noSuchMethod__", "__count__", "__parent__", "__defineGetter__", "__defineSetter__",
-          "__lookupGetter__", "__lookupSetter__", "hasOwnProperty", "constructor", "isPrototypeOf",
-          "propertyIsEnumerable",
-          "toLocaleString", "toString", "valueOf"
-            /* , "toSource", "eval", "watch", "unwatch" // not in js core anymore */
-         ]; // this is the list of the function that cannot be used as keys in an object as they are already reserved
+      ["__proto__", "__noSuchMethod__", "__count__", "__parent__", "__defineGetter__", "__defineSetter__",
+       "__lookupGetter__", "__lookupSetter__", "hasOwnProperty", "constructor", "isPrototypeOf",
+       "propertyIsEnumerable",
+       "toLocaleString", "toString", "valueOf"
+         /* , "toSource", "eval", "watch", "unwatch" // not in js core anymore */
+      ]; // this is the list of the function that cannot be used as keys in an object as they are already reserved
       this.jsOI_length = this.jsObjectInternals.length;
 
       this.getItem = function (key) {
@@ -756,9 +761,9 @@ define(['data_struct'], function (DS) {
       defaults.propagateResult = function (err) {
          //prepare the reault values and call the callback function with it
          // but call it with objects indicating success or failure
-         logEntry("propagateResult");
+         //logEntry("propagateResult");
          self.callback(err, self.aStore);
-         logExit("propagateResult");
+         //logExit("propagateResult");
       }; // default parameters, execute action after 1 value is stored
       defaults.callback = function (err, result) {
          logWrite(DBG.TAG.WARNING, "no callback function for asynchronous function call!");
@@ -901,7 +906,8 @@ define(['data_struct'], function (DS) {
           escape_html       : escape_html,
           padding_left      : padding_left,
           padding_right     : padding_right,
-          fragmentFromString: fragmentFromString
+          fragmentFromString: fragmentFromString,
+          injectArray       : injectArray
        };
    window.UT = _UT;
    return _UT;

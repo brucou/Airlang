@@ -7,24 +7,51 @@
 
 /**
  * TODO: MODULARITY
- * - remove sockets variables from global from better encapsulation, create a dedicated sio.js module
  * - investigate how to have module both require.js and stand alone in same file
+ * - client : remove later UT global variable (to have access to inspect function in debug.js : DBG.set_inspect_function
  * TODO: DOCUMENTATION
  * - documentation in code, refactoring, and split in file
  * TODO: DEBUGGING
- * - investigate automatic logEntry through deubg_Setup function who stubs all functions under windows
- * - experiment with a log prototype function to see if the log shows the originating function correctly
  * - fake all the server communication server - that should allow to run with debugging in webstorm
  * TODO: TESTING
  * - testing suite to write
+ * TODO: CONFIGURATION
+ * - move all configuration constant to a single file or object, namespace by the module who uses it
  * TODO: DEPLOYMENT
- * -  PASSER SUR LE CLOUD!!!!
+ * -  CLOUD : when ready to switch to english dictionary, move it to cloud
+* TODO : FEATURES
+ * - completely add module reader tool (config, and init (start)
+ * - do the structure to add recognizing of language, and get back the language info, passed as param to server calls
+ * - full API for the reader tool
+ * - - language API : recognize language, similar words, translation API etc.
+ * - -                all configurable to use different sources - word reference, wordnet etc.
+ * - - memrise API : to define
+ * - - user state object :
+ * - - - will be necessary for the memrise API
+ * - - - will be necessary to store server side, explicit the API (socket-based, no REST)
+ * - - - log modification through operation, will help to have an UNDO capability
+ * - - have a model for design templating for the views of each tool
  */
 
+/**
+ * how to have code work in node, require and browser
+ * (function(global, factory) {
+    if (typeof exports === 'object') {
+        // Node
+        module.exports = factory();
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD
+        define(factory);
+    } else {
+        // Browser globals
+        global.printStackTrace = factory();
+    }
+}(this, function() {}))
+ */
 /*
  Configuring require.js
  */
-
+/**
 requirejs.config(
    {
       //By default load any module IDs from js/lib
@@ -43,8 +70,8 @@ requirejs.config(
          socketio: '/socket.io/socket.io'
       }
    });
-
-/*
+*/
+ /*
  Require : load the indicated dependencies if needed, and run the function inside
  Define : does not run anything. It defines (declarative) the module.
  When a module is looked for, the factory function passed as a parameter is executed
@@ -61,8 +88,9 @@ requirejs(
     'ReaderModel',
     'ReaderController',
     'socketio',
-    'utils'],
-   function ($, RM, RC, IO, UT) {
+    'utils'//,'../Qunit/test_ReaderModel'
+   ],//
+   function ($, RM, RC, IO, UT, QU_tRM) {
 
       function start () {
          logEntry("start");
@@ -71,8 +99,9 @@ requirejs(
       }
 
       function init_log () {
-         DBG.setConfig(DBG.TAG.DEBUG, true, {by_default: false})
-         (DBG.TAG.TRACE, false, {by_default: false})
+         FORCE_TRACE = false;
+         DBG.setConfig(DBG.TAG.DEBUG, true, {by_default: true})
+         (DBG.TAG.TRACE, true, {by_default: false})
          (DBG.TAG.INFO, true, {by_default: true});
          DBG.disableLog(DBG.TAG.DEBUG, "CachedValues.init")
          (DBG.TAG.DEBUG, "putValueInCache")
@@ -87,7 +116,9 @@ requirejs(
          (DBG.TAG.TRACE, "get_text_stats")
          (DBG.TAG.TRACE, "generateTagAnalysisData")
          (DBG.TAG.TRACE, "getHitWord")
-         (DBG.TAG.DEBUG, "getHitWord");
+         (DBG.TAG.DEBUG, "getHitWord")
+         (DBG.TAG.TRACE, "is_comment_start_token");
+         (DBG.TAG.TRACE, "is_comment_end_token");
       }
 
       function init_socket () {
@@ -100,20 +131,21 @@ requirejs(
          FAKE.config('url_load_callback', FAKE.fn.url_load_callback);
       }
 
-      $(
-         function () {
-            init_log();
-            // TEST CODE
-            //trace.config('ReaderToolController', 'Constructor', false);
-            //window.RM = RM;
-            trace(RM, 'RM');
-            trace(RC, 'RC');
-            trace(IO, 'IO');
-            //init_fake();
-            ////////////
-            init_socket();
-            start();
-         });
-   })
-;
+      $(function () {
+         init_log();
+         // TEST CODE
+         //trace.config('ReaderToolController', 'Constructor', false);
+         //window.RM = RM;
+         trace(RM, 'RM');
+         trace(RC, 'RC');
+         trace(IO, 'IO');
+         //init_fake();
+         ////////////
+         init_socket();
+         if ('undefined' !== typeof QUnit) {
+            console.log("Starting QUnit tests");
+            QUnit.start();}
+         start();
+      });
+   });
 // */
