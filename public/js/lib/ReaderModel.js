@@ -50,9 +50,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
 
           ////////// Database query functions
           RM.srv_qry_word_translation = function srv_qry_word_translation (word, callback) {
-             logEntry("srv_qry_word_translation");
+             //logEntry("srv_qry_word_translation");
              rpc_socket.emit('get_translation_info', word, callback);
-             logExit("srv_qry_word_translation");
+             //logExit("srv_qry_word_translation");
           };
 
           RM.srv_qry_important_words = function srv_qry_important_words (word, callback) {
@@ -60,9 +60,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               Word: the word to question the server with
               callback: executed when the server has finished its processing
               */
-             logEntry("srv_qry_important_words");
+             //logEntry("srv_qry_important_words");
              rpc_socket.emit('highlight_important_words', word, callback);
-             logExit("srv_qry_important_words");
+             //logExit("srv_qry_important_words");
           };
 
           RM.srv_qry_stop_words = function srv_qry_stop_words (text, callback) {
@@ -70,9 +70,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               Words: the words to question the server with
               callback: executed when the server has finished its processing
               */
-             logEntry("srv_qry_stop_words");
+             //logEntry("srv_qry_stop_words");
              rpc_socket.emit('highlight_stop_words', text, callback);
-             logExit("srv_qry_stop_words");
+             //logExit("srv_qry_stop_words");
           };
 
           RM.highlight_words = UT.async_cached(RM.srv_qry_important_words, null); // no caching
@@ -136,7 +136,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               This case is currently considered pathological and ignored
               IMPROVEMENT : look if there is an article tag, in which case take the title and add it first with H1 tag before constructing the page
               */
-             logEntry("extract_relevant_text_from_html");
+             //logEntry("extract_relevant_text_from_html");
              var MIN_SENTENCE_NUMBER = 7;
              var MIN_AVG_AVG_SENTENCE_LENGTH = 13;
              var SOURCE = "source"; //for temporarily keep the loaded webpage
@@ -205,10 +205,10 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       });
              $source.remove();
 
-             logExit("extract_relevant_text_from_html");
+             //logExit("extract_relevant_text_from_html");
              return dfr.promise();
              //           return $dest;
-          }
+          };
 
           RM.compute_text_stats_group_by_div = function compute_text_stats_group_by_div (aData) {
              /*
@@ -304,7 +304,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               * Works by wrapping all text between given set of tags in a span class
               * and later analyze text in each children tag of $el for important words
               */
-             logEntry("highlight_text_in_div");
+             //logEntry("highlight_text_in_div");
 
              var aHighlightPromises = [];
 
@@ -319,7 +319,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 aHighlightPromises.push(RM.highlight_proper_text($el));
              });
 
-             logExit("highlight_text_in_div");
+             //logExit("highlight_text_in_div");
              return $.when.apply($, aHighlightPromises);
           };
 
@@ -332,28 +332,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               @param $el {Object}: jQuery element that contains sWords in its inner text
               @param then_callback {function} : callback executed after words habve been highlighted
               */
-             logEntry("highlight_proper_text");
-             /*
-              var dfr = $.Deferred();
-
-              RM.highlight_words($el.text().trim(), function (err, aStore) {
-              logEntry("highlight_proper_text callback");
-              if (err) {
-              logWrite(DBG.TAG.ERROR, "error in highlight words", err);
-              dfr.reject(["error in highlight words", err].join(" : "));
-              }
-              else {
-              var highlit_text = aStore.toString();
-              logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
-              $el.html(highlit_text);
-              dfr.resolve($el, highlit_text);
-              }
-              logExit("highlight_proper_text callback");
-              });
-              logExit("highlight_proper_text");
-              return dfr.promise();
-              */
-             return $.when(RM.apply_highlighting_filters_to_text($el.text().trim(), [RM.highlight_words/*, RM.highlight_stop_words*/]))
+             return $.when(RM.apply_highlighting_filters_to_text($el.text().trim(), [RM.highlight_words, RM.highlight_stop_words]))
                 .then(function (highlighted_text) {
                          $el.html(highlighted_text);
                          return highlighted_text; // will get passed to the done callback of the promise (not used here)
@@ -361,7 +340,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
           };
 
           RM.search_for_text_to_highlight = function search_for_text_to_highlight ($el, a$elToHighlight) {
-             logEntry("search_for_text_to_highlight");
+             //logEntry("search_for_text_to_highlight");
              var TEXT_SELECTORS = ["p", "h1", "h2", "h3", "h4", "h5", "h6", "li"].join(", ");
 
              $("script", $el).remove();
@@ -393,9 +372,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 });
              }
 
-             logExit("search_for_text_to_highlight");
+             //logExit("search_for_text_to_highlight");
              return a$elToHighlight;
-          }
+          };
 
           RM.generateTagAnalysisData = function generateTagAnalysisData ($source) {
              /**
@@ -403,7 +382,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               @param $source {jquery element} the id of the div source within which to select the text
               @returns {array} returns an array with text stats in ParagraphData object (div class, sentence number etc.)
               */
-             logEntry("generateTagAnalysisData");
+             //logEntry("generateTagAnalysisData");
              DBG.LOG_INPUT_VALUE('$source', $source);
 
              var tagHTML = ["p"/*, "h1", "h2", "h3", "h4", "h5", "h6"*//*, "li"*/].join(", ");
@@ -428,7 +407,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              logWrite(DBG.TAG.DEBUG, "Computing stats on text with tags", tagHTML);
              $(tagHTML, el_source).each(get_tag_stat);
 
-             logExit("generateTagAnalysisData");
+             //logExit("generateTagAnalysisData");
              DBG.LOG_RETURN_VALUE(aData);
              return aData;
 
@@ -570,22 +549,22 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              // the simple tokenizer methods
              var adapter = DS.get_data_adapter('text', 'token', 'simple_tokenizer');
              var aTokens = adapter(highlit_text);
-             logWrite(DBG.TAG.DEBUG, "aTokens", aTokens);
+             //logWrite(DBG.TAG.DEBUG, "aTokens", aTokens);
              var aTokenActionMap = [];
              var mark = false;
              // I have the token, now assigning actions
              aTokens.forEach(function (word, index) {
                 if (word.indexOf(StartSel_nospaces) == 0) {
                    // beginning of marking
-                   logWrite(DBG.TAG.DEBUG, "found begin of marking");
+                   //logWrite(DBG.TAG.DEBUG, "found begin of marking");
                    word = word.replace(new RegExp(StartSel_nospaces, "g"), "");
-                   logWrite(DBG.TAG.DEBUG, "word after removal of startsel marking: ", word);
+                   //logWrite(DBG.TAG.DEBUG, "word after removal of startsel marking: ", word);
                    mark = true;
                 }
                 if (mark == true && word.indexOf(StopSel_nospaces) > 0) {
-                   logWrite(DBG.TAG.DEBUG, "found end of marking");
+                   //logWrite(DBG.TAG.DEBUG, "found end of marking");
                    word = word.replace(new RegExp(StopSel_nospaces, "g"), "");
-                   logWrite(DBG.TAG.DEBUG, "word after removal of stopsel marking: ", word);
+                   //logWrite(DBG.TAG.DEBUG, "word after removal of stopsel marking: ", word);
                    logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
                    aTokenActionMap.push({token: word, action: RM.fn_html_highlight});
                    mark = false;
@@ -595,7 +574,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    aTokenActionMap.push({token: word, action: RM.fn_html_highlight});
                 }
                 else {
-                   logWrite(DBG.TAG.DEBUG, "associating action none to word ", word);
+                   //logWrite(DBG.TAG.DEBUG, "associating action none to word ", word);
                    aTokenActionMap.push({token: word, action: RM.default_filter});
                 }
 
@@ -711,8 +690,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                                                    tokenActionMap.action;
                                                 });
                                              });
-                                             logWrite(DBG.TAG.DEBUG, "aTransposedResults transpose",
-                                                      UT.inspect(aTransposedResults, null, 4));
+                                             //logWrite(DBG.TAG.DEBUG, "aTransposedResults transpose", UT.inspect(aTransposedResults, null, 4));
 
                                              /*
                                               4. Take the output of each filter and apply precedence rules
@@ -745,8 +723,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                                                 // beware the trap, this modifies directly in place, value returned is element removed
                                                 UT.injectArray(aTransposedResults, aToInsert, pos);
                                              });
-                                             logWrite(DBG.TAG.DEBUG, "aTransposedResults include comments",
-                                                      UT.inspect(aTransposedResults, null, 4));
+                                             //logWrite(DBG.TAG.DEBUG, "aTransposedResults include comments", UT.inspect(aTransposedResults, null, 4));
 
                                              // Apply filter selected
                                              // [{token, action_final}]  =>  [token_filtered]
@@ -778,7 +755,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
 
              aFilters.forEach(
                 function (filter, index, array) {
-                   logWrite(DBG.TAG.DEBUG, "analysis of token by filter", UT.inspect(filter, null, 4));
+                   logWrite(DBG.TAG.DEBUG, "analysis of token by filter", UT.inspect(filter, null, 2));
                    if (!filter.input_type || !filter.output_type) {
                       throw 'getTokenActionMap: type information not available. Possible cause is filter was not registered'
                    }

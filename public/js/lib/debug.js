@@ -93,7 +93,16 @@ function logExit (context) {
    DBG.CONTEXT.pop();
 }
 
+function remove_module_id_from_context (context){
+   re = /^\(.*\) (.*)/; //module should be at the beginning and between parenthesis. Ex: (RM) xxxx
+   var is_traced = re.exec(context);
+   if (null != is_traced) {context = is_traced[1];}
+   return context;
+}
+
 DBG.logForceEntry = function logForceEntry (context) {
+   //remove (module_name) from context
+   context = remove_module_id_from_context(context);
    if (FORCE_TRACE) {
       var tag = DBG.TAG.TRACE;
       var cfg_tag_ctxt = DBG.CONFIG[tag][context];
@@ -109,6 +118,7 @@ DBG.logForceEntry = function logForceEntry (context) {
 };
 
 DBG.logForceExit = function logForceExit (context) {
+   context = remove_module_id_from_context(context);
    if (FORCE_TRACE) {
       var tag = DBG.TAG.TRACE;
       var cfg_tag_ctxt = DBG.CONFIG[tag][context];
@@ -354,25 +364,27 @@ function create_proxy (fn_orig, fn_name, module_name) {
    var f_arity = fn_orig.length;
    fn_name = fn_name.trim();
    var display_name = ['(', module_name, ')', ' ', fn_orig.displayName || fn_name].join("");
-   if (f_arity) {
+   //if (f_arity) {
       eval(
-            "fn_proxy = (function proxy(" + vars.substring(0, f_arity * 2 - 1) +
+            "fn_proxy = (function " +
+            (fn_orig.displayName || fn_name) +
+            " /*proxy*/ (" + vars.substring(0, f_arity * 2 - 1) +
             ") { " +
             "DBG.logForceEntry(display_name);" +
             "var returnValue = fn_orig.apply(this, slice.call(arguments));" +
             "DBG.logForceExit(display_name);" +
             "return returnValue;" +
             "});");
-   }
-   else {
-      fn_proxy = function proxyy () {
+   //}
+   //else {
+   /*   fn_proxy = function proxyy () {
          DBG.logForceEntry(display_name);
          var returnValue = fn_orig.apply(this, arguments);
          //console.log("return value (", typeof returnValue, ") :", returnValue);
          DBG.logForceExit(display_name);
          return returnValue;
       };
-   }
+   }*/
    // add also the possible properties attached to the original function
    // and also the prototype of original function
    DBG.extend(fn_proxy, fn_orig);

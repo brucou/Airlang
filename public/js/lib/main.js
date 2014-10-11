@@ -101,7 +101,7 @@ requirejs(
       function init_log () {
          FORCE_TRACE = false;
          DBG.setConfig(DBG.TAG.DEBUG, true, {by_default: true})
-         (DBG.TAG.TRACE, true, {by_default: false})
+         (DBG.TAG.TRACE, true, {by_default: true})
          (DBG.TAG.INFO, true, {by_default: true});
          DBG.disableLog(DBG.TAG.DEBUG, "CachedValues.init")
          (DBG.TAG.DEBUG, "putValueInCache")
@@ -115,10 +115,15 @@ requirejs(
          (DBG.TAG.TRACE, "search_for_text_to_highlight")
          (DBG.TAG.TRACE, "get_text_stats")
          (DBG.TAG.TRACE, "generateTagAnalysisData")
+         (DBG.TAG.TRACE, "get_DOM_select_format_from_class")
          (DBG.TAG.TRACE, "getHitWord")
          (DBG.TAG.DEBUG, "getHitWord")
-         (DBG.TAG.TRACE, "is_comment_start_token");
-         (DBG.TAG.TRACE, "is_comment_end_token");
+         (DBG.TAG.TRACE, "is_comment_start_token")
+         (DBG.TAG.TRACE, "is_comment_end_token")
+         (DBG.TAG.TRACE, "dataAdapterOStore2TokenActionMap")
+         (DBG.TAG.DEBUG, "dataAdapterOStore2TokenActionMap")
+         (DBG.TAG.TRACE, "default_identity_filter")
+         (DBG.TAG.TRACE, "fn_html_highlight");
       }
 
       function init_socket () {

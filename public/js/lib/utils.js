@@ -142,7 +142,7 @@ define(['data_struct'], function (DS) {
 
       async_cached_f.cache = cvCachedValues;
       async_cached_f.f = f; // giving a way to return to the original uncached version of f)
-      f.async_cached_f = async_cached_f;
+      //f.async_cached_f = async_cached_f;
 
       return async_cached_f;
    }
