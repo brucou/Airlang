@@ -2,10 +2,10 @@
  * Created by bcouriol on 2/06/14.
  */
 
-define(['utils'], function (UT) {
+define(['utils'], function ( UT ) {
    var DS = DS || {};
 
-   DS.ParagraphData = function ParagraphData (init_object) {
+   DS.ParagraphData = function ParagraphData ( init_object ) {
       /* For each paragraph, calculate a series of indicators
        number of sentences
        average length of sentences in words
@@ -30,7 +30,7 @@ define(['utils'], function (UT) {
       }
    };
 
-   DS.ValueMap = function ValueMap (init_object) {
+   DS.ValueMap = function ValueMap ( init_object ) {
       /* Contains two fields, one input and one output
        This data structure is designed to cache one function value as in output = f(input);
        input and output can be any object.
@@ -46,19 +46,19 @@ define(['utils'], function (UT) {
       }
    };
 
-   DS.Error = function (error_message) {
+   DS.Error = function ( error_message ) {
       this.error_message = error_message;
    };
 
    DS.Tooltip = (function () {
-      function Tooltip (args) {
-         var opts = $.extend({dismiss_on: 'mousemove'}, args);
+      function Tooltip ( args ) {
+         var opts = $.extend({dismiss_on : 'mousemove'}, args);
          var self = this;
          var future_events = [];
          var tt;
          //var context = args["context"] || document; //for not applying events to the whole document
 
-         function inject_css (tt) {
+         function inject_css ( tt ) {
             var cssLink = document.createElement("link");
             cssLink.href = "css/tooltip_iframe.css";
             cssLink.rel = "stylesheet";
@@ -66,7 +66,7 @@ define(['utils'], function (UT) {
             tt[0].contentDocument.head.appendChild(cssLink);
          }
 
-         function position (x, y, tt) {
+         function position ( x, y, tt ) {
             var pos = {};
             var margin = 5;
             var anchor = 10;
@@ -111,7 +111,7 @@ define(['utils'], function (UT) {
             return pos;
          }
 
-         function setup_dismiss (tt) {
+         function setup_dismiss ( tt ) {
             if (opts.dismiss_on == 'mousemove') {
                $(document).on('mousemove_without_noise', self.hide);
                $(window).scroll(self.hide);
@@ -122,19 +122,19 @@ define(['utils'], function (UT) {
             }
          }
 
-         function escape_hide_handler (e) {
+         function escape_hide_handler ( e ) {
             if (e.keyCode == 27) {
                self.hide();
             }
          }
 
-         function bind_future_events (tt) {
-            future_events.forEach(function (event) {
+         function bind_future_events ( tt ) {
+            future_events.forEach(function ( event ) {
                tt.contents().find(event.selector).on(event.event, event.action);
             })
          }
 
-         function set_text_direction (text_direction, tt) {
+         function set_text_direction ( text_direction, tt ) {
             tt.contents().find('.pos_translation').css('direction', text_direction || 'ltr');
          }
 
@@ -142,7 +142,7 @@ define(['utils'], function (UT) {
             tt.remove();
          };
 
-         this.show = function (x, y, content, text_direction) {
+         this.show = function ( x, y, content, text_direction ) {
             logEntry("tooltip show");
             tt[0].contentDocument.body.innerHTML = content;
 
@@ -162,7 +162,7 @@ define(['utils'], function (UT) {
 
             set_text_direction(text_direction, tt);
 
-            tt.css({ top: pos.y, left: pos.x, display: 'block'});
+            tt.css({ top : pos.y, left : pos.x, display : 'block'});
 
             logExit("tooltip show");
          };
@@ -180,12 +180,12 @@ define(['utils'], function (UT) {
             return tt && !this.is_hidden();
          };
 
-         this.find = function (selector) {
+         this.find = function ( selector ) {
             return tt.contents().find(selector);
          };
 
-         this.bindFutureEvent = function (event, selector, action) {
-            future_events.push({event: event, selector: selector, action: action});
+         this.bindFutureEvent = function ( event, selector, action ) {
+            future_events.push({event : event, selector : selector, action : action});
          };
 
          this.resize = function () {
@@ -202,20 +202,20 @@ define(['utils'], function (UT) {
          };
 
          tt = $('<iframe>', {
-            css  : {
-               background     : '#fcf7d9',
-               'text-align'   : 'left',
-               'border-style' : 'solid',
-               'border-width' : '1px',
-               'border-color' : '#ccc',
-               'box-shadow'   : 'rgba(0,0,0,0.2) 0px 2px 5px',
-               position       : 'fixed',
-               'border-radius': '5px',
-               'z-index'      : 2147483647,
-               top            : '-1500px',
-               display        : 'none'
+            css   : {
+               background      : '#fcf7d9',
+               'text-align'    : 'left',
+               'border-style'  : 'solid',
+               'border-width'  : '1px',
+               'border-color'  : '#ccc',
+               'box-shadow'    : 'rgba(0,0,0,0.2) 0px 2px 5px',
+               position        : 'fixed',
+               'border-radius' : '5px',
+               'z-index'       : 2147483647,
+               top             : '-1500px',
+               display         : 'none'
             },
-            class: 'transover-tooltip'
+            class : 'transover-tooltip'
          }).appendTo('body');
 
          inject_css(tt);
@@ -225,7 +225,7 @@ define(['utils'], function (UT) {
    })();
 
    var mapDataAdapters;
-   DS.register_data_adapters = function register_data_adapters (input_type, output_type, fn_adapter, adapter_name) {
+   DS.register_data_adapters = function register_data_adapters ( input_type, output_type, fn_adapter, adapter_name ) {
       /**
        * Purpose : Register functions who can transform a data type (input_type) into another data type (output_type).
        *           Such functions are stateless, i.e. their output is only function of their input (pure function)
@@ -263,11 +263,11 @@ define(['utils'], function (UT) {
 
       mapDataAdapters[input_type] = mapDataAdapters[input_type] || {};
       var map_val = mapDataAdapters[input_type][output_type] = mapDataAdapters[input_type][output_type] || [];
-      map_val.push({fn_adapter: fn_adapter, adapter_name: adapter_name});
+      map_val.push({fn_adapter : fn_adapter, adapter_name : adapter_name});
       return mapDataAdapters; //return that value for checking purposes
    };
 
-   DS.get_data_adapter = function get_data_adapter (input_type, output_type, optional_name) {
+   DS.get_data_adapter = function get_data_adapter ( input_type, output_type, optional_name ) {
       /**
        * Purpose : Returns a previously registered data adapter based on a lookup on input_type, output_type first
        *           and then based on the optional parameter name if any.
@@ -303,14 +303,16 @@ define(['utils'], function (UT) {
          var bFound = false;
          var fn_found;
          aAdapters.some(
-            function (o_adapter) {
+            function ( o_adapter ) {
                if (o_adapter.adapter_name === optional_name.trim()) {
                   bFound = true;
                   fn_found = o_adapter.fn_adapter;
                   return bFound;
                }
             });
-         if (!bFound) {throw 'get_data_adapter: could not find the data adapter with name ' + optional_name;}
+         if (!bFound) {
+            throw 'get_data_adapter: could not find the data adapter with name ' + optional_name;
+         }
          return fn_found;
       }
       else {
@@ -319,7 +321,7 @@ define(['utils'], function (UT) {
    };
 
    var mapFilters;
-   DS.register_filter = function register_filter (input_type, output_type, fn_filter, filter_name) {
+   DS.register_filter = function register_filter ( input_type, output_type, fn_filter, filter_name ) {
       /**
        * Purpose : Register filters which are functions which leave their input unchanged, while adding action to it
        *           the action is a function mapped to the token. Ideally, a couple of filters going from one type to
@@ -372,7 +374,7 @@ define(['utils'], function (UT) {
       return mapFilters; //return that value for checking purposes
    };
 
-   DS.get_filter = function get_filter (filter_name) {
+   DS.get_filter = function get_filter ( filter_name ) {
       /**
        * Purpose : Returns a previously registered filter based on a lookup by its name
        * @param {string} input_type
@@ -392,6 +394,29 @@ define(['utils'], function (UT) {
          throw 'getFilter : no filter with the name ' + filter_name + " is registered!"
       }
       return filter;
+   };
+
+   DS.promise_value_adapter = function promise_value_adapter ( value, result_callback ) {
+      /**
+       * The idea here is to have a wrapper to have the same code running whether it is a deferred or a regular value
+       * In the filtering mechanism we have to apply a callback to swithc datatypes from filter functions
+       * So we want to execute that callback whether the filter returns a value or a promise
+       * The key trick here is that the callback has to RETURN something, which it should not have to do if it was
+       * just resolving the deferred.
+       * So basically, we can reuse code, but with important caveats (SOURCE OF BUGS!!)
+       */
+      return {
+         promise : (typeof value.promise === 'function') ?
+                   value.promise :
+                   function () {return result_callback(null, value);},
+
+         // this case should never happen for a normal value returned by a synchronous function
+         reject  : (typeof value.reject === 'function') ?
+                   value.reject :
+                   function () {throw 'rejecting return value from synchronous function for what??'},
+
+         resolve : (typeof value.resolve === 'function') ? value.resolve : function ( val ) {return val}
+      }
    };
 
    return DS;

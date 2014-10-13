@@ -9,12 +9,14 @@
  * TODO: MODULARITY
  * - investigate how to have module both require.js and stand alone in same file
  * - client : remove later UT global variable (to have access to inspect function in debug.js : DBG.set_inspect_function
+ * - register function with the language they are associated to ('cs' etc.)
  * TODO: DOCUMENTATION
  * - documentation in code, refactoring, and split in file
  * TODO: DEBUGGING
  * - fake all the server communication server - that should allow to run with debugging in webstorm
  * TODO: TESTING
  * - testing suite to write
+ * - installe SINON pour les FAKES en conjonction avec QUNIT
  * TODO: CONFIGURATION
  * - move all configuration constant to a single file or object, namespace by the module who uses it
  * TODO: DEPLOYMENT
@@ -120,8 +122,8 @@ requirejs(
          (DBG.TAG.DEBUG, "getHitWord")
          (DBG.TAG.TRACE, "is_comment_start_token")
          (DBG.TAG.TRACE, "is_comment_end_token")
-         (DBG.TAG.TRACE, "dataAdapterOStore2TokenActionMap")
-         (DBG.TAG.DEBUG, "dataAdapterOStore2TokenActionMap")
+         //(DBG.TAG.TRACE, "dataAdapterOStore2TokenActionMap")
+         //(DBG.TAG.DEBUG, "dataAdapterOStore2TokenActionMap")
          (DBG.TAG.TRACE, "default_identity_filter")
          (DBG.TAG.TRACE, "fn_html_highlight");
       }
@@ -132,11 +134,13 @@ requirejs(
       }
 
       function init_fake () {
-         FAKE.config('make_article_readable', FAKE.fn.fake_make_article_readable);
-         FAKE.config('url_load_callback', FAKE.fn.url_load_callback);
+         //FAKE.config('make_article_readable', FAKE.fn.fake_make_article_readable);
+         //FAKE.config('url_load_callback', FAKE.fn.url_load_callback);
       }
 
       $(function () {
+         window.aPromises ={};
+         window.aPromises["filters"] = [];
          init_log();
          // TEST CODE
          //trace.config('ReaderToolController', 'Constructor', false);

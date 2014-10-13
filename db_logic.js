@@ -8,6 +8,9 @@
  */
 
 var LOG = require('./debug');
+var U = require('./utils');
+var Util = require('util');
+var RSVP = require('rsvp');
 var pg = require('pg'),
     pgClient = null, // database connection variables
     // list of requent words as returned by query - set here as a default in case the query does not work or for testing purposes
@@ -23,13 +26,40 @@ stop_words['cs'] =
     'proto', 'proč', 'před', 's', 'se', 'sem', 'si', 'svůj', 'ta', 'tady', 'tak', 'také', 'tam', 'tato', 'teď', 'ten',
     'ti', 'tím', 'to', 'tobě', 'tomu', 'tvůj', 'ty', 'tyto', 'u', 'už', 'v', 've', 'vám', 'váš', 'viz', 'vy', 'z', 'za',
     'ze', 'že'
-    ,'Člověku', 'se', 'kvůli', 'tomu', '<', 'inserted', 'comment', 'že','přestane', 'kouřit', 'zpomalí'
-    ];
+   //, 'Člověku', 'se', 'kvůli', 'tomu', '<', 'inserted', 'comment', 'že', 'přestane', 'kouřit', 'zpomalí'
+];
 const conString = "postgres://postgres:Italska184a@localhost/postgres"; // connection string
 
 process.env.DATABASE_URL = process.env.DATABASE_URL || conString;
 
-function initialize_database () {
+function init () {
+   // Initialize database connection
+   init_pg_cnx();
+
+   // Register queries
+   const queryGetTranslationInfo = "SELECT DISTINCT " +
+                                   " pglemmatranslationcz.translation_lemma, " +
+                                   " pglemmatranslationcz.translation_sense, " +
+                                   " pglemmaen.lemma_gram_info, " +
+                                   " pglemmaen.lemma, " +
+                                   " pglemmaen.sense, " +
+                                   " pglemmatranslationcz.translation_gram_info, " +
+                                   " pgsamplesentenceencz.example_sentence_from, " +
+                                   " pgsamplesentenceencz.example_sentence_to, " +
+                                   " pgwordfrequency_short.freq_cat" +
+                                   " FROM pglemmaen" +
+                                   " INNER JOIN pglemmatranslationcz " +
+                                   " ON (pglemmatranslationcz.lemma_sense_id = pglemmaen.lemma_sense_id) " +
+                                   " LEFT JOIN pgsamplesentenceencz " +
+                                   " ON (pglemmatranslationcz.lemma_sense_id = pgsamplesentenceencz.lemma_sense_id)" +
+                                   " INNER JOIN pgwordfrequency_short" +
+                                   " ON (pglemmatranslationcz.translation_lemma = pgwordfrequency_short.lemma)" +
+                                   " WHERE LOWER(pglemmatranslationcz.translation_lemma) in " +
+                                   "     (select unnest(string_to_array(right(left(ts_lexize($1, $2)::varchar, -1), -1), ',')))";
+   pg_register_query('queryGetTranslationInfo', queryGetTranslationInfo, 2, ['cspell', 'default text']);
+}
+
+function init_pg_cnx () {
    console.log("database URL", process.env.DATABASE_URL);
 
    pg.connect(process.env.DATABASE_URL, function ( err, client ) {
@@ -41,6 +71,7 @@ function initialize_database () {
       console.log('successfully got a database client from which to do queries');
       exec_qry_freq_word_list(); // that updates important_words
    });
+
 }
 
 function close_connection () {
@@ -67,14 +98,148 @@ function get_important_words () {
    return important_words;
 }
 
-function get_stop_words ( locale ) {
-   return stop_words[locale];
+function pg_register_query ( query_name, query_string, arg_number, aDefaultArgs ) {
+   // Initializing registry
+   var registry = pg_register_query.registry = pg_register_query.registry || {};
+
+   // validation of inputs
+   // number of arguments : 4, all args are mandatory
+   var arity = arguments.length;
+   const arity_expected = 4;
+   if (arity != arity_expected) {
+      throw 'pg_register_query: called with ' + arity + ' parameters instead of ' + arity_expected;
+   }
+   if (!query_name || typeof query_name != 'string') {
+      throw 'pg_register_query: query_name must be non-empty string - found type ' + (typeof query_name) +
+            'and value ' + query_name;
+   }
+   if (!query_string || typeof query_string != 'string') {
+      throw 'pg_register_query: query_string must be non-empty string - found type ' + (typeof query_string) +
+            'and value ' + query_string;
+   }
+   if (!arg_number || typeof arg_number != 'number') {
+      throw 'pg_register_query: arg_number must be truthy number - found type ' + (typeof arg_number) +
+            'and value ' + arg_number;
+   }
+   if (!aDefaultArgs && !Util.isArray(aDefaultArgs)) {
+      throw 'pg_register_query: aDefaultArgs must be array - found type ' + (typeof aDefaultArgs) +
+            'and value ' + aDefaultArgs;
+   }
+
+   // checking if already something registered with that name
+   var query_obj = registry[query_name];
+   if (query_obj) {
+      // Here action is to just issue a warning, it could be in other cases to throw an exception
+      logWrite(DBG.TAG.WARNING, "Found another query with the same name - overwriting it!");
+   }
+
+   // copying default arguments
+   query_obj = {};
+   query_obj.query_string = query_string;
+   query_obj.arg_number = arg_number;
+   query_obj.aDefaultArgs = aDefaultArgs;
+   registry[query_name] = query_obj;
+}
+
+/**
+ *
+ * @param {string} query_name The name of the query which must be previously registered.
+ * @param {Array} aArgs
+ * @returns {RSVP.Promise}
+ */
+function pg_exec_query ( query_name, aArgs ) {
+   // getting registry
+   var registry = pg_register_query.registry;
+   if (!registry) {
+      throw 'pg_exec_query: falsy value for registry! Cannot execute query ' + query_name
+   }
+
+   // validation of inputs
+   // number of arguments : 2, all args are mandatory
+   var arity = arguments.length;
+   const arity_expected = 2;
+   if (arity != arity_expected) {
+      throw 'pg_exec_query: called with ' + arity + ' parameters instead of ' + arity_expected;
+   }
+   if (!query_name || typeof query_name != 'string') {
+      throw 'pg_exec_query: query_name must be non-empty string - found type ' + (typeof query_name) +
+            'and value ' + query_name;
+   }
+   if (!aArgs && !Util.isArray(aArgs)) {
+      throw 'pg_exec_query: aArgs must be array - found type ' + (typeof aArgs) +
+            'and value ' + aArgs;
+   }
+   //recovering the registered query
+   var query_obj = registry[query_name];
+   if (!query_obj) {
+      throw 'pg_exec_query: query_obj in registry must be truthy obj - found type ' + (typeof query_obj) +
+            'and value ' + query_obj;
+   }
+
+   //recovering the SQL string associated to the query
+   var query_string = query_obj.query_string;
+   if (!query_string || typeof query_string != 'string') {
+      throw 'pg_exec_query: query_string in query obj must be truthy obj - found type ' + (typeof query_string) +
+            'and value ' + query_string;
+   }
+
+   // preparing the arguments for the query
+   var arg_number = query_obj.arg_number;
+   if (!arg_number || typeof arg_number != 'number') {
+      throw 'pg_exec_query: arg_number must be truthy number - found type ' + (typeof arg_number) +
+            'and value ' + arg_number;
+   }
+   var aDefaultArgs = query_obj.aDefaultArgs;
+   if (!aDefaultArgs) {
+      throw 'pg_register_query: aDefaultArgs must be truthy obj - found type ' + (typeof aDefaultArgs) +
+            'and value ' + aDefaultArgs;
+   }
+   // replacing undefined arg in aArgs by values in default argument array
+   aArgs.forEach(function ( arg, index, array ) {
+      if (typeof arg === "undefined") {
+         array[index] = aDefaultArgs[index];
+      }
+   });
+
+   // transforming own properties in an array of arguments
+   if (aArgs.length !== arg_number) {
+      throw 'pg_exec_query: arguments number mismatch - expected ' + arg_number + ', received ' + aArgs.length
+   }
+
+   // getting the promise object
+   var promise = new RSVP.Promise(function ( resolve, reject ) {
+      // getting the pg client
+      var pgClient = get_db_client(); // do something in case there is no client
+      if (!pgClient) {
+         console.log("no database client connection found");
+         LOG.write(LOG.TAG.ERROR, 'no database client connection found');
+         reject(Error('no database client connection found'));
+      }
+
+      pgClient.query(
+         query_string, aArgs,
+         function pg_exec_query_cb ( err, result ) {
+            if (err) {
+               LOG.write(LOG.TAG.ERROR, 'error running query', err);
+               reject(Error(err));
+               return;
+            }
+            if (result && result.rows) {
+               LOG.write(LOG.TAG.DEBUG, "query results", Util.inspect(result.rows));
+               resolve(result);
+            }
+         });
+      LOG.write(LOG.TAG.INFO, 'query sent to database server, waiting for callback');
+   });
+
+   return promise;
 }
 
 module.exports = {
-   initialize_database : initialize_database,
+   initialize_database : init,
    close_connection    : close_connection,
    get_important_words : get_important_words,
-   get_stop_words      : get_stop_words,
-   get_db_client       : get_db_client
+   get_db_client       : get_db_client,
+   pg_register_query   : pg_register_query,
+   pg_exec_query       : pg_exec_query
 };

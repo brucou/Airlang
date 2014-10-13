@@ -56,8 +56,8 @@ DBG.default_config = function default_config () {
    DBG.setConfig(DBG.TAG.INFO, false, {by_default: true});
    DBG.setConfig(DBG.TAG.ERROR, false, {by_default: true});
    DBG.setConfig(DBG.TAG.WARNING, true, {by_default: true}); //
-   DBG.setConfig(DBG.TAG.DEBUG, false, {by_default: false}); //
-}
+   DBG.setConfig(DBG.TAG.DEBUG, false, {by_default: true}); //
+};
 
 DBG.enableLog = function enableLog (TAG, context) {
    DBG.setLog(TAG, context, true);

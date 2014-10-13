@@ -12,12 +12,12 @@
  */
 
 
-define(['data_struct'], function (DS) {
+define(['data_struct'], function ( DS ) {
    Array.prototype.isItArray = true;
 
    var rePUNCT = /[ \,\.\$\uFFE5\^\+=`~<>{}\[\]|\u3000-\u303F!-#%-\x2A,-\/:;\x3F@\x5B-\x5D_\x7B}\u00A1\u00A7\u00AB\u00B6\u00B7\u00BB\u00BF\u037E\u0387\u055A-\u055F\u0589\u058A\u05BE\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061E\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u0AF0\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F14\u0F3A-\u0F3D\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1360-\u1368\u1400\u166D\u166E\u169B\u169C\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B5A-\u1B60\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CC0-\u1CC7\u1CD3\u2010-\u2027\u2030-\u2043\u2045-\u2051\u2053-\u205E\u207D\u207E\u208D\u208E\u2329\u232A\u2768-\u2775\u27C5\u27C6\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC\u29FD\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00-\u2E2E\u2E30-\u2E3B\u3001-\u3003\u3008-\u3011\u3014-\u301F\u3030\u303D\u30A0\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uAAF0\uAAF1\uABEB\uFD3E\uFD3F\uFE10-\uFE19\uFE30-\uFE52\uFE54-\uFE61\uFE63\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D\uFF5F-\uFF65]+/g;
 
-   function getIndexInArray (aArray, field_to_search, value) {
+   function getIndexInArray ( aArray, field_to_search, value ) {
       var i, iIndex = -1;
       for (i = 0; i < aArray.length; i++) {
          if (aArray[i][field_to_search] === value) {
@@ -28,11 +28,11 @@ define(['data_struct'], function (DS) {
       return iIndex;
    }
 
-   function isArray (ar) {
+   function isArray ( ar ) {
       return Array.isArray(ar) || (typeof ar === 'object' && objectToString(ar) === '[object Array]');
    }
 
-   function async_cached (f, initialCache) {
+   function async_cached ( f, initialCache ) {
       /*
        TODO TO UPDATE!!! We now a library for caching
        Function who takes a function and returns an cached version of that function which memorized past computations
@@ -56,6 +56,7 @@ define(['data_struct'], function (DS) {
 
       // Default implementation of CachedValues is an array, it needs to be able to have property through CachedValues[prop] = value
       var cvCachedValues;
+      var self= this;
 
       if (initialCache && isArray(initialCache)) {
          // give the possibility to initialize the cachedvalues cache object with an array, it is easier
@@ -68,16 +69,20 @@ define(['data_struct'], function (DS) {
          cvCachedValues = initialCache; // if a cache is passed in parameter then use that one
       }
 
-      var async_cached_f = function cached_fn (value, osStore) {
+      var async_cached_f = function cached_fn ( value, osStore ) {
          // could be refactored to separate functionality of OutputStore which is that of a stream buffer
          // it piles on values till a trigger (similar to "end" of stream) is detected, then a callback ensues
          // if OutputStore is a function, then it is considered to be the callback function with default values for OutputStore structure
+
          logEntry("async_cached_f");
+
+         //var dfr = $.Deferred(); // promise passed to OS structure for resolving the data at relevant time
 
          if (isFunction(osStore)) {
             var f_callback = osStore;
-            osStore = new OutputStore({countdown: 1, callback: f_callback});
+            osStore = new OutputStore({countdown : 1, callback : f_callback});
          }
+         //osStore.setDeferred(dfr);
          var index = osStore.push(["Input value", value].join(": ")); // this is in order to "book" a place in the output array to minimize chances that a concurrent exec does not take it
          // index points at the temporary value;
 
@@ -111,12 +116,12 @@ define(['data_struct'], function (DS) {
             logWrite(DBG.TAG.INFO, "New async computation, logging value immediately returned by func", value, fvalue);
          }
 
-         function updateOutputStore (osOutputStore, iIndex, aaValue) {
+         function updateOutputStore ( osOutputStore, iIndex, aaValue ) {
             osOutputStore.setValueAt(iIndex, aaValue);
             osOutputStore.invalidateAt(iIndex); // This is to propagate the change elsewhere who registered for an action to be taken
          }
 
-         function callback (err, result) {
+         function callback ( err, result ) {
             logEntry("async cached callback");
             if (cvCachedValues) {
                if (!(err)) {
@@ -128,6 +133,7 @@ define(['data_struct'], function (DS) {
             }
             if (err) {
                logWrite(DBG.TAG.ERROR, "error while executing async query on server", err);
+               dfr.reject(err);
                osStore.setErr(err);
                osStore.invalidateAt(index);
             }
@@ -147,28 +153,28 @@ define(['data_struct'], function (DS) {
       return async_cached_f;
    }
 
-   function trimInput (value) {
+   function trimInput ( value ) {
       return value.replace(/^\s*|\s*$/g, '');
    }
 
-   function isNotEmpty (value) {
+   function isNotEmpty ( value ) {
       if (value && value !== '') {
          return true;
       }
    }
 
-   function isEmail (value) {
+   function isEmail ( value ) {
       var filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
       if (filter.test(value)) {
          return true;
       }
    }
 
-   function stylizeNoColor (str, styleType) {
+   function stylizeNoColor ( str, styleType ) {
       return str;
    }
 
-   function stylizeWithColor (str, styleType) {
+   function stylizeWithColor ( str, styleType ) {
       var style = inspect.styles[styleType];
 
       if (style) {
@@ -191,12 +197,12 @@ define(['data_struct'], function (DS) {
     whether to display the non-enumerable properties, the  third optional argument is the number of times the
     object is recursed (depth), and the fourth, also optional, is whether to style the output in ANSI colors.
     */
-   function inspect (obj, opts) {
+   function inspect ( obj, opts ) {
       // TAKEN FROM NODE
       // default options
       var ctx = {
-         seen   : [],
-         stylize: stylizeNoColor
+         seen    : [],
+         stylize : stylizeNoColor
       };
       // legacy...
       if (arguments.length >= 3) {
@@ -232,7 +238,7 @@ define(['data_struct'], function (DS) {
       return formatValue(ctx, obj, ctx.depth);
    }
 
-   function formatValue (ctx, value, recurseTimes) {
+   function formatValue ( ctx, value, recurseTimes ) {
       // Provide a hook for user-specified inspect functions.
       // Check that value is an object with an inspect function on it
       if (ctx.customInspect && value && typeof value.inspect === 'function' && // Filter out the util module, it's inspect function is special
@@ -322,7 +328,7 @@ define(['data_struct'], function (DS) {
          output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
       }
       else {
-         output = keys.map(function (key) {
+         output = keys.map(function ( key ) {
             return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
          });
       }
@@ -332,25 +338,25 @@ define(['data_struct'], function (DS) {
       return reduceToSingleString(output, base, braces);
    }
 
-   function arrayToHash (array) {
+   function arrayToHash ( array ) {
       var hash = {};
 
-      array.forEach(function (val, idx) {
+      array.forEach(function ( val, idx ) {
          hash[val] = true;
       });
 
       return hash;
    }
 
-   function injectArray (aSource, aToInject, pos) {
+   function injectArray ( aSource, aToInject, pos ) {
       return aSource.splice.apply(aSource, [pos, 0].concat(aToInject));
    }
 
-   function isRegExp (re) {
+   function isRegExp ( re ) {
       return typeof re === 'object' && objectToString(re) === '[object RegExp]';
    }
 
-   function isFunction (object) {
+   function isFunction ( object ) {
 
       return !!(object && typeof object.constructor !== "undefined" && typeof object.call !== "undefined" &&
                 typeof object.apply !== "undefined");
@@ -359,13 +365,13 @@ define(['data_struct'], function (DS) {
       // this is a more precise version but slower
    }
 
-   function isString (obj) {
+   function isString ( obj ) {
       return obj && (typeof teststring === "string");
       // return obj && toString.call(obj) == '[object String]';
       // this is a more precise version but slower
    }
 
-   function isPunct (char) {
+   function isPunct ( char ) {
       // return true if the character char is a punctuation sign
       // TODO: improve to adjust list of punctuation by language
       if (char.length > 1) {
@@ -376,15 +382,15 @@ define(['data_struct'], function (DS) {
       }
    }
 
-   function isDate (d) {
+   function isDate ( d ) {
       return typeof d === 'object' && objectToString(d) === '[object Date]';
    }
 
-   function isError (e) {
+   function isError ( e ) {
       return typeof e === 'object' && objectToString(e) === '[object Error]';
    }
 
-   function formatPrimitive (ctx, value) {
+   function formatPrimitive ( ctx, value ) {
       switch (typeof value) {
          case 'undefined':
             return ctx.stylize('undefined', 'undefined');
@@ -406,11 +412,11 @@ define(['data_struct'], function (DS) {
       }
    }
 
-   function formatError (value) {
+   function formatError ( value ) {
       return '[' + Error.prototype.toString.call(value) + ']';
    }
 
-   function formatArray (ctx, value, recurseTimes, visibleKeys, keys) {
+   function formatArray ( ctx, value, recurseTimes, visibleKeys, keys ) {
       var output = [];
       for (var i = 0, l = value.length; i < l; ++i) {
          if (hasOwnProperty(value, String(i))) {
@@ -420,7 +426,7 @@ define(['data_struct'], function (DS) {
             output.push('');
          }
       }
-      keys.forEach(function (key) {
+      keys.forEach(function ( key ) {
          if (!key.match(/^\d+$/)) {
             output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, key, true));
          }
@@ -428,9 +434,9 @@ define(['data_struct'], function (DS) {
       return output;
    }
 
-   function formatProperty (ctx, value, recurseTimes, visibleKeys, key, array) {
+   function formatProperty ( ctx, value, recurseTimes, visibleKeys, key, array ) {
       var name, str, desc;
-      desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+      desc = Object.getOwnPropertyDescriptor(value, key) || { value : value[key] };
       if (desc.get) {
          if (desc.set) {
             str = ctx.stylize('[Getter/Setter]', 'special');
@@ -457,12 +463,12 @@ define(['data_struct'], function (DS) {
             }
             if (str.indexOf('\n') > -1) {
                if (array) {
-                  str = str.split('\n').map(function (line) {
+                  str = str.split('\n').map(function ( line ) {
                      return '  ' + line;
                   }).join('\n').substr(2);
                }
                else {
-                  str = '\n' + str.split('\n').map(function (line) {
+                  str = '\n' + str.split('\n').map(function ( line ) {
                      return '   ' + line;
                   }).join('\n');
                }
@@ -490,9 +496,9 @@ define(['data_struct'], function (DS) {
       return name + ': ' + str;
    }
 
-   function reduceToSingleString (output, base, braces) {
+   function reduceToSingleString ( output, base, braces ) {
       var numLinesEst = 0;
-      var length = output.reduce(function (prev, cur) {
+      var length = output.reduce(function ( prev, cur ) {
          numLinesEst++;
          if (cur.indexOf('\n') >= 0) {
             numLinesEst++;
@@ -507,7 +513,7 @@ define(['data_struct'], function (DS) {
       return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
    }
 
-   function objectToString (o) {
+   function objectToString ( o ) {
       return Object.prototype.toString.call(o);
    }
 
@@ -517,19 +523,19 @@ define(['data_struct'], function (DS) {
       return [d.getDate(), months[d.getMonth()], time].join(' ');
    }
 
-   function inherits (ctor, superCtor) {
+   function inherits ( ctor, superCtor ) {
       ctor.super_ = superCtor;
       ctor.prototype = Object.create(superCtor.prototype, {
-         constructor: {
-            value       : ctor,
-            enumerable  : false,
-            writable    : true,
-            configurable: true
+         constructor : {
+            value        : ctor,
+            enumerable   : false,
+            writable     : true,
+            configurable : true
          }
       });
    };
 
-   function _extend (origin, add) {
+   function _extend ( origin, add ) {
       // Don't do anything if add isn't an object
       if (!add || typeof add !== 'object') {
          return origin;
@@ -543,7 +549,7 @@ define(['data_struct'], function (DS) {
       return origin;
    };
 
-   function hasOwnProperty (obj, prop) {
+   function hasOwnProperty ( obj, prop ) {
       return Object.prototype.hasOwnProperty.call(obj, prop);
    }
 
@@ -552,9 +558,9 @@ define(['data_struct'], function (DS) {
    // result : ASP is dead, but ASP.NET is alive! ASP {2}
 
    if (!String.format) {
-      String.format = function (format) {
+      String.format = function ( format ) {
          var args = Array.prototype.slice.call(arguments, 1);
-         return format.replace(/{(\d+)}/g, function (match, number) {
+         return format.replace(/{(\d+)}/g, function ( match, number ) {
             return typeof args[number] != 'undefined' ? args[number] : match;
          });
       };
@@ -594,12 +600,12 @@ define(['data_struct'], function (DS) {
       return date.join("/") + " " + time.join(":") + " " + suffix;
    }
 
-   function isNumberString (text) {
+   function isNumberString ( text ) {
       // issue: isNaN recognizes english formatting of numbers only
       return !isNaN(text);
    }
 
-   function CachedValues (arrayInit) {
+   function CachedValues ( arrayInit ) {
       // constructor
       /* We are taking advantage here of the native hashmap implementation of javascript (search in O(1))
        On the down side, we might loose some efficiency in terms of storage, as each hash is a full-fledged new object.
@@ -620,7 +626,7 @@ define(['data_struct'], function (DS) {
       ]; // this is the list of the function that cannot be used as keys in an object as they are already reserved
       this.jsOI_length = this.jsObjectInternals.length;
 
-      this.getItem = function (key) {
+      this.getItem = function ( key ) {
          // return the fvalue if there, otherwise return false
          // be careful that fvalue not be a boolean otherwise it could conflict
          var isVinC = this.isValueInCache(key);
@@ -641,7 +647,7 @@ define(['data_struct'], function (DS) {
             return null;
          }
       };
-      this.setItem = function (key, fvalue) {
+      this.setItem = function ( key, fvalue ) {
          // check that the key is not already in the cache, if it is replace current by the new fvalue
          // e.g. cache is a indexed set
          // so we have a new row, or an update row operation here
@@ -675,27 +681,27 @@ define(['data_struct'], function (DS) {
          }
       };
 
-      this.isValueInCache = function (key) {
+      this.isValueInCache = function ( key ) {
          // returns true if the key passed in parameter is already in the cache
          // first, test if the key is one of the reserved keys, because it will always match is applied to any object
          var isRes = this.isReservedKey(key);
          if (isRes.bool) {
             // the key is one of the reserved properties, look up the secondary store
             if (this.secondaryStore[isRes.index]) {
-               return {isInternalStore: false, bool: true};
+               return {isInternalStore : false, bool : true};
             }
             else {
-               return {isInternalStore: false, bool: false};
+               return {isInternalStore : false, bool : false};
             }
          }
          if (!!this.internalStore[key]) {
             // key is already cached
-            return {isInternalStore: true, bool: true};
+            return {isInternalStore : true, bool : true};
          }
-         return {isInternalStore: true, bool: false};
+         return {isInternalStore : true, bool : false};
       };
 
-      this.updateValueInCache = function (key, fvalue) {
+      this.updateValueInCache = function ( key, fvalue ) {
          // updates the value referenced by key in the cache
          // returns false if error, true if operation was successful
          // NOTE : this is an internal function, it can only be called by putValueInCache, it is supposed that the
@@ -726,21 +732,21 @@ define(['data_struct'], function (DS) {
          }
       };
 
-      this.isReservedKey = function (key) {
+      this.isReservedKey = function ( key ) {
          // returns true if the key is one of the reserved ones in jsObjectInternals
          for (var i = 0; i < this.jsOI_length; i++) {
             if (this.jsObjectInternals[i] === key) {
-               return {index: i, bool: true};
+               return {index : i, bool : true};
             }
          }
-         return {index: -1, bool: false};
+         return {index : -1, bool : false};
       };
 
-      this.init = function (arrayInit) {
+      this.init = function ( arrayInit ) {
          logEntry("CachedValues.init");
          logWrite(DBG.TAG.DEBUG, "input", inspect(arrayInit));
          if (arrayInit && isArray(arrayInit)) {
-            arrayInit.forEach(function (element, index, array) {
+            arrayInit.forEach(function ( element, index, array ) {
                logWrite(DBG.TAG.DEBUG, "element", inspect(element), element["key"], element["value"]);
                self.putValueInCache(element["key"], element["value"]);
             })
@@ -754,18 +760,30 @@ define(['data_struct'], function (DS) {
       this.init(arrayInit);
    }
 
-   function OutputStore (init) {
+   function OutputStore ( init ) {
       // constructor
       var self = this;
-      var defaults = {countDown: 1, aStore: [], err: null};
-      defaults.propagateResult = function (err) {
+
+      var defaults = {countDown : 1, aStore : [], err : null, deferred : null};
+      defaults.propagateResult = function ( err ) {
          //prepare the reault values and call the callback function with it
          // but call it with objects indicating success or failure
          //logEntry("propagateResult");
-         self.callback(err, self.aStore);
+/*         if (self.deferred) {
+            if (err) {
+               logWrite(DBG.TAG.ERROR, "error while propagating result in OutputStore from async call!");
+               self.deferred.reject(err);
+            }
+            else {
+               logWrite(DBG.TAG.DEBUG, "Successfully resolved promise with result from async call");
+               self.deferred.resolve(self.aStore);
+            }
+         }
+ */
+         self.callback(err, self.aStore/*, self.deferred*/);
          //logExit("propagateResult");
       }; // default parameters, execute action after 1 value is stored
-      defaults.callback = function (err, result) {
+      defaults.callback = function ( err, result ) {
          logWrite(DBG.TAG.WARNING, "no callback function for asynchronous function call!");
          logWrite(DBG.TAG.DEBUG, "err, result", err, UT.inspect(result));
       };
@@ -777,8 +795,15 @@ define(['data_struct'], function (DS) {
       this.callback = init.callback || defaults.callback;
       this.countDown = init.countDown || defaults.countDown;
       this.propagateResult = init.propagateResult || defaults.propagateResult;
+      this.deferred = init.deferred || defaults.deferred;
+      this.setDeferred = function setDeferred(dfr) {
+         this.deferred = dfr;
+      };
+      this.getDeferred = function getDeferred() {
+         return this.deferred;
+      };
 
-      this.setErr = function (err) {
+      this.setErr = function ( err ) {
          this.err = err;
       };
       this.getErr = function () {
@@ -787,7 +812,7 @@ define(['data_struct'], function (DS) {
       this.toString = function () {
          // print the concatenation of all values in storage
          var formatString = "";
-         this.aStore.forEach(function (element, index, array) {
+         this.aStore.forEach(function ( element, index, array ) {
             if (element) {
                if (isPunct(element)) {
                   var SEP_CHAR = "";
@@ -800,18 +825,18 @@ define(['data_struct'], function (DS) {
          });
          return formatString;
       };
-      this.setValueAt = function (pos, value) {
+      this.setValueAt = function ( pos, value ) {
          // set some value at index pos
          this.aStore[pos] = value;
       };
-      this.getValueAt = function (pos) {
+      this.getValueAt = function ( pos ) {
          // get the value at index pos
          return this.aStore[pos];
       };
       this.getValuesArray = function () {
          return this.aStore;
       };
-      this.invalidateAt = function (pos) {
+      this.invalidateAt = function ( pos ) {
          // update the counter to reflect callback who already returned
          // if all callbacks returned then we can execute the final function to propagate results where it matters
          //logEntry("invalidateAt");
@@ -821,16 +846,16 @@ define(['data_struct'], function (DS) {
          }
          //logExit("invalidateAt");
       };
-      this.push = function (value) {
+      this.push = function ( value ) {
          // add a value in the store and return an index to it
          this.aStore.push(value);
          return this.aStore.length - 1;
       }
    }
 
-   function escape_html (text) {
+   function escape_html ( text ) {
       // utility function taken from TransOver google extension
-      return text.replace(XRegExp("(<|>|&)", 'g'), function ($0, $1) {
+      return text.replace(XRegExp("(<|>|&)", 'g'), function ( $0, $1 ) {
          switch ($1) {
             case '<':
                return "&lt;";
@@ -843,7 +868,7 @@ define(['data_struct'], function (DS) {
    }
 
    // left padding s with c to a total of n chars
-   function padding_left (s, c, n) {
+   function padding_left ( s, c, n ) {
       if (!s || !c || s.length >= n) {
          return s;
       }
@@ -857,7 +882,7 @@ define(['data_struct'], function (DS) {
    }
 
    // right padding s with c to a total of n chars
-   function padding_right (s, c, n) {
+   function padding_right ( s, c, n ) {
       if (!s || !c || s.length >= n) {
          return s;
       }
@@ -870,7 +895,7 @@ define(['data_struct'], function (DS) {
       return s;
    }
 
-   function fragmentFromString (strHTML) {
+   function fragmentFromString ( strHTML ) {
       var temp = document.createElement('template');
       temp.innerHTML = strHTML;
       return temp.content;
@@ -882,32 +907,32 @@ define(['data_struct'], function (DS) {
 
    var _UT =
        {
-          isArray           : isArray,
-          trimInput         : trimInput,
-          isNotEmpty        : isNotEmpty,
-          inspect           : inspect,
-          isRegExp          : isRegExp,
-          isDate            : isDate,
-          isError           : isError,
-          timestamp         : timestamp,
-          inherits          : inherits,
-          _extend           : _extend,
-          hasOwnProperty    : hasOwnProperty,
-          isString          : isString,
-          isPunct           : isPunct,
-          isFunction        : isFunction,
-          sPrintf           : String.format,
-          timeStamp         : timeStamp,
-          isNumberString    : isNumberString,
-          async_cached      : async_cached,
-          OutputStore       : OutputStore,
-          CachedValues      : CachedValues,
-          getIndexInArray   : getIndexInArray,
-          escape_html       : escape_html,
-          padding_left      : padding_left,
-          padding_right     : padding_right,
-          fragmentFromString: fragmentFromString,
-          injectArray       : injectArray
+          isArray            : isArray,
+          trimInput          : trimInput,
+          isNotEmpty         : isNotEmpty,
+          inspect            : inspect,
+          isRegExp           : isRegExp,
+          isDate             : isDate,
+          isError            : isError,
+          timestamp          : timestamp,
+          inherits           : inherits,
+          _extend            : _extend,
+          hasOwnProperty     : hasOwnProperty,
+          isString           : isString,
+          isPunct            : isPunct,
+          isFunction         : isFunction,
+          sPrintf            : String.format,
+          timeStamp          : timeStamp,
+          isNumberString     : isNumberString,
+          async_cached       : async_cached,
+          OutputStore        : OutputStore,
+          CachedValues       : CachedValues,
+          getIndexInArray    : getIndexInArray,
+          escape_html        : escape_html,
+          padding_left       : padding_left,
+          padding_right      : padding_right,
+          fragmentFromString : fragmentFromString,
+          injectArray        : injectArray
        };
    window.UT = _UT;
    return _UT;

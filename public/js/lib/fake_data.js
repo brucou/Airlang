@@ -85,5 +85,6 @@ FAKE.fn.fake_make_article_readable = function (dfr, url_load_callback, your_url)
 
 FAKE.fn.url_load_callback = function (dfr, html_text) {
   // will be called with your_url
-  dfr.resolve(null, FAKE.DATA.HTML_PAGE_CZ_ekonomika_HL);
+  //dfr.resolve(null, FAKE.DATA.HTML_PAGE_CZ_ekonomika);
+   return FAKE.DATA.HTML_PAGE_CZ_ekonomika;
 };
