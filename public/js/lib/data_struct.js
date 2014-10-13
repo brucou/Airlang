@@ -5,6 +5,10 @@
 define(['utils'], function ( UT ) {
    var DS = DS || {};
 
+   // private variables
+   const COMMENT_START_TOKEN = "<";
+   const COMMENT_END_TOKEN = ">";
+
    DS.ParagraphData = function ParagraphData ( init_object ) {
       /* For each paragraph, calculate a series of indicators
        number of sentences
@@ -225,7 +229,8 @@ define(['utils'], function ( UT ) {
    })();
 
    var mapDataAdapters;
-   DS.register_data_adapters = function register_data_adapters ( input_type, output_type, fn_adapter, adapter_name ) {
+   DS.filter_register_data_adapters =
+   function register_data_adapters ( input_type, output_type, fn_adapter, adapter_name ) {
       /**
        * Purpose : Register functions who can transform a data type (input_type) into another data type (output_type).
        *           Such functions are stateless, i.e. their output is only function of their input (pure function)
@@ -267,7 +272,7 @@ define(['utils'], function ( UT ) {
       return mapDataAdapters; //return that value for checking purposes
    };
 
-   DS.get_data_adapter = function get_data_adapter ( input_type, output_type, optional_name ) {
+   DS.filter_get_data_adapter = function get_data_adapter ( input_type, output_type, optional_name ) {
       /**
        * Purpose : Returns a previously registered data adapter based on a lookup on input_type, output_type first
        *           and then based on the optional parameter name if any.
@@ -277,6 +282,7 @@ define(['utils'], function ( UT ) {
        * @param {string} adapter_name : adapter_name is optional.
        *
        * Returns :
+       * if input_type = output_type, returns identity function (x -> x)
        * if optional_name is set, and can be found in the registered array, that filter is returned. Otherwise an exception
        * is thrown.
        * If no optional_name, and there are several adapters, anyone can be returned, here we return the first one,
@@ -286,6 +292,10 @@ define(['utils'], function ( UT ) {
        * - various errors if input arguments do not pass some validation test
        * - if no data adapter for the corresponding parameters is registered
        */
+      if (input_type === output_type) {
+         return DS.filter_fn_identity;
+      }
+
       var _input_type = wrap(input_type, '_');
       var _output_type = wrap(output_type, '_');
       var i_type = mapDataAdapters[_input_type];
@@ -321,7 +331,7 @@ define(['utils'], function ( UT ) {
    };
 
    var mapFilters;
-   DS.register_filter = function register_filter ( input_type, output_type, fn_filter, filter_name ) {
+   DS.filter_register = function register_filter ( input_type, output_type, fn_filter, filter_name ) {
       /**
        * Purpose : Register filters which are functions which leave their input unchanged, while adding action to it
        *           the action is a function mapped to the token. Ideally, a couple of filters going from one type to
@@ -374,7 +384,17 @@ define(['utils'], function ( UT ) {
       return mapFilters; //return that value for checking purposes
    };
 
-   DS.get_filter = function get_filter ( filter_name ) {
+   DS.filter_default = function filter_default ( token ) {// id function
+      return token;
+   };
+
+   DS.filter_fn_identity = function default_identity_filter ( token ) {// id function
+      return token;
+   };
+
+   DS.filter_fn_highlight_comment = function filter_fn_highlight_comment ( token ) {return token;};
+
+   DS.filter_get_filter = function get_filter ( filter_name ) {
       /**
        * Purpose : Returns a previously registered filter based on a lookup by its name
        * @param {string} input_type
@@ -394,6 +414,14 @@ define(['utils'], function ( UT ) {
          throw 'getFilter : no filter with the name ' + filter_name + " is registered!"
       }
       return filter;
+   };
+
+   DS.filter_is_comment_start_token = function is_comment_start_token ( token ) {
+      return (token === COMMENT_START_TOKEN);
+   };
+
+   DS.filter_is_comment_end_token = function is_comment_end_token ( token ) {
+      return (token === COMMENT_END_TOKEN);
    };
 
    DS.promise_value_adapter = function promise_value_adapter ( value, result_callback ) {

@@ -26,6 +26,7 @@
  * - Generally speaking, use promise anywhere there is asynchronous function calls. That should help unify the thinking
  * - could be interesting to look at a library which allows switching from callback to promises
  * - DEBUGGING : state() function of deferred give the state ("pending", "resolved"). So pass the promise in global to look
+ * - Also can fail silently, e.g. in case of JS error directly jump to reject without any message visible
  */
 
 define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
@@ -34,11 +35,8 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
           var RM = {}; // Added so I can trace all member functions more easily
           var CLASS_SELECTOR_CHAR = ".";
           var ID_SELECTOR_CHAR = "#";
-          var highlight_words;
 
-          var COMMENT_START_TOKEN = "<";
-          var COMMENT_END_TOKEN = ">";
-
+          // CONFIG - cache mechanism
           const qry_translation_CACHE_SIZE = 1000; //max 1000 keys (frequent words) for this cache
           const qry_translation_CACHE_LOG = true;
 
@@ -55,7 +53,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
           var qry_translation_cache = new CACHE(qry_translation_CACHE_SIZE, qry_translation_CACHE_LOG, localCache,
                                                 qry_cache_options);
 
-          //       put in config file somewhere which can be read by both server and client
+          // CONFIG - highlighting : put in config file somewhere which can be read by both server and client
           const StartSel = "<span class = 'highlight'>";
           const StartSel_nospaces = StartSel.replace(/ /g, "_");
           const StopSel = "</span>";
@@ -79,27 +77,10 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              //logExit("srv_qry_important_words");
           };
 
-          RM.srv_qry_stop_words = function srv_qry_stop_words ( text, callback ) {
-             /*
-              Words: the words to question the server with
-              callback: executed when the server has finished its processing
-              */
-             //logEntry("srv_qry_stop_words");
-             //rpc_socket.emit('highlight_stop_words', text, callback);
-             //return $.Deferred();
-             if (text.indexOf("Shaangu") >= 0) {
-                text = text.replace("Shaangu", "<span class = 'highlight'>Shanngu</span>");
-             }
-             console.log("text stop words", text);
-             return text;
-             //logExit("srv_qry_stop_words");
-          };
-
           RM.highlight_words = UT.async_cached(RM.srv_qry_important_words, null); // no caching
-          RM.highlight_stop_words = RM.srv_qry_stop_words;
           RM.cached_translation = UT.async_cached(RM.srv_qry_word_translation, qry_translation_cache);
 
-          ////////// Text processing functions
+          ////////// Text processing main functions
           RM.make_article_readable = function make_article_readable ( your_url ) {
              var dfr = $.Deferred(); // to handle async results
 
@@ -353,9 +334,8 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               @param then_callback {function} : callback executed after words habve been highlighted
               */
              return $.when(RM.apply_highlighting_filters_to_text($el.text().trim(),
-                                                                 [RM.highlight_words
-                                                                    , RM.highlight_stop_words
-                                                                 ]))
+                                                                 [RM.highlight_words],
+                                                                 RM.simple_tokenizer, RM.simple_detokenizer) )
                 .then(function ( highlighted_text ) {
                          $el.html(highlighted_text);
                          return highlighted_text; // will get passed to the done callback of the promise (not used here)
@@ -498,7 +478,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              }
           }
 
-          ////////// Helper functions
+          ////////// Text processing helper functions
           RM.get_DOM_select_format_from_class = function get_DOM_select_format_from_class ( div_id, div_class ) {
              /**
               * This function return a selector from div_id, div_class parameter
@@ -538,25 +518,22 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              return $div;
           };
 
-          RM.is_comment_start_token = function is_comment_start_token ( token ) {
-             return (token === COMMENT_START_TOKEN);
-          };
-
-          RM.is_comment_end_token = function is_comment_end_token ( token ) {
-             return (token === COMMENT_END_TOKEN);
-          };
-
-          RM.fn_filter_highlight_comment = function fn_filter_highlight_comment ( token ) {return token;};
-
+          ////////// Filter helper functions
           RM.simple_tokenizer = function simple_tokenizer ( text ) {
              /**
               * Tokenizer :   text => [token] (word array)
               */
-             return text.split(" ");
+             var aTokens = text.split(" ");
+             aTokens.type='token';
+             return aTokens;
           };
 
           RM.simple_detokenizer = function simple_detokenizer ( aTokens ) {
              return aTokens.join(" ");
+          };
+
+          RM.fn_html_highlight = function fn_html_highlight ( token ) {
+             return [StartSel, token, StopSel].join("");
           };
 
           RM.dataAdapterOStore2TokenActionMap = function dataAdapterOStore2TokenActionMap ( aStore ) {
@@ -570,7 +547,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              // This manipulation ensures that whatever the StartSel, I will have the beginning and end
              // delimited by StartSel and StopSel without adding any token (tokens are space delimited under
              // the simple tokenizer methods
-             var adapter = DS.get_data_adapter('text', 'token', 'simple_tokenizer');
+             var adapter = RM.simple_tokenizer;
              var aTokens = adapter(highlit_text);
              //logWrite(DBG.TAG.DEBUG, "aTokens", aTokens);
              var aTokenActionMap = [];
@@ -598,7 +575,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 }
                 else {
                    //logWrite(DBG.TAG.DEBUG, "associating action none to word ", word);
-                   aTokenActionMap.push({token : word, action : RM.default_filter});
+                   aTokenActionMap.push({token : word, action : DS.filter_default});
                 }
 
              });
@@ -607,7 +584,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              //$el.html(highlit_text);
           };
 
-          RM.apply_highlighting_filters_to_text = function apply_highlighting_filters_to_text ( text, aFilters ) {
+          ////////// Filter highlighting functions
+          RM.apply_highlighting_filters_to_text =
+          function apply_highlighting_filters_to_text ( text, aFilters, tokenizer, detokenizer ) {
              /**
               * Purpose   : highlight words in a text
               * Input : text without formatting | array of highlighting filters
@@ -618,7 +597,25 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               * Output : string representing the highlighted text
               * Assumption : - Filter function do not add or remove token, and do not change token order,
               *                i.e. modifies token in place or leave them intact
-              *              - The text passed in parameter is trimmed
+              *              - The text passed in parameter is already trimmed
+              * Algorithm : Transform a text into tokens, then apply filters to those tokens.
+              *             Filters mark the token to be highlighted. When all filters are done, highlighting functions
+              *               are applied by order of priority. The corresponding tokens are then converted back to text
+              */
+             /** Config
+              * * Must be registered previously
+              * - filters
+              * - tokenizer and detokenizer function (no default value : they must be specified)
+              *   Tokenizers and detokenizers functions transform a text into tokens and vice versa
+              *   The output type of the tokenizer can be anything, as long as :
+              *   - either the filter function accepts that data type
+              *   - or there is a data adapter which can transform from that data type to the input data type of the filter
+              * - any data apapters allowing to go from the filter output data type to TokenActionMap
+              *       and from the token input type to the filter input data type
+              * Note:
+              * - fn_highlight is specified either directly in the filter if its output data type is TokenActionMap
+              * - in the output adapter otherwise
+              * : So there is no need to configure that in advance
               */
 
              /*
@@ -626,8 +623,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               Tokenizer :   text => [token] (word array)
               */
              var dfr = $.Deferred();
-             var aTokens = RM.simple_tokenizer(text);
-             aTokens.type = 'token';
+             var aTokens = tokenizer(text);
              logWrite(DBG.TAG.DEBUG, "tokens", UT.inspect(aTokens, null, 3));
 
              /*
@@ -648,7 +644,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              aTokens.forEach(
                 function ( token, index, array ) {
                    justFoundCommentStartToken = false;
-                   if (RM.is_comment_start_token(token)) {
+                   if (DS.filter_is_comment_start_token(token)) {
                       commentParseState = true;
                       // state variable which indicates that we are going to read the content between comment tokens
                       justFoundCommentStartToken = true;
@@ -659,10 +655,10 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
 
                    if (commentParseState == true) {
                       // keeping this in between allows to write in the array both begin and end comment token
-                      elemPos.aCommentToken.push({token : token, action : RM.fn_filter_highlight_comment});
+                      elemPos.aCommentToken.push({token : token, action : DS.filter_fn_highlight_comment});
                    }
 
-                   if (!justFoundCommentStartToken && RM.is_comment_end_token(token)) {
+                   if (!justFoundCommentStartToken && DS.filter_is_comment_end_token(token)) {
                       aCommentPos.push(clone(elemPos));
                       commentParseState = false;
                       reset(elemPos);
@@ -693,7 +689,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    // Note : the when function concatenate resolution of deferred in the same order than they were called
                    // e.g. in the same order than the array of filters
                    var aFilterResults = Array.prototype.slice.call(arguments);
-                   console.log("aFilterResults", aFilterResults);
 
                    // - [ [{token, action}]_token ]_filter  =>  [ {token, [action]_filter}  ]_token   (function transposition)
                    // Prepare the transposed object to receive the transposed values
@@ -727,7 +722,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       transposedResult.action =
                       transposedResult.action_final =
                       transposedResult.aActions.reduce(function ( action_a, action_b ) {
-                         return action_a.name !== RM.default_filter.name ?
+                         return action_a.name !== DS.filter_default.name ?
                                 action_a :
                                 action_b;
                       })
@@ -760,10 +755,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    /*
                     * 6. Detokenize
                     */
-                   var i_adapter = DS.get_data_adapter('token', 'text');
-                   console.log("executing i_adapter ", i_adapter.name);
+                   logWrite(DBG.TAG.DEBUG, "executing detokenizer ", detokenizer.name);
 
-                   var final_output = i_adapter(aTokensActedOn);
+                   var final_output = detokenizer(aTokensActedOn);
                    logWrite(DBG.TAG.DEBUG, "final_output",
                             UT.inspect(final_output, null, 4));
 
@@ -786,11 +780,8 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       throw 'getTokenActionMap: type information not available. Possible cause is filter was not registered'
                    }
 
-                   //var dfr = $.Deferred();
-                   //aDeferred.push(dfr.promise());
-
-                   var i_adapter = DS.get_data_adapter(aTokens.type || 'token', filter.input_type);
-                   var o_adapter = DS.get_data_adapter(filter.output_type, 'token_action_map');
+                   var i_adapter = DS.filter_get_data_adapter(aTokens.type || 'token', filter.input_type);
+                   var o_adapter = DS.filter_get_data_adapter(filter.output_type, 'token_action_map');
                    logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens", aTokens);
 
                    var deferred_or_value =
@@ -837,21 +828,14 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              return aPromises;
           };
 
-          RM.fn_html_highlight = function fn_html_highlight ( token ) {
-             return [StartSel, token, StopSel].join("");
-          };
-
-          RM.default_filter = function default_identity_filter ( token ) {// id function
-             return token;
-          };
-
+          ////////// Module initialization
+          // mostly contains initialization of filters and data adapters for text highlighting
           RM.init = function init () {
-             DS.register_data_adapters('text', 'token', RM.simple_tokenizer);
-             DS.register_data_adapters('token', 'text', RM.simple_detokenizer);
-             DS.register_filter('text', 'async_cached_postgres_highlighted_text', RM.highlight_words);
-             DS.register_filter('text', 'async_cached_postgres_highlighted_text', RM.highlight_stop_words);
-             DS.register_data_adapters('async_cached_postgres_highlighted_text', 'token_action_map',
-                                       RM.dataAdapterOStore2TokenActionMap);
+             DS.filter_register_data_adapters('text', 'token', RM.simple_tokenizer);
+             DS.filter_register_data_adapters('token', 'text', RM.simple_detokenizer);
+             DS.filter_register('text', 'async_cached_postgres_highlighted_text', RM.highlight_words);
+             DS.filter_register_data_adapters('async_cached_postgres_highlighted_text', 'token_action_map',
+                                              RM.dataAdapterOStore2TokenActionMap);
           };
 
           /*return {//that's the object returned only for requirejs, e.g. the visible interface exposed

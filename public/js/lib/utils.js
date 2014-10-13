@@ -56,7 +56,7 @@ define(['data_struct'], function ( DS ) {
 
       // Default implementation of CachedValues is an array, it needs to be able to have property through CachedValues[prop] = value
       var cvCachedValues;
-      var self= this;
+      var self = this;
 
       if (initialCache && isArray(initialCache)) {
          // give the possibility to initialize the cachedvalues cache object with an array, it is easier
@@ -769,17 +769,17 @@ define(['data_struct'], function ( DS ) {
          //prepare the reault values and call the callback function with it
          // but call it with objects indicating success or failure
          //logEntry("propagateResult");
-/*         if (self.deferred) {
-            if (err) {
-               logWrite(DBG.TAG.ERROR, "error while propagating result in OutputStore from async call!");
-               self.deferred.reject(err);
-            }
-            else {
-               logWrite(DBG.TAG.DEBUG, "Successfully resolved promise with result from async call");
-               self.deferred.resolve(self.aStore);
-            }
-         }
- */
+         /*         if (self.deferred) {
+          if (err) {
+          logWrite(DBG.TAG.ERROR, "error while propagating result in OutputStore from async call!");
+          self.deferred.reject(err);
+          }
+          else {
+          logWrite(DBG.TAG.DEBUG, "Successfully resolved promise with result from async call");
+          self.deferred.resolve(self.aStore);
+          }
+          }
+          */
          self.callback(err, self.aStore/*, self.deferred*/);
          //logExit("propagateResult");
       }; // default parameters, execute action after 1 value is stored
@@ -796,10 +796,10 @@ define(['data_struct'], function ( DS ) {
       this.countDown = init.countDown || defaults.countDown;
       this.propagateResult = init.propagateResult || defaults.propagateResult;
       this.deferred = init.deferred || defaults.deferred;
-      this.setDeferred = function setDeferred(dfr) {
+      this.setDeferred = function setDeferred ( dfr ) {
          this.deferred = dfr;
       };
-      this.getDeferred = function getDeferred() {
+      this.getDeferred = function getDeferred () {
          return this.deferred;
       };
 
@@ -905,34 +905,49 @@ define(['data_struct'], function ( DS ) {
    //window.inspect = inspect;
    ////////
 
+   /**
+    * Limitations :
+    * - Works only in Chrome V8!!
+    * - Also, it is evaluated at runtime, so it would not work for tracing purpose for example.
+    * @return {string} the name of the immediately enclosing function in which this function is called
+    */
+   function get_calling_function_name () {
+      return /^ *at (.*)\(/.exec(Error("function_name").stack.split("\n")[3])[1].trim();
+      // Another regexp should work for Firefox
+      // Sample stack trace function s() {return Error("something").stack}
+      // "s@debugger eval code:1:15
+      // @debugger eval code:1:1
+   }
+
    var _UT =
        {
-          isArray            : isArray,
-          trimInput          : trimInput,
-          isNotEmpty         : isNotEmpty,
-          inspect            : inspect,
-          isRegExp           : isRegExp,
-          isDate             : isDate,
-          isError            : isError,
-          timestamp          : timestamp,
-          inherits           : inherits,
-          _extend            : _extend,
-          hasOwnProperty     : hasOwnProperty,
-          isString           : isString,
-          isPunct            : isPunct,
-          isFunction         : isFunction,
-          sPrintf            : String.format,
-          timeStamp          : timeStamp,
-          isNumberString     : isNumberString,
-          async_cached       : async_cached,
-          OutputStore        : OutputStore,
-          CachedValues       : CachedValues,
-          getIndexInArray    : getIndexInArray,
-          escape_html        : escape_html,
-          padding_left       : padding_left,
-          padding_right      : padding_right,
-          fragmentFromString : fragmentFromString,
-          injectArray        : injectArray
+          isArray                   : isArray,
+          trimInput                 : trimInput,
+          isNotEmpty                : isNotEmpty,
+          inspect                   : inspect,
+          isRegExp                  : isRegExp,
+          isDate                    : isDate,
+          isError                   : isError,
+          timestamp                 : timestamp,
+          inherits                  : inherits,
+          _extend                   : _extend,
+          hasOwnProperty            : hasOwnProperty,
+          isString                  : isString,
+          isPunct                   : isPunct,
+          isFunction                : isFunction,
+          sPrintf                   : String.format,
+          timeStamp                 : timeStamp,
+          isNumberString            : isNumberString,
+          async_cached              : async_cached,
+          OutputStore               : OutputStore,
+          CachedValues              : CachedValues,
+          getIndexInArray           : getIndexInArray,
+          escape_html               : escape_html,
+          padding_left              : padding_left,
+          padding_right             : padding_right,
+          fragmentFromString        : fragmentFromString,
+          injectArray               : injectArray,
+          get_calling_function_name : get_calling_function_name
        };
    window.UT = _UT;
    return _UT;

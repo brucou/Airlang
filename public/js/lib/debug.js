@@ -176,13 +176,34 @@ DBG.logForceWrite = function logForceWrite (tag, text, arg) {
          }
       }
    }
-   console.log(DBG.padding_right(tag, ' ', 6) + DBG.SEP.TAG + text);
-}
+   //console.log(DBG.padding_right(tag, ' ', 6) + DBG.SEP.TAG + text);
+   // for trace it is 7, for debug, info it is 5
+   // remove Object. if any
+   // Ex: Object.compute_text_stats_group_by_div: [compute_text_stats_group_] i, div, tagName:: 11:: #copyright2:: P
+   console.log(DBG.padding_right(tag, ' ', 6) + DBG.SEP.TAG + DBG.get_calling_function_name(5) + DBG.SEP.TAG + text);
+};
 
 /////////////// Helper functions
 /**
  * Helper function already contained in utils
  */
+
+   /**
+ * Limitations :
+ * - Works only in Chrome V8!!
+ * - Also, it is evaluated at runtime, so it would not work for tracing purpose for example.
+ * @return {string} the name of the immediately enclosing function in which this function is called
+ */
+   DBG.get_calling_function_name = function get_calling_function_name (depth) {
+      var lines = /^ *at (.*)\(/.exec(Error("function_name").stack.split("\n")[depth]);
+      if (lines) return lines[1].trim();
+      else return "";
+   // Another regexp should work for Firefox
+   // Sample stack trace function s() {return Error("something").stack}
+   // "s@debugger eval code:1:15
+   // @debugger eval code:1:1
+};
+
 DBG.set_inspect_function = function set_inspect_function () {
    if ('undefined' !== typeof UT) {
       DBG.inspect = UT.inspect
