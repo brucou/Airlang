@@ -4,9 +4,12 @@
    "main"         : "app.js",
    "private"      : true,
    "scripts"      : {
-      "start" : "node app.js"
+      "start" : "node app.js",
+      "test": "mocha --reporter spec test/mocha/*js"
    },
    "dependencies" : {
+      "mocha"                   : "1.20.1",
+      "sinon"                   : "1.10.2",
       "chai"                    : "1.9.1",
       "karma"                   : "0.12.19",
       "karma-chai"              : "0.1.0",
@@ -18,8 +21,6 @@
       "karma-mocha-reporter"    : "0.2.8",
       "karma-coverage"          : "0.2.4",
       "karma-jasmine"           : "0.1.5",
-      "mocha"                   : "1.20.1",
-      "sinon"                   : "1.10.2",
       "express"                 : "4.4.3",
       "socket.io"               : "1.0.6",
       "pg"                      : "3.3.0",

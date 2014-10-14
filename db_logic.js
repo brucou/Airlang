@@ -34,7 +34,7 @@ process.env.DATABASE_URL = process.env.DATABASE_URL || conString;
 
 function init () {
    // Initialize database connection
-   init_pg_cnx();
+   var promise = init_pg_cnx();
 
    // Register queries
    const queryGetTranslationInfo = "SELECT DISTINCT " +
@@ -56,22 +56,33 @@ function init () {
                                    " ON (pglemmatranslationcz.translation_lemma = pgwordfrequency_short.lemma)" +
                                    " WHERE LOWER(pglemmatranslationcz.translation_lemma) in " +
                                    "     (select unnest(string_to_array(right(left(ts_lexize($1, $2)::varchar, -1), -1), ',')))";
+   const qryHighlightImportantWords = "select ts_headline('cs', $1, to_tsquery('cs', $2), " +
+                                       "'StartSel=\"<span class = ''highlight''>\", StopSel=\"</span>\", HighlightAll=true') " +
+                                       "as highlit_text"; //important the first %s has no quotes
+
    pg_register_query('queryGetTranslationInfo', queryGetTranslationInfo, 2, ['cspell', 'default text']);
+   pg_register_query('queryHighlightImportantWords', qryHighlightImportantWords, 2, ['cspell', 'default text']);
+
+   return promise;
 }
 
 function init_pg_cnx () {
-   console.log("database URL", process.env.DATABASE_URL);
+   LOG.write(LOG.TAG.DEBUG, "database URL", process.env.DATABASE_URL);
 
-   pg.connect(process.env.DATABASE_URL, function ( err, client ) {
-      if (err) {
-         console.error('could not connect to postgres', err);
-         return null;
-      }
-      pgClient = client;
-      console.log('successfully got a database client from which to do queries');
-      exec_qry_freq_word_list(); // that updates important_words
+   var promise = new RSVP.Promise(function ( resolve, reject ) {
+      pg.connect(process.env.DATABASE_URL, function ( err, client ) {
+         if (err) {
+            console.error('could not connect to postgres', err);
+            reject(err);
+            return null;
+         }
+         pgClient = client;
+         LOG.write(LOG.TAG.DEBUG, 'successfully got a database client from which to do queries');
+         exec_qry_freq_word_list(); // that updates important_words
+         resolve();
+      });
    });
-
+   return promise;
 }
 
 function close_connection () {
@@ -148,6 +159,8 @@ function pg_register_query ( query_name, query_string, arg_number, aDefaultArgs 
  * @returns {RSVP.Promise}
  */
 function pg_exec_query ( query_name, aArgs ) {
+   //cf. https://github.com/brianc/node-postgres/wiki/Client#method-query-parameterized
+
    // getting registry
    var registry = pg_register_query.registry;
    if (!registry) {
@@ -220,12 +233,12 @@ function pg_exec_query ( query_name, aArgs ) {
          query_string, aArgs,
          function pg_exec_query_cb ( err, result ) {
             if (err) {
-               LOG.write(LOG.TAG.ERROR, 'error running query', err);
+               LOG.write(LOG.TAG.ERROR, 'error running query ' + query_name, err);
                reject(Error(err));
                return;
             }
             if (result && result.rows) {
-               LOG.write(LOG.TAG.DEBUG, "query results", Util.inspect(result.rows));
+               //LOG.write(LOG.TAG.DEBUG, "query results", Util.inspect(result.rows));
                resolve(result);
             }
          });
