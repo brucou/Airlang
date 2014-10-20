@@ -14,10 +14,7 @@
  Then 'cs' is the name for full text search
  */
 
-// TODO : define a list (script file to create table) with important words -> to_tsquery, be careful with syntax 'word |...' cf. temp.sql.js
-// TODO: add a debug systme
 // TODO: check if db connections are pooled, otherwise pool them : performance should be better
-// TODO : gather all query and query functionalities in a query object
 
 var http, express, app, io, server, _; // server connection variables
 var pgClient; //postgresSQL connection variable

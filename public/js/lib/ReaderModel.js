@@ -5,6 +5,7 @@
 /**
  * TODO : CODE QUALITY
  * - refactoriser ulr_load hors du callback pour faciliter le testing
+ * - DOCUMENTER le code
  * - je dois etre capable de faire rentrer n'importe quel source html directement
  * TODO : FEATURES
  * - disable click on links anyways - interacts with word info functionality
@@ -113,12 +114,12 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    }
 
                    extract_promise
-                      .done(function ( err, html_text ) {
+                      .done(function extract_relevant_text_from_html_success ( err, html_text ) {
                                logWrite(DBG.TAG.INFO, "page highlighted!");
                                //console.log("highlightd text: ", html_text);
-                               dfr.resolve(err, html_text);
+                               dfr.resolve(null, html_text);
                             })
-                      .fail(function ( err, result ) {
+                      .fail(function extract_relevant_text_from_html_failure ( err, result ) {
                                logWrite(DBG.TAG.ERROR, "error in return from extract_relevant_text_from_html");
                                dfr.reject(new DS.Error(["<p> ERROR :", err.toString(), "</p>"].join(" ")),
                                           null);
@@ -129,7 +130,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    dfr.reject(new DS.Error("<p> ERROR : could not retrieve the webpage </p>"), null);
                 }
              }
-          }
+          };
 
           RM.extract_relevant_text_from_html = function extract_relevant_text_from_html ( html_text ) {
              /*
@@ -147,6 +148,13 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              $source.hide();
              $source.appendTo($("body")); //apparently it is necessary to add it to body to avoid having head and doctype etc tag added
              var $dest = RM.create_div_in_DOM(DEST);
+
+             // A little bit of tag cleaning, not really necessary in fact
+             $("head", $source).remove();
+             $("iframe",$source).remove();
+             $("script", $source).remove();
+             $("style", $source).remove();
+             $("header",$source).remove();
 
              logWrite(DBG.TAG.INFO, "Compute tag stats");
              var aData = RM.generateTagAnalysisData($source);
@@ -190,7 +198,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              var dfr = $.Deferred();
              var prm_success = RM.highlight_important_words(selectedDivs, $dest);
              prm_success
-                .done(function ( $el ) {
+                .done(function highlight_important_words_success ( $el ) {
                          //following pattern function(err, result)
                          // if was successfully highlit then pass the $dest that was modified in place
                          logWrite(DBG.TAG.INFO, "done processing highlight_important_words");
@@ -199,7 +207,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                          dfr.resolve(null, $dest.html());
                          //$dest.empty();
                       })
-                .fail(function ( error ) {
+                .fail(function highlight_important_words_failure ( error ) {
                          // this happens if one of the selectedDivs provokes an error
                          logWrite(DBG.TAG.WARNING, "error occurred while processing highlight_important_words");
                          dfr.reject(error, null);
@@ -211,11 +219,11 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              //           return $dest;
           };
 
+          /**
+           @param {array} aData
+           @returns {array}
+           */
           RM.compute_text_stats_group_by_div = function compute_text_stats_group_by_div ( aData ) {
-             /*
-              @param aData {array} TODO
-              @returns {array}
-              */
              var aDivRow = []; // contains stats for each div
              var i; // loop variable
              for (i = 0; i < aData.length; i++) {
@@ -238,7 +246,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 }
              }
              return aDivRow;
-          }
+          };
 
           RM.select_div_to_keep =
           function select_div_to_keep ( aDivRow, MIN_SENTENCE_NUMBER, MIN_AVG_AVG_SENTENCE_LENGTH ) {
@@ -291,26 +299,32 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    continue;
                 }
 
-                logWrite(DBG.TAG.INFO, "Highlighting important words on text from", div_selector);
+                logWrite(DBG.TAG.INFO, "Highlighting important words on text from ", div_selector);
                 var $div_selector = $(div_selector);
-                aPromises.push(RM.highlight_text_in_div($div_selector)); //adds another promise to the array
+                aPromises.push(
+                   $.when(
+                      RM.highlight_text_in_div($div_selector)
+                         .done(function ( /* array of highlighted text from highlight_proper_text*/ ) {
+                                  aHighlightedText = Array.prototype.slice.call(arguments);
+
+                               }))); //adds another promise to the array
                 $div_selector.appendTo($dest);
              }
              return $.when.apply($, aPromises); // return the promise monitoring parallel execution
           };
 
+          /**
+           * Highlights important words found in $el,
+           * Works by wrapping all text between given set of tags in a span class
+           * and later analyze text in each children tag of $el for important words
+           */
           RM.highlight_text_in_div = function highlight_text_in_div ( $el ) {
-             /**
-              * Highlights important words found in $el,
-              * Works by wrapping all text between given set of tags in a span class
-              * and later analyze text in each children tag of $el for important words
-              */
-             //logEntry("highlight_text_in_div");
 
              var aHighlightPromises = [];
 
              // Get all elements to be highlit
              var a$elToHighlight = RM.search_for_text_to_highlight($el);
+             // TODO That's my paragraph array!!
              logWrite(DBG.TAG.DEBUG, "size array element to highlight", a$elToHighlight.length);
 
              a$elToHighlight.forEach(function ( $el, index, array ) {
@@ -320,7 +334,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 aHighlightPromises.push(RM.highlight_proper_text($el));
              });
 
-             //logExit("highlight_text_in_div");
              return $.when.apply($, aHighlightPromises);
           };
 
@@ -333,23 +346,23 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               @param $el {Object}: jQuery element that contains sWords in its inner text
               @param then_callback {function} : callback executed after words habve been highlighted
               */
-             return $.when(RM.apply_highlighting_filters_to_text($el.text().trim(),
-                                                                 [RM.highlight_words],
-                                                                 RM.simple_tokenizer, RM.simple_detokenizer) )
+             var parsedTree = UT.parseDOMtree($el);
+             return $
+                .when(RM.apply_highlighting_filters_to_text(
+                         parsedTree.html_parsed_text,
+                         [RM.highlight_words],
+                         RM.simple_tokenizer, RM.simple_detokenizer,
+                         function filter_comment_remover ( aTokens ) {
+                            return parsedTree.aCommentPos;
+                         }))
                 .then(function ( highlighted_text ) {
-                         $el.html(highlighted_text);
+                         $el.replaceWith(highlighted_text);
                          return highlighted_text; // will get passed to the done callback of the promise (not used here)
                       });
           };
 
           RM.search_for_text_to_highlight = function search_for_text_to_highlight ( $el, a$elToHighlight ) {
-             //logEntry("search_for_text_to_highlight");
              var TEXT_SELECTORS = ["p", "h1", "h2", "h3", "h4", "h5", "h6", "li"].join(", ");
-
-             $("script", $el).remove();
-             $("head", $el).remove();
-             $("iframe", $el).remove();
-             $("header", $el).remove();
 
              // first call of function is without a$elToHighlight param, subsequent calls have param
              a$elToHighlight = a$elToHighlight || [];
@@ -375,7 +388,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 });
              }
 
-             //logExit("search_for_text_to_highlight");
              return a$elToHighlight;
           };
 
@@ -519,12 +531,13 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
           };
 
           ////////// Filter helper functions
+
           RM.simple_tokenizer = function simple_tokenizer ( text ) {
              /**
               * Tokenizer :   text => [token] (word array)
               */
              var aTokens = text.split(" ");
-             aTokens.type='token';
+             aTokens.type = 'token';
              return aTokens;
           };
 
@@ -540,7 +553,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              // fn_highlight functions
              var highlit_text = aStore.toString();
              logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
-             // TODO: to synchronize better with server instead of copying :
+             // TODO: to synchronize better with server instead of copying : move to common config file??
              highlit_text = highlit_text.replace(new RegExp(StartSel, "g"), StartSel_nospaces);
              highlit_text = highlit_text.replace(new RegExp(StopSel, "g"), StopSel_nospaces);
              // For StopSel not necessary as there is no spaces
@@ -553,7 +566,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              var aTokenActionMap = [];
              var mark = false;
              // I have the token, now assigning actions
-             aTokens.forEach(function ( word, index ) {
+             aTokens.forEach(function assign_action_to_token ( word, index ) {
                 if (word.indexOf(StartSel_nospaces) == 0) {
                    // beginning of marking
                    //logWrite(DBG.TAG.DEBUG, "found begin of marking");
@@ -585,23 +598,27 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
           };
 
           ////////// Filter highlighting functions
+          /**
+           * Purpose    : highlight words in a text
+           * Input      : text without formatting | array of highlighting filters
+           * Output     : string representing the highlighted text
+           * Assumption : - Filter function do not add or remove token, and do not change token order,
+           *                i.e. modifies token in place or leave them intact
+           *              - The text passed in parameter is already trimmed
+           * @param{String} text character string to be highlighted
+           * @param{array} aFilters array of filter functions to be applied.
+           *                          Filters' index in array is a decreasing function of priority of application.
+           *                          i.e. aFilters[0] takes precedence over aFilters[1]
+           * @param{Function} tokenizer  function who takes a string and returns an array of tokens
+           * @param{Function} detokenizer  reverse function of tokenizer which takes an array of tokens and returns a string
+           * @param{Function} commentMarker takes an array of tokens and returns a structure in which are located the indexes of token marked up as comment
+           *                                  Such comments will be ignored by the filters.
+           * Algorithm  : Transform a text into tokens, then apply filters to those tokens.
+           *              Filters mark the token to be highlighted. When all filters are done, highlighting functions
+           *                are applied by order of priority. The corresponding tokens are then converted back to text
+           */
           RM.apply_highlighting_filters_to_text =
-          function apply_highlighting_filters_to_text ( text, aFilters, tokenizer, detokenizer ) {
-             /**
-              * Purpose   : highlight words in a text
-              * Input : text without formatting | array of highlighting filters
-              * @param{String} text : character string to be highlighted
-              * @param{array} aFilters : array of filter functions to be applied.
-              *                          Filters' index in array is a decreasing function of priority of application.
-              *                          i.e. aFilters[0] takes precedence over aFilters[1]
-              * Output : string representing the highlighted text
-              * Assumption : - Filter function do not add or remove token, and do not change token order,
-              *                i.e. modifies token in place or leave them intact
-              *              - The text passed in parameter is already trimmed
-              * Algorithm : Transform a text into tokens, then apply filters to those tokens.
-              *             Filters mark the token to be highlighted. When all filters are done, highlighting functions
-              *               are applied by order of priority. The corresponding tokens are then converted back to text
-              */
+          function apply_highlighting_filters_to_text ( text, aFilters, tokenizer, detokenizer, commentMarker ) {
              /** Config
               * * Must be registered previously
               * - filters
@@ -622,6 +639,8 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               1. Tokenize input text
               Tokenizer :   text => [token] (word array)
               */
+             console.log("comment remover", commentMarker);
+
              var dfr = $.Deferred();
              var aTokens = tokenizer(text);
              logWrite(DBG.TAG.DEBUG, "tokens", UT.inspect(aTokens, null, 3));
@@ -629,50 +648,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              /*
               2. Identify and filter out comment tokens
               */
-             var aCommentPos = [];
-             var elemPos = {};
-
-             function reset ( elemPos ) {
-                elemPos.pos = undefined;
-                elemPos.aCommentToken = [];
-             }
-
-             reset(elemPos);
-             var commentParseState = false;
-             var justFoundCommentStartToken = false;
-
-             aTokens.forEach(
-                function ( token, index, array ) {
-                   justFoundCommentStartToken = false;
-                   if (DS.filter_is_comment_start_token(token)) {
-                      commentParseState = true;
-                      // state variable which indicates that we are going to read the content between comment tokens
-                      justFoundCommentStartToken = true;
-                      // this is necessary for the case when comment token is delimited by the same characters
-
-                      elemPos.pos = index;
-                   }
-
-                   if (commentParseState == true) {
-                      // keeping this in between allows to write in the array both begin and end comment token
-                      elemPos.aCommentToken.push({token : token, action : DS.filter_fn_highlight_comment});
-                   }
-
-                   if (!justFoundCommentStartToken && DS.filter_is_comment_end_token(token)) {
-                      aCommentPos.push(clone(elemPos));
-                      commentParseState = false;
-                      reset(elemPos);
-                      function clone ( elemPos ) {
-                         return {
-                            pos           : elemPos.pos,
-                            aCommentToken : elemPos.aCommentToken
-                         }
-                      }
-                   }
-
-                });
              // expect aToken to have the array with comment indexes ([token]  =>  [pos, [{tokens_commented, 'comment'}]])
 
+             var aCommentPos = commentMarker(aTokens);
              logWrite(DBG.TAG.DEBUG, "comment table", UT.inspect(aCommentPos, null, 4));
              // Now remove the comment tokens from the input
              aCommentPos.forEach(
@@ -685,7 +663,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               */
              var aPromises = RM.getTokenActionMap(aTokens, aFilters);
              $.when.apply($, aPromises).then(
-                function ( /*arguments is each of the token_action_map type returned by filters*/ ) {
+                function getTokenActionMap_done ( /*arguments is each of the token_action_map type returned by filters*/ ) {
                    // Note : the when function concatenate resolution of deferred in the same order than they were called
                    // e.g. in the same order than the array of filters
                    var aFilterResults = Array.prototype.slice.call(arguments);
@@ -727,8 +705,11 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                                 action_b;
                       })
                    });
-                   logWrite(DBG.TAG.DEBUG, "aTransposedResults action reduce",
-                            UT.inspect(aTransposedResults, null, 4));
+                   //console.dir(aTransposedResults);
+                   logWriteShort(DBG.TAG.DEBUG, "aTransposedResults - action reduce"
+                      //, UT.inspect(aTransposedResults, null, 4)
+                      , aTransposedResults
+                   );
 
                    /*
                     * 5. Replace the comment tokens inside the original text
@@ -767,9 +748,12 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              return dfr.promise();
           };
 
+          /** [filter], [token]  =>  [ [{token, action}]_token ]_filter
+           *                             i_adapter    filter       o_adapter
+           * This works like this : token -> input_type -> output_type -> [ [{token, action}]_token ]_filter
+           * aFilters: array of REGISTERED filters. If the filter is not registered, fields will be missing and it will not work!!
+           */
           RM.getTokenActionMap = function getTokenActionMap ( aTokens, aFilters ) {
-             // [filter], [token]  =>  [ [{token, action}]_token ]_filter
-             // aFilters: array of REGISTERED filters. If the filter is not registered, fields will be missing and it will not work!!
              var aFilterResults = [];
              var aPromises = [];
 
@@ -838,12 +822,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                                               RM.dataAdapterOStore2TokenActionMap);
           };
 
-          /*return {//that's the object returned only for requirejs, e.g. the visible interface exposed
-           extract_relevant_text_from_html: extract_relevant_text_from_html,
-           highlight_important_words      : highlight_important_words,
-           cached_translation             : cached_translation,
-           make_article_readable          : make_article_readable
-           };*/
           RM.init();
           return RM;
        });

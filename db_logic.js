@@ -140,7 +140,7 @@ function pg_register_query ( query_name, query_string, arg_number, aDefaultArgs 
    // checking if already something registered with that name
    var query_obj = registry[query_name];
    if (query_obj) {
-      // Here action is to just issue a warning, it could be in other cases to throw an exception
+      // Here just warns, it could be in other cases to throw an exception
       logWrite(DBG.TAG.WARNING, "Found another query with the same name - overwriting it!");
    }
 

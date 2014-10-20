@@ -15,7 +15,7 @@ var DB = require(prefix_src_dir + './db_logic');
 
 describe('database queries', function () {
    before(function () {
-      // disable logs
+      // disable logs as it interfers with nice presentation of mocha reporters
       DBG.setConfig(DBG.TAG.TRACE, false, {by_default : false});
       DBG.setConfig(DBG.TAG.INFO, false, {by_default : false});
       DBG.setConfig(DBG.TAG.ERROR, false, {by_default : false});

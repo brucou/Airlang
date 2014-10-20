@@ -287,7 +287,6 @@ function trace (module, module_name) {
     * Returns   : nothing
     * Action    : All proper FUNCTIONS of the module are stubbed with trace functions, properties are unchanged
     * TODO : Implement features
-    * TODO : Test on require module!!
     */
    var property;
    if (already_traced(module_name)) {
