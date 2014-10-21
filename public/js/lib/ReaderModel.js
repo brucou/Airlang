@@ -320,33 +320,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
            */
           RM.highlight_text_in_div = function highlight_text_in_div ( $el ) {
 
-             var aHighlightPromises = [];
-
-             // Get all elements to be highlit
-             var a$elToHighlight = RM.search_for_text_to_highlight($el);
-             // TODO That's my paragraph array!!
-             logWrite(DBG.TAG.DEBUG, "size array element to highlight", a$elToHighlight.length);
-
-             a$elToHighlight.forEach(function ( $el, index, array ) {
-                if ($el.text().trim().length === 0) {//dealing with empty or null string
-                   return;
-                }
-                aHighlightPromises.push(RM.highlight_proper_text($el));
-             });
-
-             return $.when.apply($, aHighlightPromises);
-          };
-
-          RM.highlight_proper_text = function highlight_proper_text ( $el ) {
-             /**
-              * Highlights important words found in sWords, and signals them in $el
-              * Important : this function expects to be called with a normal text, e.g. no html tags
-              * If html tags are present, they will be parsed as regular text
-              @param sWords {String}: sentence whose words are to be highlit
-              @param $el {Object}: jQuery element that contains sWords in its inner text
-              @param then_callback {function} : callback executed after words habve been highlighted
-              */
+             //var aHighlightPromises = [];
              var parsedTree = UT.parseDOMtree($el);
+
              return $
                 .when(RM.apply_highlighting_filters_to_text(
                          parsedTree.html_parsed_text,
@@ -359,36 +335,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                          $el.replaceWith(highlighted_text);
                          return highlighted_text; // will get passed to the done callback of the promise (not used here)
                       });
-          };
 
-          RM.search_for_text_to_highlight = function search_for_text_to_highlight ( $el, a$elToHighlight ) {
-             var TEXT_SELECTORS = ["p", "h1", "h2", "h3", "h4", "h5", "h6", "li"].join(", ");
-
-             // first call of function is without a$elToHighlight param, subsequent calls have param
-             a$elToHighlight = a$elToHighlight || [];
-
-             // text_selectors cannot have SPAN inside, otherwise it will recurse infinitely
-             // Wrap a span tag around text nodes for easier modification
-             // remove text_selectors filter, do it for all tags, except for span -> cf. filter function application
-             $(TEXT_SELECTORS, $el).contents().filter(function () {
-                // filter all the noise of spaces that are converted to Node_text elements
-                return (this.nodeType !== 1) && (this.nodeType === 3) && (clean_text(this.textContent).length > 0);
-             }).wrap("<span></span>").end().filter("br").remove(); //TODO : test on a text with br elements (old web pages)
-
-             var length = $el.children().length;
-             if (length == 0) {
-                logWrite(DBG.TAG.DEBUG, "processing element without child", $el.tagName, $el.text());
-                a$elToHighlight.push($el);
-             }
-             else {
-                // go through recursively into the children
-                logWrite(DBG.TAG.DEBUG, "", "tag", $el.get(0).tagName, "has ", length, "children", "processing them");
-                $el.children().each(function () {
-                   RM.search_for_text_to_highlight($(this), a$elToHighlight);
-                });
-             }
-
-             return a$elToHighlight;
           };
 
           RM.generateTagAnalysisData = function generateTagAnalysisData ( $source ) {
@@ -639,7 +586,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               1. Tokenize input text
               Tokenizer :   text => [token] (word array)
               */
-             console.log("comment remover", commentMarker);
 
              var dfr = $.Deferred();
              var aTokens = tokenizer(text);
@@ -653,9 +599,12 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              var aCommentPos = commentMarker(aTokens);
              logWrite(DBG.TAG.DEBUG, "comment table", UT.inspect(aCommentPos, null, 4));
              // Now remove the comment tokens from the input
+             var offset =0;
              aCommentPos.forEach(
                 function ( elemPos, index, array ) {
-                   aTokens.splice(elemPos.pos, elemPos.aCommentToken.length);
+                   var removed_token_no = elemPos.aCommentToken.length;
+                   aTokens.splice(elemPos.pos - offset, elemPos.aCommentToken.length);
+                   offset += removed_token_no;
                 });
 
              /*

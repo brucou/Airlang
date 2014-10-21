@@ -424,6 +424,52 @@ define(['utils'], function ( UT ) {
       return (token === COMMENT_END_TOKEN);
    };
 
+   DS.filter_comment_remover = function filter_comment_remover(aTokens) {
+      var aCommentPos = [];
+      var elemPos = {};
+
+      function reset ( elemPos ) {
+         elemPos.pos = undefined;
+         elemPos.aCommentToken = [];
+      }
+
+      reset(elemPos);
+      var commentParseState = false;
+      var justFoundCommentStartToken = false;
+
+      aTokens.forEach(
+         function ( token, index, array ) {
+            justFoundCommentStartToken = false;
+            if (DS.filter_is_comment_start_token(token)) {
+               commentParseState = true;
+               // state variable which indicates that we are going to read the content between comment tokens
+               justFoundCommentStartToken = true;
+               // this is necessary for the case when comment token is delimited by the same characters
+
+               elemPos.pos = index;
+            }
+
+            if (commentParseState == true) {
+               // keeping this in between allows to write in the array both begin and end comment token
+               elemPos.aCommentToken.push({token : token, action : DS.filter_fn_highlight_comment});
+            }
+
+            if (!justFoundCommentStartToken && DS.filter_is_comment_end_token(token)) {
+               aCommentPos.push(clone(elemPos));
+               commentParseState = false;
+               reset(elemPos);
+               function clone ( elemPos ) {
+                  return {
+                     pos           : elemPos.pos,
+                     aCommentToken : elemPos.aCommentToken
+                  }
+               }
+            }
+
+         });
+      return aCommentPos;
+   };
+
    DS.promise_value_adapter = function promise_value_adapter ( value, result_callback ) {
       /**
        * The idea here is to have a wrapper to have the same code running whether it is a deferred or a regular value

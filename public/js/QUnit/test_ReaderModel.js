@@ -12,7 +12,78 @@ define(['ReaderModel', 'data_struct', 'utils'],
            });
            */
 
+          QUnit.module("Testing async. function tester QasyncTest");
+          QasyncTest("equal", "function with one parameter, no transforms",
+                     function dummy_1_var ( x ) {
+                        var dfr = $.Deferred();
+                        dfr.resolve(5 * x);
+                        return dfr.promise();
+                     },
+                     [2], 10, null, ['should be equal to 10']
+          )();
+          QasyncTest("equal", "function with 3 parameters, no transforms",
+                     function dummy_3_var ( x, y, z ) {
+                        var dfr = $.Deferred();
+                        dfr.resolve(5 * x * y * z);
+                        return dfr.promise();
+                     },
+                     [2, 0.5, 3], 15, null, ['should be equal to 15']
+          )();
+          QasyncTest("equal", "function with 3 parameters including one array, no transforms",
+                     function dummy_3_var_array ( x, aY, z ) {
+                        var dfr = $.Deferred();
+                        dfr.resolve(5 * x * aY[0] * z.length);
+                        return dfr.promise();
+                     },
+                     [2, [0.5], 'abc'], 15, null, ['should be equal to 15']
+          )();
+          QasyncTest("equal", "function with string parameters, involving 2 transforms",
+                     function dummy_with_transform ( text ) {
+                        var dfr = $.Deferred();
+                        dfr.resolve(text);
+                        return dfr.promise();
+                     },
+                     ['texte de quatre mots'],
+                     [20, 'de quatre mots'],
+                     [function ( x ) {return x.length}, function ( x ) {return x.substr(6)}],
+                     ['checked length of string', 'checked string extraction']
+          )();
+
           QUnit.module("Testing filtering functionality");
+          QUnit.asyncTest("comments stay the same", function ( assert ) {
+             expect(1);
+             var expected = [ 'Člověku', 'se',
+                              '<', 'one', 'comment', '>',
+                              '<span class = \'highlight\'>kvůli</span>',
+                              'tomu,',
+                              '<', 'inserted', 'comment', '>',
+                              '<', 'another', 'comment', '>',
+                              'že', 'přestane', 'kouřit,', 'zpomalí', 'metabolismus.', 'A', 'to', 'je',
+                              '<span class = \'highlight\'>hlavní</span>',
+                              '<span class = \'highlight\'>problém,</span>',
+                              'proč',
+                              '<span class = \'highlight\'>většině</span>',
+                              'lidí',
+                              '<span class = \'highlight\'>začne</span>',
+                              'ručička', 'váhy', 'ukazovat', 'za',
+                              '<span class = \'highlight\'>pár</span>',
+                              '<span class = \'highlight\'>měsíců</span>',
+                              'o',
+                              '<span class = \'highlight\'>několik</span>',
+                              'kilogramů',
+                              '<span class = \'highlight\'>více.</span>' ].join(" ");
+             RM.apply_highlighting_filters_to_text(
+                "Člověku se < one comment > kvůli tomu, < inserted comment > < another comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
+                [RM.highlight_words],
+                RM.simple_tokenizer, RM.simple_detokenizer,
+                DS.filter_comment_remover
+             ).then(function ( result ) {
+                       actual = result;
+                       QUnit.start();
+                       assert.equal(actual, expected, ["expected :", expected, "\n returned :", actual].join(" "));
+                    });
+          });
+
           QUnit.asyncTest("one filter", function ( assert ) {
              expect(1);
              var expected = [ 'Člověku', 'se',
@@ -116,7 +187,7 @@ define(['ReaderModel', 'data_struct', 'utils'],
                              'kilogramů',
                              '<span class = \'highlight\'>více.</span>'
                             ].join(" ");
-             var filter2 = function filter2 ( text, callback ) {
+             var filter3 = function filter3 ( text, callback ) {
                 if (text.indexOf("Člověku") >= 0) {
                    text = text.replace("Člověku", "<span class = 'highlight2'>Člověku</span>");
                 }
@@ -177,14 +248,14 @@ define(['ReaderModel', 'data_struct', 'utils'],
                 return aTokenActionMap;
              };
 
-             DS.filter_register('text', 'async_cached_postgres_highlighted_text2', filter2,
+             DS.filter_register('text', 'async_cached_postgres_highlighted_text2', filter3,
                                 'srv_qry_stop_words');
              DS.filter_register_data_adapters('async_cached_postgres_highlighted_text2', 'token_action_map',
                                               dataAdapterOStore2TokenActionMap2);
 
              RM.apply_highlighting_filters_to_text(
                 "Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
-                [RM.highlight_words, filter2],
+                [RM.highlight_words, filter3],
                 RM.simple_tokenizer, RM.simple_detokenizer,
                 DS.filter_comment_remover
              ).then(function ( actual ) {
@@ -231,53 +302,54 @@ define(['ReaderModel', 'data_struct', 'utils'],
           });
 
           /*
-          QUnit.asyncTest("Text highlighting - one filter", function ( assert ) {
-             var parsedTree = UT.parseDOMtree($el),
-                 aHTMLparsed = parsedTree.aHTMLparsed,
-                 aHTMLparsed_expected = [
-                    "<DIV id='0'>",
-                    "<H2 id='1'>", "<A id='2'>", "Medio siglo de oro de artistas y canciones", "</A>", "</H2>",
-                    "<P id='3'>", "Por Luis Merino", "</P>",
-                    "<P id='4'>",
-                    "Un lanzamiento de 24 discos, 360 canciones, 3.000 temas. Los álbumes funcionan como ",
-                    "<I id='5'>", "'playlists'", "</I>",
-                    " de una hora cuyas canciones han sido remasterizadas para ofrecer una calidad espectacular.",
-                    "</P>",
-                    "</DIV>"
-                 ];
-             var expected = [ 'Člověku', 'se',
-                              '<span class = \'highlight\'>kvůli</span>',
-                              'tomu,',
-                              '<', 'inserted', 'comment', '>',
-                              'že', 'přestane', 'kouřit,', 'zpomalí', 'metabolismus.', 'A', 'to', 'je',
-                              '<span class = \'highlight\'>hlavní</span>',
-                              '<span class = \'highlight\'>problém,</span>',
-                              'proč',
-                              '<span class = \'highlight\'>většině</span>',
-                              'lidí',
-                              '<span class = \'highlight\'>začne</span>',
-                              'ručička', 'váhy', 'ukazovat', 'za',
-                              '<span class = \'highlight\'>pár</span>',
-                              '<span class = \'highlight\'>měsíců</span>',
-                              'o',
-                              '<span class = \'highlight\'>několik</span>',
-                              'kilogramů',
-                              '<span class = \'highlight\'>více.</span>' ].join(" ");
-             RM.apply_highlighting_filters_to_text(
-                "Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
-                [RM.highlight_words],
-                RM.simple_tokenizer, RM.simple_detokenizer,
-                function filter_comment_remover ( aTokens ) {
-                   return parsedTree.aCommentPos;
-                }
-             ).then(function ( result ) {
-                       actual = result;
-                       QUnit.start();
-                       assert.equal(actual, expected, ["expected :", expected, "\n returned :", actual].join(" "));
-                    });
-          });
 
-*/
+           QUnit.asyncTest("Text highlighting - one filter", function ( assert ) {
+           var parsedTree = UT.parseDOMtree($el),
+           aHTMLparsed = parsedTree.aHTMLparsed,
+           aHTMLparsed_expected = [
+           "<DIV id='0'>",
+           "<H2 id='1'>", "<A id='2'>", "Medio siglo de oro de artistas y canciones", "</A>", "</H2>",
+           "<P id='3'>", "Por Luis Merino", "</P>",
+           "<P id='4'>",
+           "Un lanzamiento de 24 discos, 360 canciones, 3.000 temas. Los álbumes funcionan como ",
+           "<I id='5'>", "'playlists'", "</I>",
+           " de una hora cuyas canciones han sido remasterizadas para ofrecer una calidad espectacular.",
+           "</P>",
+           "</DIV>"
+           ];
+           var expected = [ 'Člověku', 'se',
+           '<span class = \'highlight\'>kvůli</span>',
+           'tomu,',
+           '<', 'inserted', 'comment', '>',
+           'že', 'přestane', 'kouřit,', 'zpomalí', 'metabolismus.', 'A', 'to', 'je',
+           '<span class = \'highlight\'>hlavní</span>',
+           '<span class = \'highlight\'>problém,</span>',
+           'proč',
+           '<span class = \'highlight\'>většině</span>',
+           'lidí',
+           '<span class = \'highlight\'>začne</span>',
+           'ručička', 'váhy', 'ukazovat', 'za',
+           '<span class = \'highlight\'>pár</span>',
+           '<span class = \'highlight\'>měsíců</span>',
+           'o',
+           '<span class = \'highlight\'>několik</span>',
+           'kilogramů',
+           '<span class = \'highlight\'>více.</span>' ].join(" ");
+           RM.apply_highlighting_filters_to_text(
+           "Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
+           [RM.highlight_words],
+           RM.simple_tokenizer, RM.simple_detokenizer,
+           function filter_comment_remover ( aTokens ) {
+           return parsedTree.aCommentPos;
+           }
+           ).then(function ( result ) {
+           actual = result;
+           QUnit.start();
+           assert.equal(actual, expected, ["expected :", expected, "\n returned :", actual].join(" "));
+           });
+           });
+
+           */
           var t_RM = {};
           return t_RM;
        });
