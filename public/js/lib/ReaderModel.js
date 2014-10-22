@@ -781,7 +781,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    aPromises.push(deferred_or_value.promise());
                    // filter returns either a plain object or a promise/deferred. In any case that is stored
                 });
-             window.aPromises["filters"].push(aPromises);
              return aPromises;
           };
 

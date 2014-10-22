@@ -139,8 +139,6 @@ requirejs(
       }
 
       $(function () {
-         window.aPromises ={};
-         window.aPromises["filters"] = [];
          init_log();
          // TEST CODE
          //trace.config('ReaderToolController', 'Constructor', false);
