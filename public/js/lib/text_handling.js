@@ -64,8 +64,8 @@ function get_text_stats(text) {
    // for each split, count the number of words
    var words = text.toLowerCase().replace(/[,;.!\?]/g, '').trim().split(/[\s\/]+/g);
    var word_number = (words[0].trim().length === 0) ? 0 : words.length; // case "" e.g. text with spaces and punct only
-   var sentence_number = text.split(".").length - 1;
-   // naive algorithm for english, just count number of dots.
+   var sentence_number = text.replace("...",".").split(".").length - 1;
+   // naive algorithm for english, just count number of dots. But we should also count !? as end of sentences
    // even for english could be improved with .+space (\n or " " etc or EOF)
    // also, we take 1 as sentence number even if there is no ., it could be a sentence not terminated by a . like in a li element
    // but if there is a . somewhere then . are expected everywhere

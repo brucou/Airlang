@@ -902,14 +902,41 @@ define([], function () {
    }
 
    /**
-    * TODO : finish documentation
-    * ASSUMPTIONS:
+    * return an array which contains the own properties name of the object passed as parameter
+    * @param {Object} obj : object from which own properties are retrieved
+    * @return {Array}
+    */
+   function get_own_properties ( obj ) {
+      var aProperties = [];
+      for (var prop in obj) {
+         if (obj.hasOwnProperty(prop)) {
+            aProperties.push(prop);
+         }
+      }
+      return aProperties;
+   }
+
+   /**
+    * Purpose : Parse a DOM Tree whose root is given by $el
+    * Action  : Add a html line corresponding to the tag at hand and number it sequentially for later identification
+    * Tags and attributes name can be mapped according to mapAttrClass and mapTagClass
+    * MapAttrClass is a double mapping (attribute, value) -> "attribute = `mapping((attribute, value)`"
+    * MapTagClass is a simple mapping (tagName) -> "class = mapping(tagName)"
+    * MapAttrClass[attribute] has to be always in lower case (cf. Assumption)
+    *   MapAttrClass[attribute] can also be configured for cases where 'attribute' is not present in element
+    *   To that purpose one has to configure a mapping for undefined. Ex: MapAttrClass[attribute][undefined] = XX
+    * ASSUMPTION :
     * - the $el is at the top of a DOM tree starting with an html tag (span, div, etc.).
     *   i.e. it cannot be a text node
+    * - this number must be unique in the whole document (we use id=x) to later retrieve it
+    *   with $(#id)
+    * - configuration of mapAttrClass in lower case. Ex : ['class']['title'] vs. ['class']['Title']
     * @param {JQuery} $el The root of the tree from which the parsing starts
-    * @returns {Array}
+    * @param {map} mapAttrClass MapAttrClass is a double mapping (attribute, value) -> "attribute = `mapping((attribute, value)`"
+    * @param {map} mapTagClass MapTagClass is a simple mapping (tagName) -> "class = mapping(tagName)"
+    * @returns {{aHTMLparsed: Array, aCommentPos: Array, html_parsed_text: string, aTokens: (*|Array)}}
     */
-   function parseDOMtree ( $el ) {
+   function parseDOMtree ( $el, mapTagClass, mapAttrClass ) {
       // TODO: check el is a Jquery element or a DOM element, if a DOM convert to Jquery
       if (!($el instanceof jQuery)) {
          throw 'parseDOMtree: called with parameter $el, expected JQuery object, found type ' + (typeof $el)
@@ -933,137 +960,160 @@ define([], function () {
          //There are spaces in aHTMLparsed, so this op is not trivial x->x
       };
 
-   function _parseDOMtree ( $el, aHTMLparsed, aCommentPos ) {
+      function _parseDOMtree ( $el, aHTMLparsed, aCommentPos ) {
 
-      /////// Helper functions
-      function identity ( token ) {return token;}
+         /////// Helper functions
+         function identity ( token ) {return token;}
 
-      // Initialize comments structure for isolating non-text nodes
-      function reset ( /*out*/ elemPos ) {
-         elemPos.pos = undefined;
-         elemPos.aCommentToken = [];
-      }
+         // Initialize comments structure for isolating non-text nodes
+         function reset ( /*out*/ elemPos ) {
+            elemPos.pos = undefined;
+            elemPos.aCommentToken = [];
+         }
 
-      function clone ( elemPos ) {
-         return {
-            pos           : elemPos.pos,
-            aCommentToken : elemPos.aCommentToken
-         };
-      }
+         function clone ( elemPos ) {
+            return {
+               pos           : elemPos.pos,
+               aCommentToken : elemPos.aCommentToken
+            };
+         }
 
-      function simple_tokenizer ( text ) {
-         /**
-          * Tokenizer :   text => [token] (word array)
-          */
-         var aTokens = text.split(" ");
-         aTokens.type = 'token';
-         return aTokens;
-      }
+         function simple_tokenizer ( text ) {
+            /**
+             * Tokenizer :   text => [token] (word array)
+             */
+            var aTokens = text.split(" ");
+            aTokens.type = 'token';
+            return aTokens;
+         }
 
-      function simple_detokenizer ( aTokens ) {
-         return aTokens.join(" ");
-      }
+         function simple_detokenizer ( aTokens ) {
+            return aTokens.join(" ");
+         }
 
-      // Set the html content which is not a text node as a comment
-      function comment_tag_out ( html_tag ) {
-         reset(elemPos);
-         elemPos.pos = comment_index;
-         simple_tokenizer(html_tag).forEach(function ( token ) {
-            elemPos.aCommentToken.push({token : token, action : identity});
-            comment_index++;
-         });
-         // account for the extra space we will add after the ending >
-         // This is necessary as otherwise
-         // <tag end><tag end> is 3 tokens, and that is counted as 4
-         // so we will have to transform it to <tag end> <tag end> to reconcile the token position with the index
-         aCommentPos.push(clone(elemPos));
-      }
+         // Set the html content which is not a text node as a comment
+         function comment_tag_out ( html_tag ) {
+            reset(elemPos);
+            elemPos.pos = comment_index;
+            simple_tokenizer(html_tag).forEach(function ( token ) {
+               elemPos.aCommentToken.push({token : token, action : identity});
+               comment_index++;
+            });
+            // account for the extra space we will add after the ending >
+            // This is necessary as otherwise
+            // <tag end><tag end> is 3 tokens, and that is counted as 4
+            // so we will have to transform it to <tag end> <tag end> to reconcile the token position with the index
+            aCommentPos.push(clone(elemPos));
+         }
 
-      /* Add a html line corresponding to the tag at hand and number it sequentially for later identification
-       * ASSUMPTION :
-       * - this number must be unique in the whole document (we use id=x) to later retrieve it
-       *   with $(#id)
-       */
-      var html_begin_tag = "<" + $el.prop("tagName") + " id='" + node_index + "'" + ">";
-      aHTMLparsed.push(html_begin_tag);
-      // and commment it out
-      comment_tag_out(html_begin_tag);
+         // read the attributes to map from mapAttrTagClass -> array
+         var aAttributes = get_own_properties(mapAttrClass);
+         // for each attribute in the array, read the corresponding value from $el
+         // and perform the mapping if there is one to perform
+         var html_class_attr = aAttributes.reduce(function ( accu, attribute ) {
+            var attr_value_in_$el = $el.attr(attribute);
+            var replace_attr_value = mapAttrClass[attribute][attr_value_in_$el ?
+                                                             attr_value_in_$el.toLowerCase() :
+                                                             undefined];
+            logWrite(DBG.TAG.DEBUG, "attribute name, attribute value, mapping", attribute, attr_value_in_$el,
+                     replace_attr_value);
+            return [accu,
+                    (attr_value_in_$el && replace_attr_value) ?
+                    (attribute + "='" + replace_attr_value + "'") :
+                    ""
+            ].join(" ");
+         }, "").trim();
 
-      node_index++;
-      var aChildren = $el.contents();
+         // read the tags map from mapTagClass -> array
+         var tag_name = $el.prop("tagName");
+         var html_class_tag = mapTagClass[tag_name];
 
-      aChildren.each(function ( index, el ) {
-         if (el.nodeType === 3) {
-            var text = el.textContent;
-            if (text.trim()) {
-               aHTMLparsed.push(text);
-               // and increase comment index but do not comment out
-               comment_index += simple_tokenizer(text).length;
+         // make the corresponding html_text
+         var html_class_text = (html_class_tag)
+            ? [html_class_tag, html_class_attr].join(" ")
+            : " " + html_class_attr;
+
+         var html_begin_tag = "<" + tag_name + " id='" + node_index + "'" + html_class_text + ">";
+         aHTMLparsed.push(html_begin_tag);
+         // and commment it out
+         comment_tag_out(html_begin_tag);
+
+         node_index++;
+         var aChildren = $el.contents();
+
+         aChildren.each(function ( index, el ) {
+            if (el.nodeType === 3) {
+               var text = el.textContent;
+               if (text.trim()) {
+                  aHTMLparsed.push(text);
+                  // and increase comment index but do not comment out
+                  comment_index += simple_tokenizer(text).length;
+               }
             }
-         }
-         else {
-            _parseDOMtree($(el), aHTMLparsed, aCommentPos);
-         }
-      });
+            else {
+               _parseDOMtree($(el), aHTMLparsed, aCommentPos);
+            }
+         });
 
-      // Close the tag, we finished reading its content
-      var html_end_tag = "</" + $el.prop("tagName") + ">";
-      aHTMLparsed.push(html_end_tag);
-      // and don't forget to comment it out as to be skipped when highlighting
-      comment_tag_out(html_end_tag);
+         // Close the tag, we finished reading its content
+         var html_end_tag = "</" + $el.prop("tagName") + ">";
+         aHTMLparsed.push(html_end_tag);
+         // and don't forget to comment it out as to be skipped when highlighting
+         comment_tag_out(html_end_tag);
+      }
    }
-}
 
-//TEST CODE
-//window.inspect = inspect;
-////////
+   //TEST CODE
+   //window.inspect = inspect;
+   ////////
 
-/**
- * Limitations :
- * - Works only in Chrome V8!!
- * - Also, it is evaluated at runtime, so it would not work for tracing purpose for example.
- * @return {string} the name of the immediately enclosing function in which this function is called
- */
-function get_calling_function_name () {
-   return /^ *at (.*)\(/.exec(Error("function_name").stack.split("\n")[3])[1].trim();
-   // Another regexp should work for Firefox
-   // Sample stack trace function s() {return Error("something").stack}
-   // "s@debugger eval code:1:15
-   // @debugger eval code:1:1
-}
+   /**
+    * Limitations :
+    * - Works only in Chrome V8!!
+    * - Also, it is evaluated at runtime, so it would not work for tracing purpose for example.
+    * @return {string} the name of the immediately enclosing function in which this function is called
+    */
+   function get_calling_function_name () {
+      return /^ *at (.*)\(/.exec(Error("function_name").stack.split("\n")[3])[1].trim();
+      // Another regexp should work for Firefox
+      // Sample stack trace function s() {return Error("something").stack}
+      // "s@debugger eval code:1:15
+      // @debugger eval code:1:1
+   }
 
-var _UT =
-    {
-       isArray                   : isArray,
-       trimInput                 : trimInput,
-       isNotEmpty                : isNotEmpty,
-       inspect                   : inspect,
-       isRegExp                  : isRegExp,
-       isDate                    : isDate,
-       isError                   : isError,
-       timestamp                 : timestamp,
-       inherits                  : inherits,
-       _extend                   : _extend,
-       hasOwnProperty            : hasOwnProperty,
-       isString                  : isString,
-       isPunct                   : isPunct,
-       isFunction                : isFunction,
-       sPrintf                   : String.format,
-       timeStamp                 : timeStamp,
-       isNumberString            : isNumberString,
-       async_cached              : async_cached,
-       OutputStore               : OutputStore,
-       CachedValues              : CachedValues,
-       getIndexInArray           : getIndexInArray,
-       escape_html               : escape_html,
-       padding_left              : padding_left,
-       padding_right             : padding_right,
-       fragmentFromString        : fragmentFromString,
-       injectArray               : injectArray,
-       get_calling_function_name : get_calling_function_name,
-       parseDOMtree              : parseDOMtree
-    };
-window.UT = _UT;
-return _UT;
+   var _UT =
+       {
+          isArray                   : isArray,
+          trimInput                 : trimInput,
+          isNotEmpty                : isNotEmpty,
+          inspect                   : inspect,
+          isRegExp                  : isRegExp,
+          isDate                    : isDate,
+          isError                   : isError,
+          timestamp                 : timestamp,
+          inherits                  : inherits,
+          _extend                   : _extend,
+          hasOwnProperty            : hasOwnProperty,
+          isString                  : isString,
+          isPunct                   : isPunct,
+          isFunction                : isFunction,
+          sPrintf                   : String.format,
+          timeStamp                 : timeStamp,
+          isNumberString            : isNumberString,
+          async_cached              : async_cached,
+          OutputStore               : OutputStore,
+          CachedValues              : CachedValues,
+          getIndexInArray           : getIndexInArray,
+          escape_html               : escape_html,
+          padding_left              : padding_left,
+          padding_right             : padding_right,
+          fragmentFromString        : fragmentFromString,
+          injectArray               : injectArray,
+          get_calling_function_name : get_calling_function_name,
+          parseDOMtree              : parseDOMtree,
+          get_own_properties        : get_own_properties
+       };
+   window.UT = _UT;
+   return _UT;
 })
 ;

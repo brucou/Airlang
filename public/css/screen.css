@@ -345,7 +345,9 @@ tfoot {
 .anticlockwiseTopSemicircleArrow:after { content: "\21B6" }
 .clockwiseTopSemicircleArrow:after { content: "\21B7" }
 
-#article.title {
+.title {
+    max-width: 960px;
+    width: 601px;
     font-weight: 600;
     font-family: 'Titillium Web', sans-serif;
     position: relative;

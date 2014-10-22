@@ -5,7 +5,7 @@
    // jquery.xdomainajax.js  ------ from padolsey
 
 define(['jquery'], function ($) {
-          $.ajax = (function (_ajax) {
+          $.ajaxx = (function (_ajax) {
 
              var protocol = location.protocol, hostname = location.hostname, exRegex = RegExp(protocol + '//' +
                                                                                               hostname), YQL = 'http' +
@@ -71,7 +71,19 @@ define(['jquery'], function ($) {
           })($.ajax);
 
           return {
-             url_load: function (your_url, callback) {
+             url_load : function (your_url, callback) {
+                var protomatch = /^(https?|ftp):\/\//; // NB: not '.*'
+                var url = your_url.replace(protomatch, '');
+                $.ajax({
+                          crossOrigin: true,
+                          url: 'http://www.corsproxy.com/' + url,
+                          success: function(html_text, error) {
+                             //console.log(html_text);
+                             callback(html_text);
+                          }
+                       });
+             },
+             url_load2: function (your_url, callback) {
                 logEntry("url_load");
                 $.ajax({
                           url    : your_url,

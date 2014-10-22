@@ -90,6 +90,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 return FAKE(RM.make_article_readable, this)(dfr, url_load_callback, your_url);
              }
              ///////
+             /*return  $.get('http://www.corsproxy.com/www.voxeurop.eu/cs/content/editorial/4765047-jsme-zpet',
+              function(response) {console.log("response:", response);
+              document.body.innerHTML = response; });*/
              UL.url_load(encodeURI(your_url), url_load_callback);
              return dfr.promise();
 
@@ -101,6 +104,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       html_text = FAKE(url_load_callback, this)(dfr, html_text);
                    }
                    ///////
+                   window.html_text = html_text;
                    var extract_promise = RM.extract_relevant_text_from_html(html_text);
 
                    if (!extract_promise) {
@@ -140,25 +144,29 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               */
              //logEntry("extract_relevant_text_from_html");
              var MIN_SENTENCE_NUMBER = 7;
-             var MIN_AVG_AVG_SENTENCE_LENGTH = 13;
+             var MIN_AVG_AVG_SENTENCE_LENGTH = 10;
              var SOURCE = "source"; //for temporarily keep the loaded webpage
              var DEST = "destination";
 
              var $source = RM.create_div_in_DOM(SOURCE).html(html_text);
              $source.hide();
-             $source.appendTo($("body")); //apparently it is necessary to add it to body to avoid having head and doctype etc tag added
-             var $dest = RM.create_div_in_DOM(DEST);
-
-             // A little bit of tag cleaning, not really necessary in fact
              $("head", $source).remove();
-             $("iframe",$source).remove();
+             $("iframe", $source).remove();
              $("script", $source).remove();
              $("style", $source).remove();
-             $("header",$source).remove();
+             $("header", $source).remove();
+
+             $source.appendTo($("body")); //apparently it is necessary to add it to body to avoid having head and doctype etc tag added
+             var $dest = RM.create_div_in_DOM(DEST);
+             //$dest.appendTo($("body"));
+
+             // A little bit of tag cleaning, not really necessary in fact
 
              logWrite(DBG.TAG.INFO, "Compute tag stats");
              var aData = RM.generateTagAnalysisData($source);
-
+             //TEST OODE
+             window.aData = aData;
+             //
              /* A.
               for each div:
               for each paragraph in that div
@@ -172,6 +180,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
               */
              logWrite(DBG.TAG.INFO, "Compute tag stats grouped by div");
              var aDivRow = RM.compute_text_stats_group_by_div(aData);
+             //TEST OODE
+             window.aDivRow = aDivRow;
+             //
 
              /* we finished exploring, now gather the final stats (averages)
               */
@@ -195,17 +206,22 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              RM.read_and_add_title_to_$el($source, $dest);
 
              logWrite(DBG.TAG.INFO, "Highlighting important words");
+             // extract from selectedDivs only the divs
+             var aSelectedDivSelectors = [];
+             selectedDivs.forEach(function ( selectedDiv ) {
+                aSelectedDivSelectors.push(selectedDiv.div);
+             });
+
              var dfr = $.Deferred();
-             var prm_success = RM.highlight_important_words(selectedDivs, $dest);
+             var prm_success = RM.highlight_important_words(aData, aSelectedDivSelectors, $dest);
              prm_success
-                .done(function highlight_important_words_success ( $el ) {
+                .done(function highlight_important_words_success ( html_highlighted_text ) {
                          //following pattern function(err, result)
                          // if was successfully highlit then pass the $dest that was modified in place
                          logWrite(DBG.TAG.INFO, "done processing highlight_important_words");
                          logWrite(DBG.TAG.DEBUG, "dest", $dest.html().substring(0, 300));
 
-                         dfr.resolve(null, $dest.html());
-                         //$dest.empty();
+                         dfr.resolve(null, html_highlighted_text);
                       })
                 .fail(function highlight_important_words_failure ( error ) {
                          // this happens if one of the selectedDivs provokes an error
@@ -214,9 +230,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       });
              $source.remove();
 
-             //logExit("extract_relevant_text_from_html");
              return dfr.promise();
-             //           return $dest;
           };
 
           /**
@@ -225,35 +239,30 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
            */
           RM.compute_text_stats_group_by_div = function compute_text_stats_group_by_div ( aData ) {
              var aDivRow = []; // contains stats for each div
-             var i; // loop variable
-             for (i = 0; i < aData.length; i++) {
-                var pdStatRow = aData[i]; //ParagraphData object
+             aData.forEach(function ( pdStatRow, index, array ) {
                 var div = pdStatRow.enclosing_div;
-                var tagName = pdStatRow.tag;
-                logWrite(DBG.TAG.DEBUG, "i, div, tagName", i, div, tagName);
+                logWrite(DBG.TAG.DEBUG, "index, div, tagName", index, div, pdStatRow.tag);
+                var iIndex = UT.getIndexInArray(aDivRow, "div", div);
 
-                if (tagName) {// TEST!! we only compute summary stats for some tags
-                   var iIndex = UT.getIndexInArray(aDivRow, "div", div);
-
-                   if (iIndex > -1) { // div class already added to the stat array
-                      aDivRow[iIndex].sum_sentence_number += pdStatRow.sentence_number;
-                      aDivRow[iIndex].sum_avg_sentence_length += pdStatRow.avg_sentence_length;
-                      aDivRow[iIndex].count_avg_sentence_length += 1;
-                   }
-                   else { // first time seen that div class, so add it to the stat array
-                      aDivRow.push({div : div, sum_sentence_number : pdStatRow.sentence_number, sum_avg_sentence_length : pdStatRow.avg_sentence_length, count_avg_sentence_length : 1});
-                   }
+                if (iIndex > -1) { // div class already added to the stat array
+                   aDivRow[iIndex].sum_sentence_number += pdStatRow.sentence_number;
+                   aDivRow[iIndex].sum_avg_sentence_length += pdStatRow.avg_sentence_length;
+                   aDivRow[iIndex].count_avg_sentence_length += 1;
                 }
-             }
+                else { // first time seen that div class, so add it to the stat array
+                   aDivRow.push({div : div, sum_sentence_number : pdStatRow.sentence_number, sum_avg_sentence_length : pdStatRow.avg_sentence_length, count_avg_sentence_length : 1});
+                }
+             });
+
              return aDivRow;
           };
 
+          /**
+           @param aDivRow {array} array of div elements from the page to analyze
+           @returns {array} filtered array with only the div elements to keep for presentation, e.g. the important text
+           */
           RM.select_div_to_keep =
           function select_div_to_keep ( aDivRow, MIN_SENTENCE_NUMBER, MIN_AVG_AVG_SENTENCE_LENGTH ) {
-             /**
-              @param aDivRow {array} array of div elements from the page to analyze
-              @returns {array} filtered array with only the div elements to keep for presentation, e.g. the important text
-              */
              var selectedDivs = [];
              var pdStatRowPartial, i;
              for (i = 0; i < aDivRow.length; i++) {
@@ -273,135 +282,148 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 }
              }
              return selectedDivs;
-          }
+          };
 
-          RM.highlight_important_words = function highlight_important_words ( aSelectedDivs, $dest ) {
-             /*
-              for each element of the array of selected div elements, highlight its text content
-              then put the result in the destination DOM element
-              The DOM takes the el from its source and (RE)MOVES it to the destination
-              issue : might be necessary to have a special treatment for div with no classes AND no id selectors
-              */
-             var pdStatRowPartial;
-             var i;
+          /*
+           for each element of the array of selected div elements, highlight its text content
+           then put the result in the destination DOM element
+           The DOM takes the el from its source and (RE)MOVES it to the destination
+           issue : might be necessary to have a special treatment for div with no classes AND no id selectors
+           */
+          RM.highlight_important_words = function highlight_important_words ( aData, aSelectedDivs, $dest ) {
 
-             //var controlDeferred = $.Deferred();
-             var aPromises = []; //array of deferred for async function calls
+             // for all selected Div, get the closest div from aData
+             // move it to dest
+             // parse dest
 
-             for (i = 0; i < aSelectedDivs.length; i++) {
-                pdStatRowPartial = aSelectedDivs[i];
-                var div_selector = pdStatRowPartial.div;
-                if (div_selector.length === 0) {
-                   // this is pathological case, where the relevant text is directly under the body tag
-                   // that should not happen as we are always under body under that version of the algorithm
-                   // so just warns in console
-                   logWrite(DBG.TAG.WARNING, "div_selector is empty, ignoring");
-                   continue;
+             // append each div to $dest
+             var aTarget$el = [];
+             aData.forEach(function ( paragraphData ) {
+                const PREFIX = "z_";
+                var pdEnclosingDiv = paragraphData.enclosing_div;
+                if (aSelectedDivs.indexOf(pdEnclosingDiv) !== -1) {
+                   // this div is selected, get the div
+                   var closest_div = paragraphData.mapClosestDiv[PREFIX + pdEnclosingDiv];
+                   // if not already selected for moving to destination, add it
+                   if (aTarget$el.indexOf(closest_div) === -1) {
+                      aTarget$el.push(closest_div);
+                   }
                 }
+             });
+             // move it to dest
+             aTarget$el.forEach(function ( $el ) {
+                $el.appendTo($dest);
+             });
 
-                logWrite(DBG.TAG.INFO, "Highlighting important words on text from ", div_selector);
-                var $div_selector = $(div_selector);
-                aPromises.push(
-                   $.when(
-                      RM.highlight_text_in_div($div_selector)
-                         .done(function ( /* array of highlighted text from highlight_proper_text*/ ) {
-                                  aHighlightedText = Array.prototype.slice.call(arguments);
+             // Add the class mapping for given html tags and attributes
+             var mapTagClass = {};
+             var mapAttrClass = {};
+             // mapTagClass allows to add some class attribute to the DOM elements with a given tag
+             // Here it is used to add a class for styling the title of the page
+             // mapTagClass[tagName] = class_name
+             // If we process a <title> then add class = 'title'
+             // If we process a <tag class='title'> then add a class='title' i.e. keep it
+             mapTagClass["TITLE"] = 'title';
+             mapAttrClass["class"] = {};
+             mapAttrClass["class"]["title"] = 'title';
 
-                               }))); //adds another promise to the array
-                $div_selector.appendTo($dest);
-             }
-             return $.when.apply($, aPromises); // return the promise monitoring parallel execution
+             // highlight $dest and return the promise
+             return RM.highlight_text_in_div($dest, mapTagClass, mapAttrClass);
           };
 
           /**
-           * Highlights important words found in $el,
-           * Works by wrapping all text between given set of tags in a span class
-           * and later analyze text in each children tag of $el for important words
+           * Highlights important words found in $el
+           * Does not change el, returns the highlighted text as an HTML string
+           * through a promise
            */
-          RM.highlight_text_in_div = function highlight_text_in_div ( $el ) {
+          RM.highlight_text_in_div = function highlight_text_in_div ( $el, mapTagClass, mapAttrClass ) {
 
              //var aHighlightPromises = [];
-             var parsedTree = UT.parseDOMtree($el);
+             var parsedTree = UT.parseDOMtree($el, mapTagClass, mapAttrClass);
 
-             return $
-                .when(RM.apply_highlighting_filters_to_text(
-                         parsedTree.html_parsed_text,
-                         [RM.highlight_words],
-                         RM.simple_tokenizer, RM.simple_detokenizer,
-                         function filter_comment_remover ( aTokens ) {
-                            return parsedTree.aCommentPos;
-                         }))
-                .then(function ( highlighted_text ) {
-                         $el.replaceWith(highlighted_text);
-                         return highlighted_text; // will get passed to the done callback of the promise (not used here)
-                      });
-
+             return $.when(
+                RM.apply_highlighting_filters_to_text(
+                   parsedTree.html_parsed_text,
+                   [RM.highlight_words],
+                   RM.simple_tokenizer, RM.simple_detokenizer,
+                   function filter_comment_remover ( aTokens ) {
+                      return parsedTree.aCommentPos;
+                   }));
           };
 
+          /**
+           INPUT:
+           @param $source {jquery element} the id of the div source within which to select the text
+           @returns {array} returns an array with text stats in ParagraphData object (div class, sentence number etc.)
+           */
           RM.generateTagAnalysisData = function generateTagAnalysisData ( $source ) {
-             /**
-              INPUT:
-              @param $source {jquery element} the id of the div source within which to select the text
-              @returns {array} returns an array with text stats in ParagraphData object (div class, sentence number etc.)
-              */
-                //logEntry("generateTagAnalysisData");
              DBG.LOG_INPUT_VALUE('$source', $source);
 
-             var tagHTML = ["p"/*, "h1", "h2", "h3", "h4", "h5", "h6"*//*, "li"*/].join(", ");
-             // table tags and spans should not be among those tags as it would affect the accurate counting of sentences.
-             // table tags : a lots of single words would lower dramatically the average sentence number
-             // span tags : One sentence can be separated into several span which falsify the counting
-             var aData = []; // array which will contain the analysis of text paragraphs
+             /* We only analyze the paragraph as:
+              - they are a better indication of the content of the article
+              - tables tend to have short phrases, e.g. can mislead the analysis based on average length of sentences
+              - same goes for span tags, who tend not to have complete sentences
+              */
+             var tagHTML = "p",
+                 // array which will contain the analysis of text paragraphs
+                 aData = [];
 
-             // Do clean-up of in-the-way tags
-             var el_source = $source[0];
-             $("script", el_source).remove();
-             $("meta", el_source).remove();
-             $("link", el_source).remove();
-             $("iframe", el_source).remove();
-
-             /* For each paragraph, calculate a series of indicators
-              number of sentences
-              average length of sentences in words
-              number of links
-              the first enclosing div
+             /*
+              For each paragraph, calculate a series of indicators
+              - number of sentences
+              - average length of sentences in words
+              - number of links
+              - the first enclosing div
               */
              logWrite(DBG.TAG.DEBUG, "Computing stats on text with tags", tagHTML);
-             $(tagHTML, el_source).each(get_tag_stat);
+             $(tagHTML, $source).each(get_tag_stat);
 
              //logExit("generateTagAnalysisData");
              DBG.LOG_RETURN_VALUE(aData);
              return aData;
 
+             /**
+              * This function gets executed for each paragraph of the loaded html_page (located in $source)
+              * @param index : index in the array of jQuery array-like object
+              * @param element : the DOM <p> element
+              */
              function get_tag_stat ( index, element ) {
-                // I have to put it inside that bloc to have aData available in the closure
-                // that makes it harder to test it separately
-                // called from a DOM object, in an each context
-                // that means this refers to the DOM element, NOTE: the DOM element, not the jQuery version
-                var paragraghData = new DS.ParagraphData();
+                // this is just to ensure that the javascript native map do not interact badly with reserved names
+                const PREFIX = "z_";
+                var paragraghData = new DS.ParagraphData(),
+                    $el = $(this); // In principle, same as $(element)
+
                 switch (element.nodeType) {
+                   // we only are dealing with paragraphs here, so that will always be the case
+                   // but we keep like this for later possible evolution
+                   // for example, case of old web pages who do not use the paragraph tags but direct text and
+                   // page break with br tag
                    case 1: //Represents an element
-                      // look for nodename and do something
                       var tagName = element.tagName;
 
-                      var parentTagName = $(this).parent()[0].tagName;
-                      //logWrite(DBG.TAG.DEBUG, "element read", tagName, element.id, element.textContent);
-                      //logWrite(DBG.TAG.DEBUG, "element parent", parentTagName);
+                      var parentTagName = element.parentNode.tagName;
+                      //var parentTagName = $(this).parent()[0].tagName;
 
                       // this portion of code ensure that value in tables do no count towards the stats
                       // if they would, table elements with one number would dramatically lower the average of words
                       // per sentence, hence a greater likelihood of excluding paragraphs
+                      // So in short, no paragraph whose parent has a table tag will be accounted for
+                      // This means paragraphs in table cells are discounted
                       //var isTableContent =  ? "false" : "true";
                       if (parentTagName.search("T") !== -1) {
+                         // that include TR, TD, TH, hopefully nothing else relevant
                          break;
                       }
 
-                      var hierarchy = $(this).parentsUntil("body", "div") || [$("body")]; //!! to test! if no div enclosing, then body is used
+                      //TODO : replace by jQUERY closest
+                      var hierarchy = $el.parentsUntil("body", "div") || [$("body")]; //!! to test! if no div enclosing, then body is used
                       var div = $(hierarchy[0]); // By construction can't be null right?
+                      var div_id = div.attr("id");
+                      var div_class = div.attr("class");
 
-                      paragraghData.$el = $(this);
+                      paragraghData.$el = $el;
                       paragraghData.tag = tagName;
-                      paragraghData.text = element.textContent;
+                      paragraghData.text = element.textContent.trim();
                       if (paragraghData.text === "") {
                          logWrite(DBG.TAG.WARNING, "text in element is empty : ignoring");
                          break;
@@ -414,17 +436,19 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       }
                       paragraghData.sentence_number = text_stats.sentence_number;
                       paragraghData.avg_sentence_length = text_stats.avg_sentence_length;
-                      paragraghData.enclosing_div_id = (typeof div.attr("id") === "undefined") ? "" : div.attr("id");
-                      paragraghData.enclosing_div_class =
-                      (typeof div.attr("class") === "undefined") ? "" : div.attr("class");
+
+                      paragraghData.enclosing_div_id = (typeof div_id === "undefined") ? "" : div_id;
+                      paragraghData.enclosing_div_class = (typeof div_class === "undefined") ? "" : div_class;
                       paragraghData.enclosing_div =
                       RM.get_DOM_select_format_from_class(paragraghData.enclosing_div_id,
                                                           paragraghData.enclosing_div_class);//we have to take care of the case with several classes
+                      paragraghData.mapClosestDiv = {};
+                      paragraghData.mapClosestDiv[PREFIX + paragraghData.enclosing_div] = div;
 
                       aData.push(paragraghData);
                       break;
 
-                   case elem.TEXT_NODE: //Represents textual content in an element or attribute
+                   case 3: //Represents textual content in an element or attribute
                       // that case should never happen because of the processing done prior to the call (wrap in span tags)
                       // for the sake of completeness we could define it though
                       logWrite(DBG.TAG.WARNING, "text", element);
@@ -435,7 +459,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       logWrite(DBG.TAG.WARNING, "do nothing");
                 }
              }
-          }
+          };
 
           ////////// Text processing helper functions
           RM.get_DOM_select_format_from_class = function get_DOM_select_format_from_class ( div_id, div_class ) {
@@ -599,7 +623,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              var aCommentPos = commentMarker(aTokens);
              logWrite(DBG.TAG.DEBUG, "comment table", UT.inspect(aCommentPos, null, 4));
              // Now remove the comment tokens from the input
-             var offset =0;
+             var offset = 0;
              aCommentPos.forEach(
                 function ( elemPos, index, array ) {
                    var removed_token_no = elemPos.aCommentToken.length;

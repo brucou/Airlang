@@ -97,3 +97,32 @@ todo:
  and then some style info for the classes
 
  */
+FROM READER MODEL RM.highlight_important_words
+var pdStatRowPartial;
+var i;
+
+var aPromises = []; //array of deferred for async function calls
+
+for (i = 0; i < aSelectedDivs.length; i++) {
+   pdStatRowPartial = aSelectedDivs[i];
+   var div_selector = pdStatRowPartial.div;
+   if (div_selector.length === 0) {
+      // this is pathological case, where the relevant text is directly under the body tag
+      // that should not happen as we are always under body under that version of the algorithm
+      // so just warns in console
+      logWrite(DBG.TAG.WARNING, "div_selector is empty, ignoring");
+      continue;
+   }
+
+   logWrite(DBG.TAG.INFO, "Highlighting important words on text from ", div_selector);
+   var $div_selector = $(div_selector);
+   aPromises.push(
+      $.when(
+         RM.highlight_text_in_div($div_selector)
+            .done(function ( /* array of highlighted text from highlight_proper_text*/ ) {
+                     aHighlightedText = Array.prototype.slice.call(arguments);
+
+                  }))); //adds another promise to the array
+   $div_selector.appendTo($dest);
+}
+return $.when.apply($, aPromises); // return the promise monitoring parallel execution
