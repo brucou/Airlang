@@ -20,7 +20,7 @@
  * @param aExpectationMsg
  * @returns {Function}
  */
-function QasyncTest ( sTestType, sTestDescription, f, aInputs, objExpectedOutput, aTransforms,
+function QasyncTest ( sTestType, sTestDescription, f, aInputs, aTransforms, objExpectedOutput,
                       aExpectationMsg ) {
    function check_input_args () {
       var aArgs = Array.prototype.slice.call(arguments);

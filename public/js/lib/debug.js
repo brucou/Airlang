@@ -209,10 +209,10 @@ DBG.logForceWriteShort = function logForceWriteShort ( tag, text, arg ) {
    text = ['[', DBG.padding_right(calling_function, ' ', DBG.MAX_LETTERS), ']', ' ', text].join("");
    console.log(DBG.padding_right(tag, ' ', 6) + DBG.SEP.TAG + text);
 
-   if (arg) {
+   if (arguments.length>2) {
       for (i = 2; i != arguments.length; i++) {
-         if (!arguments[i]) {
-            console.log(DBG.SEP.ARG + "??");
+         if (typeof arguments[i] === 'undefined' || null == arguments[i]) {
+            text += DBG.SEP.ARG + "??"
          }
          else {
             console.dir(arguments[i]);
@@ -242,9 +242,9 @@ DBG.logForceWrite = function logForceWrite ( tag, text, arg ) {
 
    //text_old = ['[', DBG.padding_right(context, ' ', DBG.MAX_LETTERS), ']', ' ', text].join("");
    text = ['[', DBG.padding_right(calling_function, ' ', DBG.MAX_LETTERS), ']', ' ', text].join("");
-   if (arg) {
+   if (arguments.length>2) {
       for (i = 2; i != arguments.length; i++) {
-         if (!arguments[i]) {
+         if (typeof arguments[i] === 'undefined' || null == arguments[i]) {
             text += DBG.SEP.ARG + "??"
          }
          else {

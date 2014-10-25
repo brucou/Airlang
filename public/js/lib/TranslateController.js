@@ -32,6 +32,8 @@
  - apres celle qui n'ont ni sens ni translation (enlever la ligne vide...)
  TODO : FEATURES : See how to mitigate the fact that ts_lexize cspell do not find the lexeme always
  - for instance, připomněl -> připomněl
+ IMPORTANT:
+ - if in the controller there are two identical strings matching to event handlers, only the last one is taken into account
  */
 define(['jquery',
         'mustache',
@@ -87,14 +89,20 @@ define(['jquery',
                    }
                    this.process(ev, this.$tooltip, this.options);
                 },
-                'click'                : function ( $el, ev ) {
+                'click'                : function click ( $el, ev ) {
                    if (this.options.translate_by != 'click') {
-                      return;
+                      //return;
                    }
-                   logEntry('Translate : click');
-                   this.process(ev, this.$tooltip, this.options);
-                   logExit('Translate : click');
-                   return true;
+                   else {
+                      logEntry('Translate : click');
+                      this.process(ev, this.$tooltip, this.options);
+                      logExit('Translate : click');
+                   }
+
+                   // hook to handle note functionality
+                   var note = TC.getNoteFromWordClickedOn($el, ev, window.getSelection().getRangeAt(0));
+
+                   return true; // TODO : what does return true mean?
                 },
                 'mousemove'            : function ( $el, ev ) {
                    var self = this;
@@ -454,5 +462,178 @@ define(['jquery',
 
              });
 
+          /**
+           * Purpose    : return a note object containing the word and positional information about the word being clicked on
+           * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
+           *              i.e. with numbered html tag except for text nodes
+           * @param {JQuery} $el : JQuery element clicked on (target element)
+           * @param {event} ev  : event object
+           * @param {range} selectedRange range containing the click selection made by the user
+           */
+          TC.getNoteFromWordClickedOn = function getNoteFromWordClickedOn ( $el, ev, selectedRange ) {
+             // count the number of words to the first element with ID
+
+             // Two cases, the anchor object has an id property or it does not. Most of the time it won't
+             var startNode = selectedRange.startContainer;
+             var selected_word = startNode.textContent;
+             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+
+             var parent_node_with_id = TC.findParentWithId(startNode);
+             var id_of_parent_node_with_id = parent_node_with_id.getAttribute("id");
+
+             var currentNode = document.getElementById("0");
+             // NOTE :: This introduces a dependance with the parseDOMTree function
+             // if at some point the id changes in parseDomTree, it has to be updated here too
+
+          };
+
+          /**
+           *
+           * @param {DOM Node} startNode
+           * @returns {DOM Node}
+           */
+          TC.findParentWithId = function findParentWithId ( startNode ) {
+             // Find an ancestor node to startNode with an attribute id
+             var currentNode = startNode;
+             var ancestor_level = 0;
+             while (currentNode &&
+                    (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") ))
+             {
+                logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
+                currentNode = currentNode.parentNode;
+                ancestor_level++;
+             }
+             if (currentNode === null) {
+                // we reached the top of the tree and we found no node with an attribute ID...
+                throw 'findParentWithId: could not find a node with an ID...'
+             }
+
+             logWrite(DBG.TAG.DEBUG,
+                      "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
+             return currentNode;
+          };
+
+          /**
+           * Purpose    : return the word index from the first parent element with an existing attribute ID
+           * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
+           *              i.e. with numbered html tag except for text nodes
+           * @param {JQuery} $el : JQuery element clicked on (target element)
+           * @param {event} ev  : event object
+           * @param {range} selectedRange range containing the click selection made by the user
+           * TODO : treat the case where startNode is not a text node : as this is a click, it should always be the case
+           *          unless we click on a tag (is that possible? on an image for instance? what if there is a selection before the click?
+           */
+          TC.getWordIndexFromIDParent = function getWordIndexFromIDParent ( $el, ev, selectedRange ) {
+
+             //var selectedRange = window.getSelection().getRangeAt(0);
+             // if it is just a click, then anchor and focus point to the same location
+             // but that means there is no selection having been done previously
+             // For the moment we just deal with anchor
+
+             // Two cases, the anchor object has an id property or it does not. Most of the time it won't
+             var startNode = selectedRange.startContainer;
+             var startOffset = selectedRange.startOffset;
+             var textContent = startNode.textContent;
+             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+
+             logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
+
+             // Init array variables tracing the counting
+             var aCharLengths = [],
+                 aWordLengths = [];
+
+             // get the first parent with id
+             var currentNode = TC.findParentWithId(startNode);
+
+             // traverse tree till startNode and count words and characters while doing so
+             count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
+
+             logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(sum, 0), aWordLengths.reduce(sum, 0));
+
+             count_word_and_char_till_offset(startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
+
+             //finished! Now count the number of words we have skipped to reach the final one and the chars
+             selectedRange.detach();
+             function sum ( a, b ) {return a + b}
+
+             return aWordLengths.reduce(sum);
+
+             ////// Helper functions
+             function count_word_and_char_till_node ( currentNode, startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths,
+                                                      tokenizer ) {
+                // tokenizer is passed here as a parameter because I need to use the same tokenizer that gave me the token array when highlighting previously
+                if (!currentNode.isEqualNode(startNode)) {
+                   // by construction, currentNode cannot be a TEXT_NODE the first time, as ancestor node have an ID
+                   // and text node cannot have id
+                   if (currentNode.nodeType === currentNode.TEXT_NODE) {
+                      logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
+                      var text_content = currentNode.textContent;
+                      var text_content_trim = text_content.trim();
+                      var aWords = tokenizer(text_content_trim);
+                      aCharLengths.push(text_content.length);
+
+                      if (text_content_trim) {
+                         logWrite(DBG.TAG.DEBUG, "non empty string: adding to word array");
+                         // if text_content is only spaces, there is no words to count!!
+                         aWordLengths.push(aWords.length);
+                      }
+                      // the question here is whether to add +1 or not to account for spaces : TODO:  TEST IN CHROME, FIREFOX, OPERA
+                      return false;
+                   }
+                   else {
+                      // otherwise we have an element node, which do not have a text, just proceed to the next child
+                      if (!currentNode.hasChildNodes())
+                      {
+                         throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
+                      }
+                      logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
+                               currentNode.childNodes.length);
+                      var nodeChildren = currentNode.childNodes;
+                      return UT.some(nodeChildren, function some ( nodeChild, index, array ) {
+                         logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
+                                  currentNode.nodeName);
+
+                         var result = count_word_and_char_till_node(nodeChild, startNode, aCharLengths, aWordLengths,
+                                                                    tokenizer);
+                         logWrite(DBG.TAG.DEBUG, "some returns ", result);
+                         return result;
+                      });
+                   }
+                }
+                else {
+                   // found startNode!!
+                   logWrite(DBG.TAG.DEBUG, "found startNode");
+                   return true;
+                }
+             }
+
+             // we found startNode, now count words and characters till we reach the offset
+             function count_word_and_char_till_offset ( startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths,
+                                                        tokenizer ) {
+                // tokenizer is passed here as a parameter because I need to use the same tokenizer that gave me the token array when highlighting previously
+                if (startNode.nodeType !== startNode.TEXT_NODE)
+                {
+                   throw 'count_word_and_char_till_node: this is implemented only for text node! Passed ' +
+                         startNode.nodeName + " " + startNode.nodeType;
+                }
+
+                var current_offset = 0,
+                    aWords = tokenizer(startNode.textContent);
+                aWords.some(function ( word, index, array ) {
+                   logWrite(DBG.TAG.DEBUG, "processing", word);
+                   aCharLengths.push(word.length);
+                   // we put 1 because there is another word which has been parsed.
+                   // Reminder : this array contains the number of words to be counted till reaching the final word
+                   aWordLengths.push(word.trim() ? 1 : 0);
+                   logWrite(DBG.TAG.DEBUG, "current_offset, startOffset", current_offset, startOffset);
+                   current_offset +=
+                   word.length + (word.length == 0 ? 1 : (array[index + 1] ? 1 : 0) );
+                   return !(current_offset <= startOffset);
+                });
+             }
+
+          };
+
           return TC;
-       });
+       })
+;

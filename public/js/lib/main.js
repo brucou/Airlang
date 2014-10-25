@@ -10,6 +10,7 @@
  * - investigate how to have module both require.js and stand alone in same file
  * - client : remove later UT global variable (to have access to inspect function in debug.js : DBG.set_inspect_function
  * - register function with the language they are associated to ('cs' etc.)
+ * - use router : https://github.com/flatiron/director (works server and client side, no dependencies of Jquery and the rest
  * TODO: DOCUMENTATION
  * - documentation in code, refactoring, and split in file
  * TODO: DEBUGGING

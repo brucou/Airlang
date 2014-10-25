@@ -1031,7 +1031,7 @@ define([], function () {
          // make the corresponding html_text
          var html_class_text = (html_class_tag)
             ? [html_class_tag, html_class_attr].join(" ")
-            : " " + html_class_attr;
+            : (html_class_attr ? " " + html_class_attr : "");
 
          var html_begin_tag = "<" + tag_name + " id='" + node_index + "'" + html_class_text + ">";
          aHTMLparsed.push(html_begin_tag);
@@ -1043,11 +1043,28 @@ define([], function () {
 
          aChildren.each(function ( index, el ) {
             if (el.nodeType === 3) {
+               // it is important to trim here to avoid variation in the number of token returned by split
+               // according to the composition of the text
+               // For instance "  <".split(" ").length !== "s <".split(" ").length (3 != 2)
+               // This also means we are modifying the html source albeit only spaces, e.g. SIDE EFFECT!!
+               // This could have impact maybe in verbatim source (pre tag for instance)
+               // Hopefully in common application this will be without consequence
                var text = el.textContent;
                if (text.trim()) {
+                  /*
+                   var html_begin_tag = "<span" + " id='" + node_index + "'" + ">";
+                   aHTMLparsed.push(html_begin_tag);
+                   // and commment it out
+                   comment_tag_out(html_begin_tag);
+                   node_index++;
+                   */
                   aHTMLparsed.push(text);
-                  // and increase comment index but do not comment out
                   comment_index += simple_tokenizer(text).length;
+                  /*
+                   var html_end_tag = "</span>";
+                   aHTMLparsed.push(html_end_tag);
+                   comment_tag_out(html_end_tag);
+                   */
                }
             }
             else {
@@ -1081,6 +1098,29 @@ define([], function () {
       // @debugger eval code:1:1
    }
 
+   function some (arr, fun /*, thisArg*/) {
+
+            if (this == null) {
+               throw new TypeError('Array.prototype.some called on null or undefined');
+            }
+
+            if (typeof fun !== 'function') {
+               throw new TypeError();
+            }
+
+            var len = arr.length;
+
+            var thisArg = arguments.length >= 3 ? arguments[2] : void 0;
+            for (var i = 0; i < len; i++) {
+               if (i in arr && fun.call(thisArg, arr[i], i, arr)) {
+                  return true;
+               }
+            }
+
+            return false;
+
+   }
+
    var _UT =
        {
           isArray                   : isArray,
@@ -1111,7 +1151,8 @@ define([], function () {
           injectArray               : injectArray,
           get_calling_function_name : get_calling_function_name,
           parseDOMtree              : parseDOMtree,
-          get_own_properties        : get_own_properties
+          get_own_properties        : get_own_properties,
+          some : some
        };
    window.UT = _UT;
    return _UT;
