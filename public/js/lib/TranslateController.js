@@ -520,6 +520,7 @@ define(['jquery',
            * @param {JQuery} $el : JQuery element clicked on (target element)
            * @param {event} ev  : event object
            * @param {range} selectedRange range containing the click selection made by the user
+           * @returns {number} index of word (starting with 1) from parent with an existing attribute ID
            * TODO : treat the case where startNode is not a text node : as this is a click, it should always be the case
            *          unless we click on a tag (is that possible? on an image for instance? what if there is a selection before the click?
            */

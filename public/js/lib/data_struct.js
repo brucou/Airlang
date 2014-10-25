@@ -455,14 +455,14 @@ define(['utils'], function ( UT ) {
             }
 
             if (!justFoundCommentStartToken && DS.filter_is_comment_end_token(token)) {
-               aCommentPos.push(clone(elemPos));
-               commentParseState = false;
-               reset(elemPos);
                function clone ( elemPos ) {
                   return {
                      pos           : elemPos.pos,
                      aCommentToken : elemPos.aCommentToken
                   }
+               aCommentPos.push(clone(elemPos));
+               commentParseState = false;
+               reset(elemPos);
                }
             }
 
