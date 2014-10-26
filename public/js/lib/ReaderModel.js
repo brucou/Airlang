@@ -28,6 +28,18 @@
  * - could be interesting to look at a library which allows switching from callback to promises
  * - DEBUGGING : state() function of deferred give the state ("pending", "resolved"). So pass the promise in global to look
  * - Also can fail silently, e.g. in case of JS error directly jump to reject without any message visible
+ * JQuery :
+ * - Two types of node comparison, strict comparison can be done with ===, the 'same contents' comparison with isEqualNode
+ * - there is advantage in knowing how to navigate the DOM with jQuery and with the DOM API directly, lots of time wasted
+ *   trying to figure out which is which
+ * DOM :
+ * - there is advantage in knowing how to navigate the DOM with jQuery and with the DOM API directly, lots of time wasted
+ *   trying to figure out which is which
+ * - lots of time wasted trying to programatically set a selection, found no answer so passed the range directly
+ * QUnit
+ * - setup possible when declaring module and actually should be used not to repeat too much test
+ * - split test in different files
+
  */
 
 define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],

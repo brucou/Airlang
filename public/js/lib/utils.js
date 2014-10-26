@@ -1174,6 +1174,8 @@ define([], function () {
       }
    }
 
+   function sum ( a, b ) {return a + b}
+
    var _UT =
        {
           isArray                   : isArray,
@@ -1207,7 +1209,8 @@ define([], function () {
           get_own_properties        : get_own_properties,
           some                      : some,
           traverse_DOM_depth_first  : traverse_DOM_depth_first,
-          fn_get_prop               : fn_get_prop
+          fn_get_prop               : fn_get_prop,
+          sum                       : sum
        };
    window.UT = _UT;
    return _UT;

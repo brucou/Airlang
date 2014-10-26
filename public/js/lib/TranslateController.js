@@ -473,37 +473,79 @@ define(['jquery',
           TC.getNoteFromWordClickedOn = function getNoteFromWordClickedOn ( $el, ev, selectedRange ) {
              // count the number of words to the first element with ID
 
+             ///Helper function
+             function count_word ( word ) {
+                return word ? 1 : 0;
+             }
+
+             function is_word ( word ) {
+                return word;
+             }
+
              // Two cases, the anchor object has an id property or it does not. Most of the time it won't
-             var startNode = selectedRange.startContainer;
-             var selected_word = startNode.textContent;
-             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+             var startNode = selectedRange.startContainer,
+                 firstIDNode = TC.findParentWithId(startNode),
+                 // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-             var parent_node_with_id = TC.findParentWithId(startNode);
-             var id_of_parent_node_with_id = parent_node_with_id.getAttribute("id");
+                 parent_node_with_id = TC.findParentWithId(startNode),
+                 id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
 
-             var currentNode = document.getElementById("0");
-             if (!currentNode) {
+                 rootNode = document.getElementById("0");
+             if (!rootNode) {
                 throw 'getNoteFromWordClickedOn: no element with id="0" - this function can only be called on a DOM parsed with parseDOMTree '
              }
 
              // NOTE TODO :: Solve the dependence introduced with the parseDOMTree function
              // if at some point the id changes in parseDomTree, it has to be updated here too
-             while (!currentNode.isEqualNode(startNode))
-             {
-                logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
-                currentNode = currentNode.parentNode;
-                ancestor_level++;
-             }
-             if (currentNode === null) {
-                // we reached the top of the tree and we found no node with an attribute ID...
-                throw 'findParentWithId: could not find a node with an ID...'
+             var aDomNodes = UT.traverse_DOM_depth_first("===", rootNode, firstIDNode);
+
+             // remove the startNode as we do not wish to count the words in it
+             if (!aDomNodes.pop()) {
+                // if for some reason there is no nodes returned by the traversal, throw an error
+                // there should always one node by construction, the rootNode
+                // TODO: test the edge case if rootnode = startnode in which case there is no words (0) to count
+                // in that case the array is empty, the map leaves it empty and the reduce gives 0
+                // BECAUSE I set 0 as initial value, otherwise error
+                throw 'getNoteFromWordClickedOn: internal error? traverse_DOM_depth_first returns an empty array!'
              }
 
+             var word_index_to_selected_node = aDomNodes
+                // first for each node get the number of words in the node
+                .map(function ( node ) {
+                        return (node.nodeType === node.TEXT_NODE)
+                           //returns number of words in the text node. "" does not count for a word
+                           ? RM.simple_tokenizer(node.textContent).map(count_word).reduce(UT.sum, 0)
+                           // not a text node so no words to count here
+                           : 0;
+                     })
+                // the sum all those numbers
+                .reduce(UT.sum, 0);
+
+             // now calculate the number of words from selected node to selected word
+             var word_index_to_selected_word = TC.getWordIndexFromIDParent($el, ev, selectedRange);
+
+             // get selected word from the index
+             var full_text = rootNode.textContent;
+             if (!full_text) {
+                // that should never happen right?
+                // we let it slip and let the caller decide what to do
+                return {
+                   word  : null,
+                   index : null
+                }
+             }
+             var final_index = word_index_to_selected_node + word_index_to_selected_word;
+
+             //TODO : switch index to 0 if first word?
+             return {
+                word  : RM.simple_tokenizer(full_text).filter(is_word)[final_index - 1],
+                index : final_index
+             }
           };
 
           /**
            *
-           * @param {DOM Node} startNode
+           * @param startNode {DOM Node}
            * @returns {DOM Node}
            * @throws {Exception} throws 'findParentWithId: could not find a node with an ID...'
            */
@@ -564,15 +606,14 @@ define(['jquery',
              // traverse tree till startNode and count words and characters while doing so
              count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
-             logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(sum, 0), aWordLengths.reduce(sum, 0));
+             logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
 
              count_word_and_char_till_offset(startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
              //finished! Now count the number of words we have skipped to reach the final one and the chars
              selectedRange.detach();
-             function sum ( a, b ) {return a + b}
 
-             return aWordLengths.reduce(sum);
+             return aWordLengths.reduce(UT.sum, 0);
 
              ////// Helper functions
              function count_word_and_char_till_node ( currentNode, startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths,
