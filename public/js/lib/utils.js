@@ -916,6 +916,12 @@ define([], function () {
       return aProperties;
    }
 
+   function fn_get_prop ( prop_name ) {
+      return function ( obj ) {
+         return obj[prop_name];
+      }
+   }
+
    /**
     * Purpose : Parse a DOM Tree whose root is given by $el
     * Action  : Add a html line corresponding to the tag at hand and number it sequentially for later identification
@@ -1098,27 +1104,74 @@ define([], function () {
       // @debugger eval code:1:1
    }
 
-   function some (arr, fun /*, thisArg*/) {
+   ////// Helper function DOM
+   function some ( arr, fun /*, thisArg*/ ) {
 
-            if (this == null) {
-               throw new TypeError('Array.prototype.some called on null or undefined');
+      if (this == null) {
+         throw new TypeError('Array.prototype.some called on null or undefined');
+      }
+
+      if (typeof fun !== 'function') {
+         throw new TypeError();
+      }
+
+      var len = arr.length;
+
+      var thisArg = arguments.length >= 3 ? arguments[2] : void 0;
+      for (var i = 0; i < len; i++) {
+         if (i in arr && fun.call(thisArg, arr[i], i, arr)) {
+            return true;
+         }
+      }
+
+      return false;
+
+   }
+
+   /**
+    *
+    * @param start_node {Node}
+    * @param end_node {Node}
+    * @param type_comparison {string} string which indicates the type of comparison to be performed.
+    *                                 === means using === to compare nodes.
+    *                                 That means DOM tree traversal will stop when the exact node (same reference in memory)
+    *                                 will be found.
+    *                                 Any other value will use isEqualNode which compare node contents.
+    *                                 Two nodes in different positions of the tree can not be differentiated
+    * @returns {Array} array with the list of DOM nodes found while traversing the tree
+    */
+   function traverse_DOM_depth_first ( type_comparison, start_node, /*optional*/ end_node ) {
+      if (typeof start_node.hasChildNodes !== 'function') {
+         throw 'traverse_DOM_depth_first: expected a DOM node as parameter, received object start_node with no function hasChildNodes...'
+      }
+      if (end_node && typeof end_node.hasChildNodes !== 'function') {
+         throw 'traverse_DOM_depth_first: expected a DOM node as parameter, received object end_node with no function hasChildNodes...'
+      }
+      var aDomNodes = [];
+      _traverse_DOM_depth_first(start_node);
+      return aDomNodes;
+
+      //// Helper function
+      function _traverse_DOM_depth_first ( current_node ) {
+         aDomNodes.push(current_node);
+
+         if (type_comparison === '===') {
+            if (current_node === end_node) {
+               return true;
             }
-
-            if (typeof fun !== 'function') {
-               throw new TypeError();
+         }
+         else {
+            if (current_node.isEqualNode(end_node)) {
+               return true;
             }
-
-            var len = arr.length;
-
-            var thisArg = arguments.length >= 3 ? arguments[2] : void 0;
-            for (var i = 0; i < len; i++) {
-               if (i in arr && fun.call(thisArg, arr[i], i, arr)) {
-                  return true;
-               }
-            }
-
+         }
+         if (!current_node.hasChildNodes()) {
             return false;
-
+         }
+         else {
+            return UT.some(current_node.childNodes, _traverse_DOM_depth_first);
+         }
+      }
    }
 
    var _UT =
@@ -1152,7 +1205,9 @@ define([], function () {
           get_calling_function_name : get_calling_function_name,
           parseDOMtree              : parseDOMtree,
           get_own_properties        : get_own_properties,
-          some : some
+          some                      : some,
+          traverse_DOM_depth_first  : traverse_DOM_depth_first,
+          fn_get_prop               : fn_get_prop
        };
    window.UT = _UT;
    return _UT;

@@ -482,8 +482,22 @@ define(['jquery',
              var id_of_parent_node_with_id = parent_node_with_id.getAttribute("id");
 
              var currentNode = document.getElementById("0");
-             // NOTE :: This introduces a dependance with the parseDOMTree function
+             if (!currentNode) {
+                throw 'getNoteFromWordClickedOn: no element with id="0" - this function can only be called on a DOM parsed with parseDOMTree '
+             }
+
+             // NOTE TODO :: Solve the dependence introduced with the parseDOMTree function
              // if at some point the id changes in parseDomTree, it has to be updated here too
+             while (!currentNode.isEqualNode(startNode))
+             {
+                logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
+                currentNode = currentNode.parentNode;
+                ancestor_level++;
+             }
+             if (currentNode === null) {
+                // we reached the top of the tree and we found no node with an attribute ID...
+                throw 'findParentWithId: could not find a node with an ID...'
+             }
 
           };
 
@@ -491,6 +505,7 @@ define(['jquery',
            *
            * @param {DOM Node} startNode
            * @returns {DOM Node}
+           * @throws {Exception} throws 'findParentWithId: could not find a node with an ID...'
            */
           TC.findParentWithId = function findParentWithId ( startNode ) {
              // Find an ancestor node to startNode with an attribute id
@@ -578,7 +593,6 @@ define(['jquery',
                          // if text_content is only spaces, there is no words to count!!
                          aWordLengths.push(aWords.length);
                       }
-                      // the question here is whether to add +1 or not to account for spaces : TODO:  TEST IN CHROME, FIREFOX, OPERA
                       return false;
                    }
                    else {

@@ -1,8 +1,8 @@
 /**
  * Created by bcouriol on 9/10/14.
  */
-define(['ReaderModel', 'TranslateController', 'data_struct', 'utils'],
-       function ( RM, TC, DS, UT ) {
+define(['ReaderModel', 'TranslateController', 'data_struct', 'utils', 'jquery'],
+       function ( RM, TC, DS, UT, $ ) {
           var dup_assert;
           var actual; // will contain the actual_value returned by the function tested
           /*
@@ -11,43 +11,6 @@ define(['ReaderModel', 'TranslateController', 'data_struct', 'utils'],
            assert.equal(value, "hello", "We expect value to be hello");
            });
            */
-
-          QUnit.module("Testing async. function tester QasyncTest");
-          QasyncTest("equal", "function with one parameter, no transforms",
-                     function dummy_1_var ( x ) {
-                        var dfr = $.Deferred();
-                        dfr.resolve(5 * x);
-                        return dfr.promise();
-                     },
-                     [2], null, 10, ['should be equal to 10']
-          )();
-          QasyncTest("equal", "function with 3 parameters, no transforms",
-                     function dummy_3_var ( x, y, z ) {
-                        var dfr = $.Deferred();
-                        dfr.resolve(5 * x * y * z);
-                        return dfr.promise();
-                     },
-                     [2, 0.5, 3], null, 15, ['should be equal to 15']
-          )();
-          QasyncTest("equal", "function with 3 parameters including one array, no transforms",
-                     function dummy_3_var_array ( x, aY, z ) {
-                        var dfr = $.Deferred();
-                        dfr.resolve(5 * x * aY[0] * z.length);
-                        return dfr.promise();
-                     },
-                     [2, [0.5], 'abc'], null, 15, ['should be equal to 15']
-          )();
-          QasyncTest("equal", "function with string parameters, involving 2 transforms",
-                     function dummy_with_transform ( text ) {
-                        var dfr = $.Deferred();
-                        dfr.resolve(text);
-                        return dfr.promise();
-                     },
-                     ['texte de quatre mots'],
-                     [function ( x ) {return x.length}, function ( x ) {return x.substr(6)}],
-                     [20, 'de quatre mots'],
-                     ['checked length of string', 'checked string extraction']
-          )();
 
           QUnit.module("Testing filtering functionality");
           QUnit.asyncTest("comments stay the same", function ( assert ) {

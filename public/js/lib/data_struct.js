@@ -424,7 +424,7 @@ define(['utils'], function ( UT ) {
       return (token === COMMENT_END_TOKEN);
    };
 
-   DS.filter_comment_remover = function filter_comment_remover(aTokens) {
+   DS.filter_comment_remover = function filter_comment_remover ( aTokens ) {
       var aCommentPos = [];
       var elemPos = {};
 
@@ -460,10 +460,11 @@ define(['utils'], function ( UT ) {
                      pos           : elemPos.pos,
                      aCommentToken : elemPos.aCommentToken
                   }
+               }
+
                aCommentPos.push(clone(elemPos));
                commentParseState = false;
                reset(elemPos);
-               }
             }
 
          });
