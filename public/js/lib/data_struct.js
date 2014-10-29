@@ -384,10 +384,6 @@ define(['utils'], function ( UT ) {
       return mapFilters; //return that value for checking purposes
    };
 
-   DS.filter_default = function filter_default ( token ) {// id function
-      return token;
-   };
-
    DS.filter_fn_identity = function default_identity_filter ( token ) {// id function
       return token;
    };

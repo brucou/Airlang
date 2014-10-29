@@ -97,7 +97,7 @@ requirejs(
 
       function start () {
          logEntry("start");
-         new RC.ReaderToolController("#reader_tool");
+         new RC.ReaderToolController("#reader_tool", {view: RC.rtView, getViewAdapter: RC.getViewAdapter, model: RM});
          logExit("start");
       }
 
@@ -143,7 +143,6 @@ requirejs(
          init_log();
          // TEST CODE
          //trace.config('ReaderToolController', 'Constructor', false);
-         //window.RM = RM;
          trace(RM, 'RM');
          trace(RC, 'RC');
          trace(IO, 'IO');

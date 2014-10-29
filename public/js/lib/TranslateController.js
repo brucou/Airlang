@@ -99,9 +99,6 @@ define(['jquery',
                       logExit('Translate : click');
                    }
 
-                   // hook to handle note functionality
-                   var note = TC.getNoteFromWordClickedOn($el, ev, window.getSelection().getRangeAt(0));
-
                    return true; // TODO : what does return true mean?
                 },
                 'mousemove'            : function ( $el, ev ) {
@@ -539,7 +536,8 @@ define(['jquery',
              //TODO : switch index to 0 if first word?
              return {
                 word  : RM.simple_tokenizer(full_text).filter(is_word)[final_index - 1],
-                index : final_index
+                index : final_index,
+                rootNode : rootNode /* optional */
              }
           };
 

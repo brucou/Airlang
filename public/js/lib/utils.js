@@ -940,9 +940,10 @@ define([], function () {
     * @param {JQuery} $el The root of the tree from which the parsing starts
     * @param {map} mapAttrClass MapAttrClass is a double mapping (attribute, value) -> "attribute = `mapping((attribute, value)`"
     * @param {map} mapTagClass MapTagClass is a simple mapping (tagName) -> "class = mapping(tagName)"
+    * @param {boolean} flag_no_transform optional. If true, tags are converted with their attributes to HTML
     * @returns {{aHTMLparsed: Array, aCommentPos: Array, html_parsed_text: string, aTokens: (*|Array)}}
     */
-   function parseDOMtree ( $el, mapTagClass, mapAttrClass ) {
+   function parseDOMtree ( $el, mapTagClass, mapAttrClass, /* boolean optional */ flag_no_transform ) {
       // TODO: check el is a Jquery element or a DOM element, if a DOM convert to Jquery
       if (!($el instanceof jQuery)) {
          throw 'parseDOMtree: called with parameter $el, expected JQuery object, found type ' + (typeof $el)
@@ -963,7 +964,7 @@ define([], function () {
          aCommentPos      : aCommentPos,
          html_parsed_text : html_parsed_text,
          aTokens          : html_parsed_text.split(" ")
-         //There are spaces in aHTMLparsed, so this op is not trivial x->x
+         //There are spaces in aHTMLparsed, so this split op is not trivial x->x
       };
 
       function _parseDOMtree ( $el, aHTMLparsed, aCommentPos ) {
@@ -1012,34 +1013,49 @@ define([], function () {
             aCommentPos.push(clone(elemPos));
          }
 
-         // read the attributes to map from mapAttrTagClass -> array
-         var aAttributes = get_own_properties(mapAttrClass);
-         // for each attribute in the array, read the corresponding value from $el
-         // and perform the mapping if there is one to perform
-         var html_class_attr = aAttributes.reduce(function ( accu, attribute ) {
-            var attr_value_in_$el = $el.attr(attribute);
-            var replace_attr_value = mapAttrClass[attribute][attr_value_in_$el ?
-                                                             attr_value_in_$el.toLowerCase() :
-                                                             undefined];
-            logWrite(DBG.TAG.DEBUG, "attribute name, attribute value, mapping", attribute, attr_value_in_$el,
-                     replace_attr_value);
-            return [accu,
-                    (attr_value_in_$el && replace_attr_value) ?
-                    (attribute + "='" + replace_attr_value + "'") :
-                    ""
-            ].join(" ");
-         }, "").trim();
+         var html_begin_tag,
+             tag_name = $el.prop("tagName");
+         if ('undefined' !== flag_no_transform && flag_no_transform) {
+            // case when flag_no_transform is true
+            // in that case we don't read mapAttr and else, we convert the tag attributes to html
+            var arr = [];
+            arr.push("<" + tag_name);
+            var aDomAttributes = Array.prototype.slice.call($el[0].attributes);
+            aDomAttributes.forEach(function ( attribute ) {
+               arr.push(attribute.nodeName + "='" + attribute.value + "'");
+            });
+            html_begin_tag = arr.join(" ") + ">";
+            console.log("html_Begin tag", html_begin_tag);
+         }
+         else {// read the attributes to map from mapAttrTagClass -> array
+            var aAttributes = get_own_properties(mapAttrClass);
+            // for each attribute in the array, read the corresponding value from $el
+            // and perform the mapping if there is one to perform
+            var html_class_attr = aAttributes.reduce(function ( accu, attribute ) {
+               var attr_value_in_$el = $el.attr(attribute);
+               var replace_attr_value = mapAttrClass[attribute][attr_value_in_$el ?
+                                                                attr_value_in_$el.toLowerCase() :
+                                                                undefined];
+               logWrite(DBG.TAG.DEBUG, "attribute name, attribute value, mapping", attribute, attr_value_in_$el,
+                        replace_attr_value);
+               return [accu,
+                       (attr_value_in_$el && replace_attr_value) ?
+                       (attribute + "='" + replace_attr_value + "'") :
+                       ""
+               ].join(" ");
+            }, "").trim();
 
-         // read the tags map from mapTagClass -> array
-         var tag_name = $el.prop("tagName");
-         var html_class_tag = mapTagClass[tag_name];
+            // read the tags map from mapTagClass -> array
+            var html_class_tag = mapTagClass[tag_name];
 
-         // make the corresponding html_text
-         var html_class_text = (html_class_tag)
-            ? [html_class_tag, html_class_attr].join(" ")
-            : (html_class_attr ? " " + html_class_attr : "");
+            // make the corresponding html_text
+            var html_class_text = (html_class_tag)
+               ? [html_class_tag, html_class_attr].join(" ")
+               : (html_class_attr ? " " + html_class_attr : "");
 
-         var html_begin_tag = "<" + tag_name + " id='" + node_index + "'" + html_class_text + ">";
+            html_begin_tag = "<" + tag_name + " id='" + node_index + "'" + html_class_text + ">";
+         }
+
          aHTMLparsed.push(html_begin_tag);
          // and commment it out
          comment_tag_out(html_begin_tag);
@@ -1055,26 +1071,15 @@ define([], function () {
                // This also means we are modifying the html source albeit only spaces, e.g. SIDE EFFECT!!
                // This could have impact maybe in verbatim source (pre tag for instance)
                // Hopefully in common application this will be without consequence
-               var text = el.textContent;
+               var text;
+               text = flag_no_transform? el.textContent.trim() : el.textContent;
                if (text.trim()) {
-                  /*
-                   var html_begin_tag = "<span" + " id='" + node_index + "'" + ">";
-                   aHTMLparsed.push(html_begin_tag);
-                   // and commment it out
-                   comment_tag_out(html_begin_tag);
-                   node_index++;
-                   */
                   aHTMLparsed.push(text);
                   comment_index += simple_tokenizer(text).length;
-                  /*
-                   var html_end_tag = "</span>";
-                   aHTMLparsed.push(html_end_tag);
-                   comment_tag_out(html_end_tag);
-                   */
                }
             }
             else {
-               _parseDOMtree($(el), aHTMLparsed, aCommentPos);
+               _parseDOMtree($(el), aHTMLparsed, aCommentPos, flag_no_transform);
             }
          });
 

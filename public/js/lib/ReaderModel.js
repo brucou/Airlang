@@ -571,13 +571,12 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                 }
                 else {
                    //logWrite(DBG.TAG.DEBUG, "associating action none to word ", word);
-                   aTokenActionMap.push({token : word, action : DS.filter_default});
+                   aTokenActionMap.push({token : word, action : null});
                 }
 
              });
 
              return aTokenActionMap;
-             //$el.html(highlit_text);
           };
 
           ////////// Filter highlighting functions
@@ -588,13 +587,14 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
            * Assumption : - Filter function do not add or remove token, and do not change token order,
            *                i.e. modifies token in place or leave them intact
            *              - The text passed in parameter is already trimmed
-           * @param{String} text character string to be highlighted
-           * @param{array} aFilters array of filter functions to be applied.
+           * @param text {String} character string to be highlighted
+           * @param aFilters {array}  array of filter functions to be applied.
            *                          Filters' index in array is a decreasing function of priority of application.
            *                          i.e. aFilters[0] takes precedence over aFilters[1]
-           * @param{Function} tokenizer  function who takes a string and returns an array of tokens
-           * @param{Function} detokenizer  reverse function of tokenizer which takes an array of tokens and returns a string
-           * @param{Function} commentMarker takes an array of tokens and returns a structure in which are located the indexes of token marked up as comment
+           *                          Filters have to be registered to know they input type and output type
+           * @param tokenizer {Function}     function who takes a string and returns an array of tokens
+           * @param detokenizer {Function}   reverse function of tokenizer which takes an array of tokens and returns a string
+           * @param commentMarker {Function} takes an array of tokens and returns a structure in which are located the indexes of token marked up as comment
            *                                  Such comments will be ignored by the filters.
            * Algorithm  : Transform a text into tokens, then apply filters to those tokens.
            *              Filters mark the token to be highlighted. When all filters are done, highlighting functions
@@ -685,9 +685,8 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       transposedResult.action =
                       transposedResult.action_final =
                       transposedResult.aActions.reduce(function ( action_a, action_b ) {
-                         return action_a.name !== DS.filter_default.name ?
-                                action_a :
-                                action_b;
+                         // if action_a is falsy (null or undefined or ""), then reduce to action_b
+                         return action_a ? action_a : action_b;
                       })
                    });
                    //console.dir(aTransposedResults);
@@ -711,10 +710,10 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
 
                    // Apply filter selected
                    // [{token, action_final}]  =>  [token_filtered]
-                   var aTokensActedOn = [];
-                   aTransposedResults.forEach(function ( transposedResult ) {
-                      aTokensActedOn.push(transposedResult.action.call(null,
-                                                                       transposedResult.token));
+                   var aTokensActedOn = aTransposedResults.map(function ( transposedResult ) {
+                      return (transposedResult.action ?
+                              transposedResult.action.call(null, transposedResult.token) :
+                              transposedResult.token);
                    });
                    //logWrite(DBG.TAG.DEBUG, "aTokensActedOn", UT.inspect(aTokensActedOn, null, 4));
 

@@ -1,8 +1,8 @@
 /**
  * Created by bcouriol on 9/10/14.
  */
-define(['ReaderModel', 'TranslateController', 'data_struct', 'utils', 'jquery'],
-       function ( RM, TC, DS, UT, $ ) {
+define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct', 'utils', 'jquery'],
+       function ( RM, TC, RC, DS, UT, $ ) {
           var dup_assert;
           var actual; // will contain the actual_value returned by the function tested
           /*
@@ -234,6 +234,14 @@ define(['ReaderModel', 'TranslateController', 'data_struct', 'utils', 'jquery'],
            */
 
           QUnit.module("Testing note highlighting functionality", {
+             setup       : function () {
+                this.html_test_text =
+                "<DIV id='0'> <P id='3'> <SPAN class='highlight'>Když</SPAN> končil <SPAN class='highlight'>projekt</SPAN> Presseurop, <A id='4'> psali jsme </A> , že <SPAN class='highlight'>neříkáme</SPAN> sbohem, nýbrž „na shledanou“. </P> </DIV>";
+                this.$el =
+                $("<div id='0'> <p id='3'> <span class='highlight'>Když</span> končil <span class='highlight'>projekt</span> Presseurop, <a id='4'> psali jsme </a> , že <span class='highlight'>neříkáme</span> sbohem, nýbrž „na shledanou“. </p> </div>");
+                $("#0").remove();
+                this.$el.appendTo("body");
+             },
              setup_range : function ( range, startNode, startOffset ) {
                 range.setStart(startNode, startOffset);
                 range.setEnd(startNode, startOffset);
@@ -245,8 +253,7 @@ define(['ReaderModel', 'TranslateController', 'data_struct', 'utils', 'jquery'],
              // one chracter word, caret pos before space
              // create an html content and put it in a jquery
              // then create a range where to test, add to a selection, and call the function
-             var $el =
-                    $("<div id='0'> <p id='3'> <span class='highlight'>Když</span> končil <span class='highlight'>projekt</span> Presseurop, <a id='4'> psali jsme </a> , že <span class='highlight'>neříkáme</span> sbohem, nýbrž „na shledanou“. </p> </div>");
+             var $el = this.$el;
              var range = document.createRange();
 
              /* should be TEXT_NODE Když*/
@@ -329,9 +336,7 @@ define(['ReaderModel', 'TranslateController', 'data_struct', 'utils', 'jquery'],
           });
 
           QUnit.test("Getting word info from selection - from document start to selected node", function ( assert ) {
-             var $el =
-                    $("<div id='0'> <p id='3'> <span class='highlight'>Když</span> končil <span class='highlight'>projekt</span> Presseurop, <a id='4'> psali jsme </a> , že <span class='highlight'>neříkáme</span> sbohem, nýbrž „na shledanou“. </p> </div>");
-             $el.appendTo("body");
+             var $el = this.$el;
              //TODO add display none
              var range = document.createRange();
 
@@ -443,6 +448,25 @@ define(['ReaderModel', 'TranslateController', 'data_struct', 'utils', 'jquery'],
              assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'že',
                           'word " , že " - beginning of že- first ancestor with id : 1 level higher');
 
+          });
+
+          QUnit.asyncTest("highlighting word from selection", function ( assert ) {
+             var $el = this.$el;
+             var html_test_text = this.html_test_text;
+             var range = document.createRange();
+
+             this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
+             var context = {stateGetIsUrlLoaded : function () {return true}, viewAdapter : {
+                setErrorMessage : function () {},
+                set_HTML_body   : function ( html_text ) {window.html_text = html_text}
+             }};
+             RC.show_and_add_note.call(context, undefined, undefined, range)
+                .then(function ( highlighted_text ) {
+                         QUnit.start();
+                         assert.equal(highlighted_text, html_test_text,
+                                      'testing promise'
+                         );
+                      })
           });
 
           return {};
