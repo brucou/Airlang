@@ -2,6 +2,7 @@
  * Created by bcouriol on 13/06/14.
  * TODO: Error treatment
  * - error treatment!!!!
+ * - check & validate util functions
  * A lot of those functions have a callback err, result. The question is how to react and propagate those errors
  * TODO: consistency between text handling text functions and utils tex functions
  * - isPunct for example
@@ -952,22 +953,24 @@ define([], function () {
       var node_index = 0,
           comment_index = 0,
           aHTMLparsed = [],
+          aHTMLtokens = [],
           aCommentPos = [],
           elemPos = {};
 
-      _parseDOMtree($el, aHTMLparsed, aCommentPos);
+      _parseDOMtree($el, aHTMLparsed, aHTMLtokens, aCommentPos);
       var html_parsed_text = aHTMLparsed.join(" ");
 
       logWrite(DBG.TAG.DEBUG, "parsed HTML", aHTMLparsed.join("\n"));
       return {
          aHTMLparsed      : aHTMLparsed,
+         aHTMLtokens      : aHTMLtokens,
          aCommentPos      : aCommentPos,
          html_parsed_text : html_parsed_text,
          aTokens          : html_parsed_text.split(" ")
          //There are spaces in aHTMLparsed, so this split op is not trivial x->x
       };
 
-      function _parseDOMtree ( $el, aHTMLparsed, aCommentPos ) {
+      function _parseDOMtree ( $el, aHTMLparsed, aHTMLtokens, aCommentPos ) {
 
          /////// Helper functions
          function identity ( token ) {return token;}
@@ -1015,6 +1018,7 @@ define([], function () {
 
          var html_begin_tag,
              tag_name = $el.prop("tagName");
+
          if ('undefined' !== flag_no_transform && flag_no_transform) {
             // case when flag_no_transform is true
             // in that case we don't read mapAttr and else, we convert the tag attributes to html
@@ -1057,6 +1061,7 @@ define([], function () {
          }
 
          aHTMLparsed.push(html_begin_tag);
+         aHTMLtokens.push({type : 'html_begin_tag', text : html_begin_tag, name : tag_name});
          // and commment it out
          comment_tag_out(html_begin_tag);
 
@@ -1071,24 +1076,49 @@ define([], function () {
                // This also means we are modifying the html source albeit only spaces, e.g. SIDE EFFECT!!
                // This could have impact maybe in verbatim source (pre tag for instance)
                // Hopefully in common application this will be without consequence
-               var text;
-               text = flag_no_transform? el.textContent.trim() : el.textContent;
+               var text = el.textContent;
+               //text = flag_no_transform ? el.textContent : el.textContent;
                if (text.trim()) {
                   aHTMLparsed.push(text);
+                  aHTMLtokens.push({type : 'text', text : text, name : ''});
                   comment_index += simple_tokenizer(text).length;
                }
             }
             else {
-               _parseDOMtree($(el), aHTMLparsed, aCommentPos, flag_no_transform);
+               _parseDOMtree($(el), aHTMLparsed, aHTMLtokens, aCommentPos, flag_no_transform);
             }
          });
 
          // Close the tag, we finished reading its content
          var html_end_tag = "</" + $el.prop("tagName") + ">";
          aHTMLparsed.push(html_end_tag);
+         aHTMLtokens.push({type : 'html_end_tag', text : html_end_tag, name : $el.prop("tagName")});
          // and don't forget to comment it out as to be skipped when highlighting
          comment_tag_out(html_end_tag);
       }
+   }
+
+   function parseDOMtree_flatten_text_nodes ( aHTMLTokens ) {
+      var aHTMLTokens_split = [];
+      aHTMLTokens
+         .forEach(function ( html_token ) {
+                     switch (html_token.type) {
+                        case 'html_begin_tag' :
+                        case 'html_end_tag':
+                           aHTMLTokens_split.push(html_token);
+                           break;
+                        case 'text':
+                           html_token.text.split(" ").forEach(function ( word ) {
+                              aHTMLTokens_split.push({type : 'text', text : word});
+                           });
+                           break;
+                        default:
+                           throw 'filter_selected_word: error, encountered an html_token with unknown type ' +
+                                 html_token.type;
+                           break;
+                     }
+                  });
+      return aHTMLTokens_split;
    }
 
    //TEST CODE
@@ -1181,41 +1211,59 @@ define([], function () {
 
    function sum ( a, b ) {return a + b}
 
+   function assert_validate () {
+      /* how to get the instanceof value : from the constructor source code
+       Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(document.body.firstChild))).constructor
+       function ---> Node() { [native code] }
+       cf. also http://perfectionkills.com/instanceof-considered-harmful-or-how-to-write-a-robust-isarray/
+       note : with function.caller (not use in PRODUCTION!!) I can get the calling function
+       */
+      assert_arity(arguments, expected_arity, optional throw exception or not);
+      assert_type(arguments, {type_comparison : "s", start_node : undefined, end_node : undefined}, optional throw exception or not);
+      assert_instanceOf(arguments, {type_comparison : undefined, start_node : 'DOMElement', end_node : 'DOMElement'});
+      assert_notEqual(arguments, {type_comparison : "", start_node : [null, undefined], end_node : null});
+      //Note if key: [] this is the test for empty array, {} test for empty object, "falsy", "truthy" also possible, "empty"
+      //throws an exception if the check fails
+      // exception contains the name of the function whose arguments are being checked, and an error message
+      // with expected XXX, BUT got XXX
+   }
+
    var _UT =
        {
-          isArray                   : isArray,
-          trimInput                 : trimInput,
-          isNotEmpty                : isNotEmpty,
-          inspect                   : inspect,
-          isRegExp                  : isRegExp,
-          isDate                    : isDate,
-          isError                   : isError,
-          timestamp                 : timestamp,
-          inherits                  : inherits,
-          _extend                   : _extend,
-          hasOwnProperty            : hasOwnProperty,
-          isString                  : isString,
-          isPunct                   : isPunct,
-          isFunction                : isFunction,
-          sPrintf                   : String.format,
-          timeStamp                 : timeStamp,
-          isNumberString            : isNumberString,
-          async_cached              : async_cached,
-          OutputStore               : OutputStore,
-          CachedValues              : CachedValues,
-          getIndexInArray           : getIndexInArray,
-          escape_html               : escape_html,
-          padding_left              : padding_left,
-          padding_right             : padding_right,
-          fragmentFromString        : fragmentFromString,
-          injectArray               : injectArray,
-          get_calling_function_name : get_calling_function_name,
-          parseDOMtree              : parseDOMtree,
-          get_own_properties        : get_own_properties,
-          some                      : some,
-          traverse_DOM_depth_first  : traverse_DOM_depth_first,
-          fn_get_prop               : fn_get_prop,
-          sum                       : sum
+          isArray                         : isArray,
+          trimInput                       : trimInput,
+          isNotEmpty                      : isNotEmpty,
+          inspect                         : inspect,
+          isRegExp                        : isRegExp,
+          isDate                          : isDate,
+          isError                         : isError,
+          timestamp                       : timestamp,
+          inherits                        : inherits,
+          _extend                         : _extend,
+          hasOwnProperty                  : hasOwnProperty,
+          isString                        : isString,
+          isPunct                         : isPunct,
+          isFunction                      : isFunction,
+          sPrintf                         : String.format,
+          timeStamp                       : timeStamp,
+          isNumberString                  : isNumberString,
+          async_cached                    : async_cached,
+          OutputStore                     : OutputStore,
+          CachedValues                    : CachedValues,
+          getIndexInArray                 : getIndexInArray,
+          escape_html                     : escape_html,
+          padding_left                    : padding_left,
+          padding_right                   : padding_right,
+          fragmentFromString              : fragmentFromString,
+          injectArray                     : injectArray,
+          get_calling_function_name       : get_calling_function_name,
+          parseDOMtree                    : parseDOMtree,
+          get_own_properties              : get_own_properties,
+          some                            : some,
+          traverse_DOM_depth_first        : traverse_DOM_depth_first,
+          fn_get_prop                     : fn_get_prop,
+          parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
+          sum                             : sum
        };
    window.UT = _UT;
    return _UT;

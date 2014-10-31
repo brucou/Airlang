@@ -126,7 +126,8 @@ requirejs(
          //(DBG.TAG.TRACE, "dataAdapterOStore2TokenActionMap")
          //(DBG.TAG.DEBUG, "dataAdapterOStore2TokenActionMap")
          (DBG.TAG.TRACE, "default_identity_filter")
-         (DBG.TAG.TRACE, "fn_html_highlight");
+         (DBG.TAG.TRACE, "fn_html_highlight")
+         (DBG.TAG.TRACE, "parseDOMtree");
       }
 
       function init_socket () {
@@ -143,9 +144,9 @@ requirejs(
          init_log();
          // TEST CODE
          //trace.config('ReaderToolController', 'Constructor', false);
-         trace(RM, 'RM');
-         trace(RC, 'RC');
-         trace(IO, 'IO');
+         //trace(RM, 'RM');
+         //trace(RC, 'RC');
+         //trace(IO, 'IO');
          //init_fake();
          ////////////
          init_socket();

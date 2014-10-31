@@ -12,44 +12,18 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
            });
            */
 
-          QUnit.module("Testing filtering functionality");
-          QUnit.asyncTest("comments stay the same", function ( assert ) {
-             expect(1);
-             var expected = [ 'Člověku', 'se',
-                              '<', 'one', 'comment', '>',
-                              '<span class = \'highlight\'>kvůli</span>',
-                              'tomu,',
-                              '<', 'inserted', 'comment', '>',
-                              '<', 'another', 'comment', '>',
-                              'že', 'přestane', 'kouřit,', 'zpomalí', 'metabolismus.', 'A', 'to', 'je',
-                              '<span class = \'highlight\'>hlavní</span>',
-                              '<span class = \'highlight\'>problém,</span>',
-                              'proč',
-                              '<span class = \'highlight\'>většině</span>',
-                              'lidí',
-                              '<span class = \'highlight\'>začne</span>',
-                              'ručička', 'váhy', 'ukazovat', 'za',
-                              '<span class = \'highlight\'>pár</span>',
-                              '<span class = \'highlight\'>měsíců</span>',
-                              'o',
-                              '<span class = \'highlight\'>několik</span>',
-                              'kilogramů',
-                              '<span class = \'highlight\'>více.</span>' ].join(" ");
-             RM.apply_highlighting_filters_to_text(
-                "Člověku se < one comment > kvůli tomu, < inserted comment > < another comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
-                [RM.highlight_words],
-                RM.simple_tokenizer, RM.simple_detokenizer,
-                DS.filter_comment_remover
-             ).then(function ( result ) {
-                       actual = result;
-                       QUnit.start();
-                       assert.equal(actual, expected, ["expected :", expected, "\n returned :", actual].join(" "));
-                    });
+          QUnit.module("Testing filtering functionality", {
+             setup : function () {
+                this.StartSel = "<span class = 'highlight2'>";
+                this.StartSel_nospaces = "<span class = 'highlight2'>".replace(/ /g, "_");
+                this.StopSel = "</span>";
+                this.StopSel_nospaces = "</span>".replace(/ /g, "_");
+             }
           });
 
           QUnit.asyncTest("one filter", function ( assert ) {
              expect(1);
-             var expected = [ 'Člověku', 'se',
+             var expected = [ "<DIV id='0'>", 'Člověku', 'se',
                               '<span class = \'highlight\'>kvůli</span>',
                               'tomu,',
                               '<', 'inserted', 'comment', '>',
@@ -66,59 +40,15 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                               'o',
                               '<span class = \'highlight\'>několik</span>',
                               'kilogramů',
-                              '<span class = \'highlight\'>více.</span>' ].join(" ");
-             RM.apply_highlighting_filters_to_text(
-                "Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
-                [RM.highlight_words],
-                RM.simple_tokenizer, RM.simple_detokenizer,
-                DS.filter_comment_remover
+                              '<span class = \'highlight\'>více.</span>',
+                              '</DIV>'].join(" ");
+
+             RM.apply_highlighting_filters_to_text_2(
+                $("<div>Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.</div>").appendTo("body"),
+                RM.fn_parser_and_transform([], []),
+                [RM.highlight_words]
              ).then(function ( result ) {
                        actual = result;
-                       QUnit.start();
-                       assert.equal(actual, expected, ["expected :", expected, "\n returned :", actual].join(" "));
-                    });
-          });
-
-          /**
-           * Two filters:
-           * 1. fn_highlight = span.highlight
-           * 2. fn_highlight = span.highlight
-           * First and second filter has no overlapping word, so both words from filter 1 and 2 should be span.highlight
-           */
-          QUnit.asyncTest("two filters - not overlapping", function ( assert ) {
-             var expected = "<span class = 'highlight'>Člověku</span> se <span class = 'highlight'>kvůli</span> tomu, " +
-                            ['<', 'inserted', 'comment', '>',
-                             'že', 'přestane', 'kouřit,', 'zpomalí', 'metabolismus.', 'A', 'to', 'je',
-                             '<span class = \'highlight\'>hlavní</span>',
-                             '<span class = \'highlight\'>problém,</span>',
-                             'proč',
-                             '<span class = \'highlight\'>většině</span>',
-                             'lidí',
-                             '<span class = \'highlight\'>začne</span>',
-                             'ručička', 'váhy', 'ukazovat', 'za',
-                             '<span class = \'highlight\'>pár</span>',
-                             '<span class = \'highlight\'>měsíců</span>',
-                             'o',
-                             '<span class = \'highlight\'>několik</span>',
-                             'kilogramů',
-                             '<span class = \'highlight\'>více.</span>'
-                            ].join(" ");
-             var filter2 = function filter2 ( text, callback ) {
-                if (text.indexOf("Člověku") >= 0) {
-                   text = text.replace("Člověku", "<span class = 'highlight'>Člověku</span>");
-                }
-                console.log("text stop words", text);
-                return text;
-             };
-             DS.filter_register('text', 'async_cached_postgres_highlighted_text', filter2,
-                                'srv_qry_stop_words');
-
-             RM.apply_highlighting_filters_to_text(
-                "Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
-                [RM.highlight_words, filter2],
-                RM.simple_tokenizer, RM.simple_detokenizer,
-                DS.filter_comment_remover
-             ).then(function ( actual ) {
                        QUnit.start();
                        assert.equal(actual, expected, ["expected :", expected, "\n returned :", actual].join(" "));
                     });
@@ -131,9 +61,10 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
            * Second filter has some overlapping to-highlight words with filter 1. Filter 1 should prevail
            * For the words where only filter 2 applies, we should see span.highlight2
            */
-          QUnit.asyncTest("two filters - overlapping - first has priority", function ( assert ) {
+          QUnit.asyncTest("two filters - overlapping and not - first has priority", function ( assert ) {
 
-             var expected = "<span class = 'highlight2'>Člověku</span> se <span class = 'highlight'>kvůli</span> tomu, " +
+             var self = this;
+             var expected = "<DIV id='0'> <span class = 'highlight2'>Člověku</span> se <span class = 'highlight'>kvůli</span> tomu, " +
                             ['<', 'inserted', 'comment', '>',
                              'že', 'přestane', 'kouřit,', 'zpomalí', 'metabolismus.', 'A', 'to', 'je',
                              '<span class = \'highlight\'>hlavní</span>',
@@ -148,7 +79,8 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                              'o',
                              '<span class = \'highlight\'>několik</span>',
                              'kilogramů',
-                             '<span class = \'highlight\'>více.</span>'
+                             '<span class = \'highlight\'>více.</span>',
+                             '</DIV>'
                             ].join(" ");
              var filter3 = function filter3 ( text, callback ) {
                 if (text.indexOf("Člověku") >= 0) {
@@ -160,52 +92,71 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                 return text;
              };
 
-             var dataAdapterOStore2TokenActionMap2 = function dataAdapterOStore2TokenActionMap2 ( aStore ) {
-                function fn_html_highlight ( token ) {
-                   return [StartSel, token, StopSel].join("");
-                }
+             var dataAdapterOStore2TokenActionMap2 = function dataAdapterOStore2TokenActionMap2 ( OStore,
+                                                                                                  aHTMLTokens ) {
 
-                var StartSel = "<span class = 'highlight2'>";
-                var StartSel_nospaces = StartSel.replace(/ /g, "_");
-                var StopSel = "</span>";
-                var StopSel_nospaces = StopSel.replace(/ /g, "_");
-                var highlit_text = aStore.toString();
-                logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
-                // TODO: to synchronize better with server instead of copying :
-                highlit_text = highlit_text.replace(new RegExp(StartSel, "g"), StartSel_nospaces);
-                highlit_text = highlit_text.replace(new RegExp(StopSel, "g"), StopSel_nospaces);
+                /////// Helper function
+                function push_token_action ( word ) {
+                   function fn_html_highlight2 ( html_token ) {
+                      return {type : 'text', text : [self.StartSel, html_token.text, self.StopSel].join("")}
+                   }
 
-                var adapter = RM.simple_tokenizer;
-                var aTokens = adapter(highlit_text);
-                //logWrite(DBG.TAG.DEBUG, "aTokens", aTokens);
-                var aTokenActionMap = [];
-                var mark = false;
-                // I have the token, now assigning actions
-                aTokens.forEach(function ( word, index ) {
-                   if (word.indexOf(StartSel_nospaces) == 0) {
+                   if (word.indexOf(self.StartSel_nospaces) == 0) {
                       // beginning of marking
                       //logWrite(DBG.TAG.DEBUG, "found begin of marking");
-                      word = word.replace(new RegExp(StartSel_nospaces, "g"), "");
+                      word = word.replace(new RegExp(self.StartSel_nospaces, "g"), "");
                       //logWrite(DBG.TAG.DEBUG, "word after removal of startsel marking: ", word);
                       mark = true;
                    }
-                   if (mark == true && word.indexOf(StopSel_nospaces) > 0) {
+                   if (mark == true && word.indexOf(self.StopSel_nospaces) > 0) {
                       //logWrite(DBG.TAG.DEBUG, "found end of marking");
-                      word = word.replace(new RegExp(StopSel_nospaces, "g"), "");
+                      word = word.replace(new RegExp(self.StopSel_nospaces, "g"), "");
                       //logWrite(DBG.TAG.DEBUG, "word after removal of stopsel marking: ", word);
                       logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
-                      aTokenActionMap.push({token : word, action : fn_html_highlight});
+                      aTokenActionMap.push({token : {type : 'text', text : word}, action : fn_html_highlight2});
                       mark = false;
                    }
                    else if (mark === true) {
                       logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
-                      aTokenActionMap.push({token : word, action : fn_html_highlight});
+                      aTokenActionMap.push({token : {type : 'text', text : word}, action : fn_html_highlight2});
                    }
                    else {
                       //logWrite(DBG.TAG.DEBUG, "associating action none to word ", word);
-                      aTokenActionMap.push({token : word, action : DS.filter_default});
+                      aTokenActionMap.push({token : {type : 'text', text : word}, action : null});
                    }
+                }
 
+                ////
+
+                logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
+                // TODO: to synchronize better with server instead of copying : move to common config file??
+                var highlit_text = OStore.toString(); // the query returns with a OStore object
+                highlit_text = highlit_text.replace(new RegExp(self.StartSel, "g"), self.StartSel_nospaces);
+                highlit_text = highlit_text.replace(new RegExp(self.StopSel, "g"), self.StopSel_nospaces);
+                // For StopSel not necessary as there is no spaces
+                // This manipulation ensures that whatever the StartSel, I will have the beginning and end
+                // delimited by StartSel and StopSel without adding any space-delimited word
+                var aTokenActionMap = [];
+                var mark = false;
+                var word_token_index = 0;
+                var aTokens = highlit_text.split(" ");
+                // I have the token, now assigning actions
+                aHTMLTokens.forEach(function ( html_token ) {
+                   switch (html_token.type) {
+                      case 'html_begin_tag':
+                      case 'html_end_tag':
+                         aTokenActionMap.push({token : html_token, action : null});
+                         break;
+                      case 'text' :
+                         //var aHighlightedWords = html_token.text.split(" ");
+                         var length_text = html_token.text.split(" ").length;
+                         for (var i = 0; i < length_text; i++, word_token_index++) {
+                            push_token_action(aTokens[word_token_index]);
+                         }
+                         break;
+                      default :
+                         throw 'dataAdapterOStore2TokenActionMap: read token with unknown type ' + html_token.type;
+                   }
                 });
 
                 return aTokenActionMap;
@@ -216,11 +167,10 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              DS.filter_register_data_adapters('async_cached_postgres_highlighted_text2', 'token_action_map',
                                               dataAdapterOStore2TokenActionMap2);
 
-             RM.apply_highlighting_filters_to_text(
-                "Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.",
-                [RM.highlight_words, filter3],
-                RM.simple_tokenizer, RM.simple_detokenizer,
-                DS.filter_comment_remover
+             RM.apply_highlighting_filters_to_text_2(
+                $("<div>Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.</div>").appendTo("body"),
+                RM.fn_parser_and_transform([], []),
+                [RM.highlight_words, filter3]
              ).then(function ( actual ) {
                        QUnit.start();
                        assert.equal(actual, expected, ["expected :", expected, "\n returned :", actual].join(" "));
@@ -452,21 +402,35 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
 
           QUnit.asyncTest("highlighting word from selection", function ( assert ) {
              var $el = this.$el;
-             var html_test_text = this.html_test_text;
+             var html_expected_text_1 =
+                    "<DIV id='0'> <P id='3'> <SPAN class='highlight'> <span class='airlang-rdt-note-highlight'>Když</span> </SPAN>  končil  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
              var range = document.createRange();
-
-             this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
              var context = {stateGetIsUrlLoaded : function () {return true}, viewAdapter : {
                 setErrorMessage : function () {},
                 set_HTML_body   : function ( html_text ) {window.html_text = html_text}
              }};
+
+             this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
              RC.show_and_add_note.call(context, undefined, undefined, range)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
-                         assert.equal(highlighted_text, html_test_text,
-                                      'testing promise'
+                         assert.equal(highlighted_text, html_expected_text_1,
+                                      'note highlighting first word Když'
                          );
+                         QUnit.stop();
+                      });
+             var html_expected_text_2 =
+                    "<DIV id='0'> <P id='3'> <SPAN class='highlight'> Když </SPAN>  <span class='airlang-rdt-note-highlight'>končil</span>  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
+             this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 2);
+             RC.show_and_add_note.call(context, undefined, undefined, range)
+                .then(function ( highlighted_text ) {
+                         QUnit.start();
+                         assert.equal(highlighted_text, html_expected_text_2,
+                                      'note highlighting second word končil'
+                         );
+                         QUnit.stop();
                       })
+
           });
 
           return {};

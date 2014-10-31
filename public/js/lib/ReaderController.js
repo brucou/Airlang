@@ -70,30 +70,72 @@ define(['jquery',
                       });
           };
 
-          RC.fn_html_highlight_note = function fn_html_highlight_note ( token ) {
-             return "<span class='airlang-rdt-note-highlight'>" + token + "</span>";
+          /**
+           * Purpose : filter function to highlight (via html) a word within an [html_token] structure
+           * @param html_token
+           * @returns {{type: string, text: string}} Returns an html_token structure
+           */
+          RC.fn_html_highlight_note = function fn_html_highlight_note ( html_token ) {
+             return {
+                type : 'text',
+                text : "<span class='airlang-rdt-note-highlight'>" + html_token.text + "</span>"
+             };
           };
 
-          RC.filter_selected_word = function filter_selected_word ( word, index ) {
-             var filter_selected_word = function filter_selected_word ( aTokens ) {
-                //returns a token action map structure with only the word in index position being acted on
-                // word input parameter is used as a check that we received the right index
-                // reminder tokenActionMap : {token : word, action: function | null}
-                var index_non_empty = 0;
-                return aTokens.map(function ( token ) {
-                   if (!token.trim()) {
-                      // we found some space(s)
-                      return {token : token, action : null}
-                   }
-                   else {
-                      return {token : token, action : (index === index_non_empty++) ? RC.fn_html_highlight_note : null}
-                   }
-                });
+          /**
+           * Purpose :
+           * @param word {string}
+           * @param index {number}
+           * @param fn_filter {function}
+           * @returns {filter_selected_word} Returns a function which takes a [html_token] structure and
+           *                                 return a token_action_map structure with <i>fn_filter</i> as the action
+           *                                 corresponding the nth <i>word</i> with n being <i>index</i>.
+           *                                 <i>word</i> input parameter is used as a check that we received the right index
+           */
+          RC.filter_selected_word = function filter_selected_word ( word, index, fn_filter ) {
+             var filter_selected_word = function filter_selected_word ( aHTMLTokens ) {
+                // reminder : tokenActionMap :: {token : html_token, action: function | null}
+                var index_word = 0;
 
+                // 1. split the text tokens into word tokens. Spaces will be translated to empty tokens ("")
+                return UT.parseDOMtree_flatten_text_nodes(aHTMLTokens)
+                   // 2. go over the words (non-empty string after removing spaces), and add the filter on the
+                   //    word with the index passed as parameter
+                   .map(function ( html_token ) {
+                           switch (html_token.type) {
+                              case 'html_begin_tag':
+                              case 'html_end_tag':
+                                 //
+                                 return {token : html_token, action : null};
+                                 break;
+
+                              case 'text':
+                                 var text_node_contents = html_token.text;
+                                 if (!text_node_contents.trim()) {
+                                    // we found some space(s)
+                                    return {token : html_token, action : null};
+                                 }
+                                 else {
+                                    return {
+                                       token  : html_token,
+                                       action : (index === index_word++)
+                                          ? fn_filter
+                                          : null
+                                    }
+                                 }
+                                 break;
+
+                              default :
+                                 throw 'filter_selected_word: error, encountered an html_token with unknown type ' +
+                                       html_token.type;
+                                 break;
+                           }
+                        }
+                );
              };
-             filter_selected_word.input_type = 'token';
+             filter_selected_word.input_type = 'array_of_html_token';
              filter_selected_word.output_type = 'token_action_map';
-
+             filter_selected_word.filter_name = 'filter_selected_word';
              return filter_selected_word;
           };
 
@@ -107,15 +149,11 @@ define(['jquery',
 
              var self = this;
              var note = TC.getNoteFromWordClickedOn($el, ev, range);
-             var parsedTree = UT.parseDOMtree($(note.rootNode), [], [], true);
              return $.when(
-                RM.apply_highlighting_filters_to_text(
-                   parsedTree.html_parsed_text,
-                   [RC.filter_selected_word(note.word, note.index - 1)],
-                   RM.simple_tokenizer, RM.simple_detokenizer,
-                   function filter_comment_remover ( aTokens ) {
-                      return parsedTree.aCommentPos;
-                   }))
+                RM.apply_highlighting_filters_to_text_2(
+                   $(note.rootNode), RM.fn_parser_and_transform([], [], true), //TODO : update filter_selected_word and output adapters
+                   [RC.filter_selected_word(note.word, note.index - 1, RC.fn_html_highlight_note)]
+                ))
                 .then(function ( highlighted_text ) {
                          // update the html in reader controller
                          //TODO : pass the $el element? pass the viewAdapter? How to structure?

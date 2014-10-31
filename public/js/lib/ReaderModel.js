@@ -350,17 +350,11 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
            */
           RM.highlight_text_in_div = function highlight_text_in_div ( $el, mapTagClass, mapAttrClass ) {
 
-             //var aHighlightPromises = [];
-             var parsedTree = UT.parseDOMtree($el, mapTagClass, mapAttrClass);
-
              return $.when(
-                RM.apply_highlighting_filters_to_text(
-                   parsedTree.html_parsed_text,
-                   [RM.highlight_words],
-                   RM.simple_tokenizer, RM.simple_detokenizer,
-                   function filter_comment_remover ( aTokens ) {
-                      return parsedTree.aCommentPos;
-                   }));
+                RM.apply_highlighting_filters_to_text_2(
+                   $el,
+                   RM.fn_parser_and_transform(mapTagClass, mapAttrClass),
+                   [RM.highlight_words]));
           };
 
           /**
@@ -528,28 +522,15 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
              return aTokens.join(" ");
           };
 
-          RM.fn_html_highlight = function fn_html_highlight ( token ) {
-             return [StartSel, token, StopSel].join("");
+          RM.fn_html_highlight = function fn_html_highlight ( html_token ) {
+             return {type:'text', text:[StartSel, html_token.text, StopSel].join("")}
           };
 
-          RM.dataAdapterOStore2TokenActionMap = function dataAdapterOStore2TokenActionMap ( aStore ) {
-             // fn_highlight functions
-             var highlit_text = aStore.toString();
-             logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
-             // TODO: to synchronize better with server instead of copying : move to common config file??
-             highlit_text = highlit_text.replace(new RegExp(StartSel, "g"), StartSel_nospaces);
-             highlit_text = highlit_text.replace(new RegExp(StopSel, "g"), StopSel_nospaces);
-             // For StopSel not necessary as there is no spaces
-             // This manipulation ensures that whatever the StartSel, I will have the beginning and end
-             // delimited by StartSel and StopSel without adding any token (tokens are space delimited under
-             // the simple tokenizer methods
-             var adapter = RM.simple_tokenizer;
-             var aTokens = adapter(highlit_text);
-             //logWrite(DBG.TAG.DEBUG, "aTokens", aTokens);
-             var aTokenActionMap = [];
-             var mark = false;
-             // I have the token, now assigning actions
-             aTokens.forEach(function assign_action_to_token ( word, index ) {
+          RM.dataAdapterOStore2TokenActionMap =
+          function dataAdapterOStore2TokenActionMap ( OStore, aHTMLTokens ) {
+
+             /////// Helper function
+             function push_token_action ( word ) {
                 if (word.indexOf(StartSel_nospaces) == 0) {
                    // beginning of marking
                    //logWrite(DBG.TAG.DEBUG, "found begin of marking");
@@ -562,21 +543,77 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    word = word.replace(new RegExp(StopSel_nospaces, "g"), "");
                    //logWrite(DBG.TAG.DEBUG, "word after removal of stopsel marking: ", word);
                    logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
-                   aTokenActionMap.push({token : word, action : RM.fn_html_highlight});
+                   aTokenActionMap.push({token : {type : 'text', text : word}, action : RM.fn_html_highlight});
                    mark = false;
                 }
                 else if (mark === true) {
                    logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
-                   aTokenActionMap.push({token : word, action : RM.fn_html_highlight});
+                   aTokenActionMap.push({token : {type : 'text', text : word}, action : RM.fn_html_highlight});
                 }
                 else {
                    //logWrite(DBG.TAG.DEBUG, "associating action none to word ", word);
-                   aTokenActionMap.push({token : word, action : null});
+                   aTokenActionMap.push({token : {type : 'text', text : word}, action : null});
                 }
+             }
 
+             ////
+
+             logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
+             // TODO: to synchronize better with server instead of copying : move to common config file??
+             var highlit_text = OStore.toString(); // the query returns with a OStore object
+             highlit_text = highlit_text.replace(new RegExp(StartSel, "g"), StartSel_nospaces);
+             highlit_text = highlit_text.replace(new RegExp(StopSel, "g"), StopSel_nospaces);
+             // For StopSel not necessary as there is no spaces
+             // This manipulation ensures that whatever the StartSel, I will have the beginning and end
+             // delimited by StartSel and StopSel without adding any space-delimited word
+             var aTokenActionMap = [];
+             var mark = false;
+             var word_token_index = 0;
+             var aTokens = highlit_text.split(" ");
+             // I have the token, now assigning actions
+             aHTMLTokens.forEach(function ( html_token ) {
+                switch (html_token.type) {
+                   case 'html_begin_tag':
+                   case 'html_end_tag':
+                      aTokenActionMap.push({token : html_token, action : null});
+                      break;
+                   case 'text' :
+                      //var aHighlightedWords = html_token.text.split(" ");
+                      var length_text = html_token.text.split(" ").length;
+                      for (var i = 0; i < length_text; i++, word_token_index++) {
+                         push_token_action(aTokens[word_token_index]);
+                      }
+                      break;
+                   default :
+                      throw 'dataAdapterOStore2TokenActionMap: read token with unknown type ' + html_token.type;
+                }
              });
 
              return aTokenActionMap;
+          };
+
+          RM.dataAdapterHTMLTok2Text = function dataAdapterHTMLTok2Text ( aHTMLtokens ) {
+             return aHTMLtokens
+                .filter(function ( html_token ) {
+                           // filter out all html_tag, keep only the text
+                           return html_token.type === 'text';
+                        })
+                .map(function ( html_token ) {
+                        return html_token.text;
+                     })
+                // the space in the join is mandatory to separate text under different tags
+                // otherwise we get sth like :
+                //Jsme zpět | VoxEurop.eu: European news, cartoons and press reviewsKdyž končil
+                //Note the reviews stuck to Když. Or <p>sth sth</p><p>sth that will be stuck</p>
+                // This has other side effects but well, this is the lesser evil
+                .join(" ");
+          };
+
+          RM.fn_parser_and_transform =
+          function fn_parser_and_transform ( mapTagClass, mapAttrClass, /* boolean optional */ flag_no_transform ) {
+             return function fn_parser ( $el ) {
+                return UT.parseDOMtree($el, mapTagClass, mapAttrClass, flag_no_transform);
+             }
           };
 
           ////////// Filter highlighting functions
@@ -600,54 +637,24 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
            *              Filters mark the token to be highlighted. When all filters are done, highlighting functions
            *                are applied by order of priority. The corresponding tokens are then converted back to text
            */
-          RM.apply_highlighting_filters_to_text =
-          function apply_highlighting_filters_to_text ( text, aFilters, tokenizer, detokenizer, commentMarker ) {
-             /** Config
-              * * Must be registered previously
-              * - filters
-              * - tokenizer and detokenizer function (no default value : they must be specified)
-              *   Tokenizers and detokenizers functions transform a text into tokens and vice versa
-              *   The output type of the tokenizer can be anything, as long as :
-              *   - either the filter function accepts that data type
-              *   - or there is a data adapter which can transform from that data type to the input data type of the filter
-              * - any data apapters allowing to go from the filter output data type to TokenActionMap
-              *       and from the token input type to the filter input data type
-              * Note:
-              * - fn_highlight is specified either directly in the filter if its output data type is TokenActionMap
-              * - in the output adapter otherwise
-              * : So there is no need to configure that in advance
-              */
+          RM.apply_highlighting_filters_to_text_2 =
+          function apply_highlighting_filters_to_text_2 ( $el, fn_parser, aFilters ) {
 
              /*
-              1. Tokenize input text
-              Tokenizer :   text => [token] (word array)
+              1. Read html from element and tokenize it (two tokens type, html_tag and text)
+              Tokenizer :   JQuery => [html_parsed_token] - html_parsed_token :: {type: html_tag | text, text: string}
               */
 
              var dfr = $.Deferred();
-             var aTokens = tokenizer(text);
-             logWrite(DBG.TAG.DEBUG, "tokens", UT.inspect(aTokens, null, 3));
+             var aHTMLtokens = fn_parser($el).aHTMLtokens;
+             aHTMLtokens.type = 'array_of_html_token';
+
+             logWrite(DBG.TAG.DEBUG, "html tokens", UT.inspect(aHTMLtokens, null, 3));
 
              /*
-              2. Identify and filter out comment tokens
+              3. For each filter : apply filter to [html_parsed_token]
               */
-             // expect aToken to have the array with comment indexes ([token]  =>  [pos, [{tokens_commented, 'comment'}]])
-
-             var aCommentPos = commentMarker(aTokens);
-             logWrite(DBG.TAG.DEBUG, "comment table", UT.inspect(aCommentPos, null, 4));
-             // Now remove the comment tokens from the input
-             var offset = 0;
-             aCommentPos.forEach(
-                function ( elemPos, index, array ) {
-                   var removed_token_no = elemPos.aCommentToken.length;
-                   aTokens.splice(elemPos.pos - offset, elemPos.aCommentToken.length);
-                   offset += removed_token_no;
-                });
-
-             /*
-              3. For each filter : apply filter to commented out tokens:
-              */
-             var aPromises = RM.getTokenActionMap(aTokens, aFilters);
-             $.when.apply($, aPromises).then(
+             $.when.apply(undefined, RM.getTokenActionMap(aHTMLtokens, aFilters)).then(
                 function getTokenActionMap_done ( /*arguments is each of the token_action_map type returned by filters*/ ) {
                    // Note : the when function concatenate resolution of deferred in the same order than they were called
                    // e.g. in the same order than the array of filters
@@ -695,19 +702,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       , aTransposedResults
                    );
 
-                   /*
-                    * 5. Replace the comment tokens inside the original text
-                    */
-                   // reminder aCommentPos = [pos, aCommentToken] or [pos, [commentToken]] or [pos, [{token, action}]]
-                   aCommentPos.forEach(function ( elemPos, index ) {
-                      var pos = elemPos.pos;
-                      var aToInsert = elemPos.aCommentToken;
-                      // insert in aTransposedResults same pos
-                      // beware the trap, this modifies directly in place, value returned is element removed
-                      UT.injectArray(aTransposedResults, aToInsert, pos);
-                   });
-                   //logWrite(DBG.TAG.DEBUG, "aTransposedResults include comments", UT.inspect(aTransposedResults, null, 4));
-
                    // Apply filter selected
                    // [{token, action_final}]  =>  [token_filtered]
                    var aTokensActedOn = aTransposedResults.map(function ( transposedResult ) {
@@ -718,11 +712,14 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                    //logWrite(DBG.TAG.DEBUG, "aTokensActedOn", UT.inspect(aTokensActedOn, null, 4));
 
                    /*
-                    * 6. Detokenize
+                    * 6. [html_parsed_token] -> html_text
                     */
-                   logWrite(DBG.TAG.DEBUG, "executing detokenizer ", detokenizer.name);
+                   var final_output = aTokensActedOn
+                      .map(function ( html_parsed_token ) {
+                              return html_parsed_token.text.trim();
+                           })
+                      .join(" ");
 
-                   var final_output = detokenizer(aTokensActedOn);
                    logWrite(DBG.TAG.DEBUG, "final_output",
                             UT.inspect(final_output, null, 4));
 
@@ -748,9 +745,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                       throw 'getTokenActionMap: type information not available. Possible cause is filter was not registered'
                    }
 
-                   var i_adapter = DS.filter_get_data_adapter(aTokens.type || 'token', filter.input_type);
+                   var i_adapter = DS.filter_get_data_adapter(aTokens.type, filter.input_type);
                    var o_adapter = DS.filter_get_data_adapter(filter.output_type, 'token_action_map');
-                   logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens", aTokens);
+                   logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens", i_adapter(aTokens));
 
                    var deferred_or_value =
                           DS.promise_value_adapter(
@@ -777,7 +774,10 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
                                   "executing output adapter",
                                   o_adapter.name ||
                                   o_adapter.displayName);
-                         var aMapTokenAction = o_adapter(result);
+                         // Note: we pass the tokens as a second optional parameter in case the output adapter needs
+                         // that contextual info. Ideally, the adapter should only need the output of the filter
+                         // as input
+                         var aMapTokenAction = o_adapter(result, aTokens);
                          //logWrite(DBG.TAG.DEBUG, "returning aMapTokenAction", UT.inspect(aMapTokenAction, null, 4));
 
                          //push the result in the result array
@@ -798,8 +798,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
           ////////// Module initialization
           // mostly contains initialization of filters and data adapters for text highlighting
           RM.init = function init () {
-             DS.filter_register_data_adapters('text', 'token', RM.simple_tokenizer);
-             DS.filter_register_data_adapters('token', 'text', RM.simple_detokenizer);
+             DS.filter_register_data_adapters('array_of_html_token', 'text', RM.dataAdapterHTMLTok2Text);
              DS.filter_register('text', 'async_cached_postgres_highlighted_text', RM.highlight_words);
              DS.filter_register_data_adapters('async_cached_postgres_highlighted_text', 'token_action_map',
                                               RM.dataAdapterOStore2TokenActionMap);
