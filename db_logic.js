@@ -3,7 +3,7 @@
  */
 
 /**
- * Use deferred because pgClient stuff can only be done aftre pgClient is non null
+ * TODO: instead of copying utils, reuse the one from client side U=require(.../.. etc/utils)
  * @type {exports}
  */
 
@@ -13,7 +13,7 @@ var Util = require('util');
 var RSVP = require('rsvp');
 var pg = require('pg'),
     pgClient = null, // database connection variables
-    // list of requent words as returned by query - set here as a default in case the query does not work or for testing purposes
+    // list of frequent words as returned by query - set here as a default in case the query does not work or for testing purposes
     important_words = {},
     stop_words = {};
 

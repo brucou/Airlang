@@ -16,6 +16,8 @@
 define([], function () {
           Array.prototype.isItArray = true;
 
+          var slice = Array.prototype.slice;
+
           var rePUNCT = /[ \,\.\$\uFFE5\^\+=`~<>{}\[\]|\u3000-\u303F!-#%-\x2A,-\/:;\x3F@\x5B-\x5D_\x7B}\u00A1\u00A7\u00AB\u00B6\u00B7\u00BB\u00BF\u037E\u0387\u055A-\u055F\u0589\u058A\u05BE\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061E\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u0AF0\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F14\u0F3A-\u0F3D\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1360-\u1368\u1400\u166D\u166E\u169B\u169C\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B5A-\u1B60\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CC0-\u1CC7\u1CD3\u2010-\u2027\u2030-\u2043\u2045-\u2051\u2053-\u205E\u207D\u207E\u208D\u208E\u2329\u232A\u2768-\u2775\u27C5\u27C6\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC\u29FD\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00-\u2E2E\u2E30-\u2E3B\u3001-\u3003\u3008-\u3011\u3014-\u301F\u3030\u303D\u30A0\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uAAF0\uAAF1\uABEB\uFD3E\uFD3F\uFE10-\uFE19\uFE30-\uFE52\uFE54-\uFE61\uFE63\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D\uFF5F-\uFF65]+/g;
 
           function getIndexInArray ( aArray, field_to_search, value ) {
@@ -563,7 +565,7 @@ define([], function () {
 
           if (!String.format) {
              String.format = function ( format ) {
-                var args = Array.prototype.slice.call(arguments, 1);
+                var args = slice.call(arguments, 1);
                 return format.replace(/{(\d+)}/g, function ( match, number ) {
                    return typeof args[number] != 'undefined' ? args[number] : match;
                 });
@@ -954,11 +956,11 @@ define([], function () {
              }
 
              var node_index = 0,
-                 comment_index = 0,
-                 aHTMLparsed = [],
-                 aHTMLtokens = [],
-                 aCommentPos = [],
-                 elemPos = {};
+                comment_index = 0,
+                aHTMLparsed = [],
+                aHTMLtokens = [],
+                aCommentPos = [],
+                elemPos = {};
 
              _parseDOMtree($el, aHTMLparsed, aHTMLtokens, aCommentPos);
              var html_parsed_text = aHTMLparsed.join(" ");
@@ -1020,14 +1022,14 @@ define([], function () {
                 }
 
                 var html_begin_tag,
-                    tag_name = $el.prop("tagName");
+                   tag_name = $el.prop("tagName");
 
                 if ('undefined' !== flag_no_transform && flag_no_transform) {
                    // case when flag_no_transform is true
                    // in that case we don't read mapAttr and else, we convert the tag attributes to html
                    var arr = [];
                    arr.push("<" + tag_name);
-                   var aDomAttributes = Array.prototype.slice.call($el[0].attributes);
+                   var aDomAttributes = slice.call($el[0].attributes);
                    aDomAttributes.forEach(function ( attribute ) {
                       arr.push(attribute.nodeName + "='" + attribute.value + "'");
                    });
@@ -1215,28 +1217,45 @@ define([], function () {
           function sum ( a, b ) {return a + b}
 
           /**
+           * Logical or. No type check on arguments type, return value forced to boolean. Please make sure you pass
+           * the right type of arguments
+           * @param a {boolean}
+           * @param b {boolean}
+           * @returns {boolean}
+           */
+          function or ( a, b ) {return !!(a || b) }
+
+          /**
            * Purpose : returns the instanceof value for objects created through a constructor (new F()...)
-           * @param {object} object object whose instanceof value is seeked
+           * @param {object} object object whose instanceof value is sought
            * @returns {string} Example getClass($("body")[0]) = "HTMLBodyElement"
            */
           function getClass ( object ) {
-             return (Object.prototype.toString.call(object).slice(8, -1));
-             //or   /function ([a-zA-Z0-9_$]+)/.exec(a.constructor.toString())[1]
-             // but that would fail in case of function /*asdas*/ name()
+             if ('undefined' === typeof object) {
+                return 'undefined';
+             }
+             else {
+                return (Object.prototype.toString.call(object).slice(8, -1));
+             }
           }
 
           function getInstanceOf ( object ) {
+             // NOTE : that would fail in case of function /*asdas*/ name()
              return /function ([a-zA-Z0-9_$]+)/.exec(object.constructor.toString())[1];
           }
 
           function is_type_in_prototype_chain ( object, type ) {
 
              var curObj = object,
-                 inst_of;
+                inst_of;
              console.log(typeof object);
-             if (['string', 'number', 'boolean', 'array', 'function'].indexOf(typeof object) > -1) {
+
+             //check that object is of type object, otherwise it is a core type, which is out of scope
+             // !! : null has type 'object' but is in no prototype chain
+             if ('object' !== typeof object || object === null) {
                 return false;
              }
+
              do {
                 inst_of = getInstanceOf(Object.getPrototypeOf(curObj));
                 curObj = Object.getPrototypeOf(curObj);
@@ -1247,37 +1266,66 @@ define([], function () {
           }
 
           /**
+           * Helper function used by assert_type (not exported)
+           * @param {boolean} type_is_ok
+           * @param property
+           * @param actual_instanceof
+           * @param expected_type
+           * @param {boolean} is_proto_chain
+           */
+          function make_check_type_message ( type_is_ok, property, actual_instanceof, expected_type, is_proto_chain ) {
+             return [
+                type_is_ok ? 'OK:' : 'NOK:',
+                'Parameter',
+                property,
+                'has type',
+                actual_instanceof,
+                is_proto_chain
+                   ? ['itself inheriting from type', expected_type].join(" ")
+                   : (type_is_ok ? "" : ['- expected type', expected_type].join(" "))
+             ].join(" ");
+          }
+
+          /**
            * Purpose : checks type of a function arguments again a type specification.
-           *           Throws an exception if one argument does not match its  specification
-           *           Note: null and undefined are of type object, as such they will never match another type specification
-           *           and thus they might raise an exception.
-           *           IMPORTANT NOTE : Does not work for jQuery!!
+           *           If so configured, throws an exception if one argument does not match its specification
+           *           IMPORTANT NOTE : Does not work for type jQuery!!
            * @param argums {arguments} first parameter should always be arguments to pass the arguments of the calling function
-           * @param aParamTypeSpecs   array of object with the following spec : [ {param1: type_spec}, {param2: type_spec}, ... ]
-           *                          type_spec is :
-           *                          - defined js types (checked with typeof) : UT.type.[string|boolean|number|...]
-           *                          - constructor types (checked with instanceof) : 'constructor name'
-           *                          For instance :
-           *                          assert_type (arguments, [{aParamTypeSpecs: UT.type.array}, {$el: 'jQuery'}])
-           * @param options {object}  Three optional properties :
+           * @param aParamTypeSpecs {object}  array of object with the following spec :
+           *                                  [ {param1: type_spec, param2: type_spec}, {param3: type_spec}, ... ]
+           *                                  type_spec is :
+           *                                  - defined js types : UT.type.[string|boolean|number|...]
+           *                                  - constructor types (checked with instanceof)
+           *                                    For instance :
+           *                                    assert_type (arguments, [{aParamTypeSpecs: UT.type.array}, {$el: 'Element'}])
+           *                                  NOTE: passing each argument spec in a separate array is safer, as there is
+           *                                        no specification of the ordering in which properties of an object are
+           *                                        retrieved. As of today however, and on chrome, the version with
+           *                                        several spec in the same object works
+           * @param options {object}  Optional properties :
            *                          - bool_no_exception if undefined or false -> throw an exception in case of error
-           *                          - bool_allow_null if undefined or false -> throw an exception if a param is null
-           *                          - bool_allow_undefined if undefined or false -> throw an exception if a param is undefined
-           *                          NOTE : bool_no_exception takes precedence over the other two, i.e. if set to true,
-           *                          even in case of null and undefined parameter no exception will be thrown.
-           *                          The error will however be logged in the array of checking results
-           * @return {Array}          If no exception is to be thrown then returns an array whose properties match the
-           *                          aParamTypeSpecs parameter. Value of those properties allow to check whether the
-           *                          specification was fulfilled or not.
+           * @return {Object}         If no exception is to be thrown then returns an object with two properties:
+           *                          - ok : true if all type checks are passed successfully, false otherwise
+           *                          - results : array of result messages allowing to check result of the type check
            *                          OK: xxx -> spec fulfilled for param
            *                          NOK: xxx -> spec not fulfilled for param
+           *                          undefined -> spec to skip type check of param
+           *                          NOTE :
+           *                          - the index in the result array corresponds to the index of the argument
+           *                            being checked.
+           * nice to have : flag to skip type checking altogether (for instance for production);
+           * nice to have : parameter which allow to return just true or false i.e. no explanation messages (speed concern)
            */
           function assert_type ( argums, aParamTypeSpecs, options ) {
+             // nice to have : add type checking for optional parameters as well
+             // This could take the shape of {aParamTypeSpecs: UT.type.array}, {$el: '*Element'}
+             // that however complicated the algorithm
+             // we would first need to fill in the (key, values) for the non-optional parameters, and then
+             // match the optional parameters (in the order they are passed) on whatever args are left
+
              // First check the arguments passed in parameters :-)
              var bool_no_exception,
-                 bool_allow_null,
-                 bool_allow_undefined,
-                 arity = arguments.length;
+                arity = arguments.length;
              if (arity !== 2 && arity !== 3) {
                 throw 'assert_type: expecting 2 or 3 arguments, received ' + arity;
              }
@@ -1286,16 +1334,6 @@ define([], function () {
                 if (bool_no_exception && 'boolean' !== typeof bool_no_exception) {
                    throw 'assert_type: expected optional argument bool_no_exception to be boolean, received type ' +
                          typeof bool_no_exception;
-                }
-                bool_allow_null = options.bool_allow_null;
-                if (bool_allow_null && 'boolean' !== typeof bool_allow_null) {
-                   throw 'assert_type: expected optional argument bool_allow_null to be boolean, received type ' +
-                         typeof bool_allow_null;
-                }
-                bool_allow_undefined = options.bool_allow_undefined;
-                if (bool_allow_undefined && 'boolean' !== typeof bool_allow_undefined) {
-                   throw 'assert_type: expected optional argument bool_allow_undefined to be boolean, received type ' +
-                         typeof bool_allow_undefined;
                 }
              }
              if (!argums) {
@@ -1306,13 +1344,15 @@ define([], function () {
              }
 
              // Get the arguments whose type is to be checked as an array
-             var aArgs = Array.prototype.slice.call(argums);
-             var aCheckResults = [];
-             var param_index = 0; //1 is starting index to skip arguments
-             var err;
+             var aArgs = slice.call(argums),
+                aCheckResults = {},
+                param_index = 0, //1 is starting index to skip arguments
+                err;
+
              aParamTypeSpecs.forEach(function ( paramTypeSpec ) {
                 // paramTypeSpec is similar to {param1: type_spec}
                 // aArgs[param_index] will be the argument number index passed as parameter
+                console.log('paramTypeSpec', paramTypeSpec)
                 var aProps = get_own_properties(paramTypeSpec);
                 if (aProps.length === 0) {
                    throw 'assert_type: expected non-empty spec object!';
@@ -1324,55 +1364,54 @@ define([], function () {
                 // For instance, Chrome lists numerical properties first, and then the rest in order of declaration
                 // It should still work in any case, as we use strings and not numbers as values of the properties,
                 // so order should be kept. There is however no guarantee that this will always be the case in the future
-                aProps.forEach(
+                aCheckResults = aProps.map(
                    function ( property ) {
                       var expected_type = paramTypeSpec[property];
+                      if (expected_type === null) {
+                         // an expected type of null means : do not check type for this argument
+                         // this allows to skip type checking of some arguments which have to be part of the specs
+                         // to keep the ordering of later arguments
+                         // TODO: something
+                      }
                       // this should be a string
                       var current_param = aArgs[param_index++];
-                      // edge cases of null and undefined value for params
-                      if ('undefined' === typeof current_param) {
-                         if (!bool_allow_undefined) {
-                            // this means by default, bool_allow_undefined is false (undefined is falsy)
-                            err = true;
-                            aCheckResults.push("NOK: Parameter " + property + " is undefined");
-                         }
-                         else {
-                            aCheckResults.push("OK: Parameter " + property + " is undefined");
-                         }
-                      }
-                      else if (current_param === null) {
-                         if (!bool_allow_null) {
-                            // this means by default, bool_allow_undefined is false (undefined is falsy)
-                            err = true;
-                            aCheckResults.push("NOK: Parameter " + property + " is null");
-                         }
-                         else {
-                            aCheckResults.push("OK: Parameter " + property + " is null");
-                         }
-                      }
+                      // edge cases of null and undefined value for params are dealth with in getClass
+                      // which turns them into normal cases
                       // normal cases, first check expected_type is a string
-                      else if ('string' === typeof expected_type) {
-                         var actual_instanceof = getClass(current_param);
-                         if (expected_type === actual_instanceof) {
-                            aCheckResults.push("OK: Parameter " + property + " has type " +
-                                               expected_type)
+                      // TODO : write test (simple, just to execute repeteadly in shell chrome F12)
+                      var aExpected_type = undefined;
+                      if (expected_type !== null) {
+                         if ('string' === typeof expected_type) {
+                            aExpected_type = [expected_type];
                          }
-                         else if (is_type_in_prototype_chain(current_param, expected_type)) {
-                            aCheckResults.push("OK: Parameter " + property + " has type " +
-                                               actual_instanceof + " itself inheriting from type " +
-                                               expected_type)
+                         else if ('undefined' !== typeof expected_type[0]) {//probably an array
+                            aExpected_type = expected_type;
                          }
                          else {
-                            // we haven't found parameter to be of the expected type neither in the prototype chain
-                            err = true;
-                            aCheckResults.push("NOK: Parameter " + property + " has type '" +
-                                               actual_instanceof + "' - expected type '" + expected_type +
-                                               "'")
+                            throw 'assert_type: expected a string or array representing the instanceof value(s). Received type ' +
+                                  typeof expected_type;
                          }
                       }
-                      else {
-                         throw 'assert_type: expected a string representing the instanceof value. Received type' +
-                               typeof expected_type;
+
+                      if (aExpected_type) {// if expected_type is null we skip the type checking for that parameter
+                         var is_proto_chain = undefined,
+                            exp_index = undefined,
+                            actual_instanceof = getClass(current_param);
+                         var type_is_ok = aExpected_type
+                            .map(function ( expected_type, index ) {
+                                    return (expected_type === actual_instanceof
+                                       || (is_type_in_prototype_chain(current_param, expected_type) &&
+                                          (is_proto_chain = true) && !!(exp_index = index + 1)));
+                                    // different hacks here to avoid doing it on a separate line
+                                 })
+                            .reduce(_UT.or, false);
+                         if (!type_is_ok) {
+                            // one failure to check is enough
+                            err = true;
+                         }
+                         return make_check_type_message(type_is_ok, property, actual_instanceof,
+                                                        exp_index ? aExpected_type[exp_index - 1] : expected_type,
+                                                        is_proto_chain);
                       }
                    }
                 );
@@ -1383,56 +1422,61 @@ define([], function () {
                 throw 'assert_type: TYPE ERROR!\n' + aCheckResults.join("\n");
              }
              else {
-                return aCheckResults;
+                return {
+                   ok      : !err,
+                   results : aCheckResults
+                };
              }
-             //assert_arity(arguments, expected_arity, optional)
           }
 
           var _UT =
-              {
-                 isArray                         : isArray,
-                 trimInput                       : trimInput,
-                 isNotEmpty                      : isNotEmpty,
-                 inspect                         : inspect,
-                 isRegExp                        : isRegExp,
-                 isDate                          : isDate,
-                 isError                         : isError,
-                 timestamp                       : timestamp,
-                 inherits                        : inherits,
-                 _extend                         : _extend,
-                 hasOwnProperty                  : hasOwnProperty,
-                 isString                        : isString,
-                 isPunct                         : isPunct,
-                 isFunction                      : isFunction,
-                 sPrintf                         : String.format,
-                 timeStamp                       : timeStamp,
-                 isNumberString                  : isNumberString,
-                 async_cached                    : async_cached,
-                 OutputStore                     : OutputStore,
-                 CachedValues                    : CachedValues,
-                 getIndexInArray                 : getIndexInArray,
-                 escape_html                     : escape_html,
-                 padding_left                    : padding_left,
-                 padding_right                   : padding_right,
-                 fragmentFromString              : fragmentFromString,
-                 injectArray                     : injectArray,
-                 get_calling_function_name       : get_calling_function_name,
-                 parseDOMtree                    : parseDOMtree,
-                 get_own_properties              : get_own_properties,
-                 some                            : some,
-                 traverse_DOM_depth_first        : traverse_DOM_depth_first,
-                 fn_get_prop                     : fn_get_prop,
-                 parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
-                 getClass                        : getClass,
-                 assert_type                     : assert_type,
-                 is_type_in_prototype_chain      : is_type_in_prototype_chain,
-                 getInstanceOf                   : getInstanceOf,
-                 sum                             : sum
-              };
+          {
+             isArray                         : isArray,
+             trimInput                       : trimInput,
+             isNotEmpty                      : isNotEmpty,
+             inspect                         : inspect,
+             isRegExp                        : isRegExp,
+             isDate                          : isDate,
+             isError                         : isError,
+             timestamp                       : timestamp,
+             inherits                        : inherits,
+             _extend                         : _extend,
+             hasOwnProperty                  : hasOwnProperty,
+             isString                        : isString,
+             isPunct                         : isPunct,
+             isFunction                      : isFunction,
+             sPrintf                         : String.format,
+             timeStamp                       : timeStamp,
+             isNumberString                  : isNumberString,
+             async_cached                    : async_cached,
+             OutputStore                     : OutputStore,
+             CachedValues                    : CachedValues,
+             getIndexInArray                 : getIndexInArray,
+             escape_html                     : escape_html,
+             padding_left                    : padding_left,
+             padding_right                   : padding_right,
+             fragmentFromString              : fragmentFromString,
+             injectArray                     : injectArray,
+             get_calling_function_name       : get_calling_function_name,
+             parseDOMtree                    : parseDOMtree,
+             get_own_properties              : get_own_properties,
+             some                            : some,
+             traverse_DOM_depth_first        : traverse_DOM_depth_first,
+             fn_get_prop                     : fn_get_prop,
+             parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
+             getClass                        : getClass,
+             assert_type                     : assert_type,
+             is_type_in_prototype_chain      : is_type_in_prototype_chain,
+             getInstanceOf                   : getInstanceOf,
+             slice                           : slice,
+             sum                             : sum,
+             or                              : or
+          };
 
           _UT.type = {
              string : 'String', array : 'Array', function : 'Function',
-             number : 'Number', boolean : 'Boolean', object : 'Object'
+             number : 'Number', boolean : 'Boolean', object : 'Object',
+             null   : 'Null', undefined : 'undefined'
           };
 
           window.UT = _UT;

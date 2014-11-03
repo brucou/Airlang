@@ -42,10 +42,12 @@
 
  */
 
-define(['jquery', 'data_struct', 'url_load', 'utils', 'socketio', 'cache'],
-       function ( $, DS, UL, UT, IO, CACHE ) {
+define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
+       function ( $, DS, UL, UT, SOCK, CACHE ) {
+
 
           var RM = {}; // Added so I can trace all member functions more easily
+          var rpc_socket = SOCK.get_socket();
           var CLASS_SELECTOR_CHAR = ".";
           var ID_SELECTOR_CHAR = "#";
 

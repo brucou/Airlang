@@ -4,9 +4,10 @@
 define(['jquery',
         'ReaderModel',
         'TranslateController',
+        'Stateful',
         'data_struct',
         'utils'],
-       function ( $, RM, TC, DS, UT ) {
+       function ( $, RM, TC, STATE, DS, UT ) {
           //TEST CODE
           trace(RM, 'RM');
           //trace(TC, 'TC');
@@ -39,8 +40,8 @@ define(['jquery',
 
           RC.combo_load_url = function combo_load_url ( $el, ev ) {
              var viewAdapter = this.viewAdapter,
-                 my_url = $el.val(),
-                 self = this;
+                my_url = $el.val(),
+                self = this;
              viewAdapter.attr("url_to_load", my_url);
              viewAdapter.setErrorMessage(null);
              viewAdapter.set_HTML_body(null);
@@ -83,14 +84,17 @@ define(['jquery',
           };
 
           /**
-           * Purpose :
-           * @param word {string}
-           * @param index {number}
-           * @param fn_filter {function}
-           * @returns {filter_selected_word} Returns a function which takes a [html_token] structure and
-           *                                 return a token_action_map structure with <i>fn_filter</i> as the action
-           *                                 corresponding the nth <i>word</i> with n being <i>index</i>.
-           *                                 <i>word</i> input parameter is used as a check that we received the right index
+           * Purpose : take a token and
+           * @param  {string} word word to be highlighted
+           * @param  {number} index index of word to be highlighted vs. the beginning of the document (starting
+           *                  from the title)
+           * @param {function} fn_filter filter function which highlight the word. Usually :: html_token -> html_token
+           *                             where the output html_token is the original token surrounded by highlighting
+           *                             html tags
+           * @returns {function} Returns a function which takes a [html_token] structure and returns a token_action_map
+           *                     structure with <i>fn_filter</i> as the action corresponding to the nth
+           *                     <i>word</i> with n being <i>index</i>.
+           *                     <i>word</i> input parameter is used as a check that we received the right index
            */
           RC.filter_selected_word = function filter_selected_word ( word, index, fn_filter ) {
              var filter_selected_word = function filter_selected_word ( aHTMLTokens ) {
@@ -150,14 +154,13 @@ define(['jquery',
              var self = this;
              var note = TC.getNoteFromWordClickedOn($el, ev, range);
              return $.when(
-                RM.apply_highlighting_filters_to_text_2(
-                   $(note.rootNode), RM.fn_parser_and_transform([], [], true), //TODO : update filter_selected_word and output adapters
-                   [RC.filter_selected_word(note.word, note.index - 1, RC.fn_html_highlight_note)]
-                ))
+                   RM.apply_highlighting_filters_to_text_2(
+                      $(note.rootNode), RM.fn_parser_and_transform([], [], true),
+                      [RC.filter_selected_word(note.word, note.index - 1, RC.fn_html_highlight_note)]
+                   ))
                 .then(function ( highlighted_text ) {
                          // update the html in reader controller
-                         //TODO : pass the $el element? pass the viewAdapter? How to structure?
-                         // TODO Also don't forget to update state data user.redaer_tool.notes.mapURLNotes
+                         // TODO Also don't forget to update state data user.reader_tool.notes.mapURLNotes
                          self.viewAdapter.setErrorMessage(null);
                          self.viewAdapter.set_HTML_body(highlighted_text);
                          return highlighted_text;
@@ -181,6 +184,12 @@ define(['jquery',
                    this.rtView = this.options.view;
                    this.viewAdapter = this.options.getViewAdapter();
                    $el.html(this.rtView(this.viewAdapter));
+                   // TODO read from database the persisted notes data user.reader_tool.notes.mapURLNotes
+                   var aNotes = STATE.get_stored_stateful_object(
+                      'Notes_Collection',
+                      { module   : 'reader_tool',
+                         user_id : 1,
+                         url     : 'whatever'})
                 },
 
                 '#url_param change' : RC.combo_load_url,
