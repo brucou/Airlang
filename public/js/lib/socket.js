@@ -3,7 +3,7 @@
  */
    //TODO : remove the global rpc_socket
 
-define(['socketio'], function ( IO ) {
+define(['socketio', 'utils'], function ( IO, UT ) {
    var SOCK = {},
       rpc_socket,
       RPC_NAMESPACE = '/rpc';

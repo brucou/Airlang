@@ -144,6 +144,7 @@ requirejs(
          ////////////
          // Initialize socket connection
          SOCK.init();
+         RM.init();
 
          // Start Qunit if called from test index.html starting page
          if ('undefined' !== typeof QUnit) {

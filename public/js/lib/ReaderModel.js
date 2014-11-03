@@ -47,7 +47,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
 
 
           var RM = {}; // Added so I can trace all member functions more easily
-          var rpc_socket = SOCK.get_socket();
+          var rpc_socket;
           var CLASS_SELECTOR_CHAR = ".";
           var ID_SELECTOR_CHAR = "#";
 
@@ -800,12 +800,13 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
           ////////// Module initialization
           // mostly contains initialization of filters and data adapters for text highlighting
           RM.init = function init () {
+             rpc_socket = SOCK.get_socket();
+
              DS.filter_register_data_adapters('array_of_html_token', 'text', RM.dataAdapterHTMLTok2Text);
              DS.filter_register('text', 'async_cached_postgres_highlighted_text', RM.highlight_words);
              DS.filter_register_data_adapters('async_cached_postgres_highlighted_text', 'token_action_map',
                                               RM.dataAdapterOStore2TokenActionMap);
           };
 
-          RM.init();
           return RM;
        });
