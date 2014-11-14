@@ -43,7 +43,7 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                               '<span class = \'highlight\'>více.</span>',
                               '</DIV>'].join(" ");
 
-             RM.apply_highlighting_filters_to_text_2(
+             RM.apply_highlighting_filters_to_text(
                 $("<div>Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.</div>").appendTo("body"),
                 RM.fn_parser_and_transform([], []),
                 [RM.highlight_words]
@@ -167,7 +167,7 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              DS.filter_register_data_adapters('async_cached_postgres_highlighted_text2', 'token_action_map',
                                               dataAdapterOStore2TokenActionMap2);
 
-             RM.apply_highlighting_filters_to_text_2(
+             RM.apply_highlighting_filters_to_text(
                 $("<div>Člověku se kvůli tomu, < inserted comment > že přestane kouřit, zpomalí metabolismus. A to je hlavní problém, proč většině lidí začne ručička váhy ukazovat za pár měsíců o několik kilogramů více.</div>").appendTo("body"),
                 RM.fn_parser_and_transform([], []),
                 [RM.highlight_words, filter3]

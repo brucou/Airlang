@@ -13,7 +13,6 @@
         <codeStyleSettings language="JavaScript">
           <option name="KEEP_FIRST_COLUMN_COMMENT" value="false" />
           <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
-          <option name="BRACE_STYLE" value="5" />
           <option name="ELSE_ON_NEW_LINE" value="true" />
           <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
           <option name="ALIGN_MULTILINE_BINARY_OPERATION" value="true" />

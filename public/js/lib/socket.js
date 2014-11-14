@@ -15,7 +15,7 @@ define(['socketio', 'utils'], function ( IO, UT ) {
 
    SOCK.get_socket = function () {
       return rpc_socket;
-   }
+   };
 
    return SOCK;
 });

@@ -7,43 +7,6 @@
  * - for each new language support added, all these function should be tested against that language
  * TODO: implement a throw error mechanism
  */
-function getWordAtPoint(elem, x, y) {
-   /*
-    Known issues : Sometimes, the text read from the cursor position is several words. That happens on boundaries of the paragrpah box
-    */
-   if (elem.nodeType == elem.TEXT_NODE) {
-      var range = elem.ownerDocument.createRange();
-      range.selectNodeContents(elem);
-      var currentPos = 0;
-      var endPos = range.endOffset;
-      while (currentPos + 1 < endPos) {
-         range.setStart(elem, currentPos);
-         range.setEnd(elem, currentPos + 1);
-         if (range.getBoundingClientRect().left <= x && range.getBoundingClientRect().right >= x &&
-             range.getBoundingClientRect().top <= y && range.getBoundingClientRect().bottom >= y) {
-            range.expand("word");
-            var ret = range.toString();
-            range.detach();
-            return(ret);
-         }
-         currentPos += 1;
-      }
-   } else {
-      for (var i = 0; i < elem.childNodes.length; i++) {
-         var range = elem.childNodes[i].ownerDocument.createRange();
-         range.selectNodeContents(elem.childNodes[i]);
-         if (range.getBoundingClientRect().left <= x && range.getBoundingClientRect().right >= x &&
-             range.getBoundingClientRect().top <= y && range.getBoundingClientRect().bottom >= y) {
-            range.detach();
-            return(getWordAtPoint(elem.childNodes[i], x, y));
-         } else {
-            range.detach();
-         }
-      }
-   }
-   return(null);
-}
-
 function get_text_stats(text) {
    /**
     @param text (string) The string text can be in several lines. Any HTML tags or else will be considered as normal text
@@ -86,19 +49,8 @@ function clean_text(sWords) {
    return sWords.replace(/(\r\n|\n|\r)/gm, " ").replace(/\s+/g, ' ').trim();
 }
 
-function disaggregate_input(sWords) {
-   /* for now, just takes a string and returns an array of word tokens
-    Consecutive spaces are reduced to one
-    Trailing and leading spaces signs are taken out
-    That includes characters such as \n \r, etc. anything considered spaces by regexp
-    puntuation signs are isolated
-    Tested on czech, french and english language characters
-    */
-   // temp.sql: return clean_text(sWords).split(" ");
-   return sWords.replace(/[^\u00C0-\u1FFF\u2C00-\uD7FF\w\s]|_/g, function ($1) {
-      return ' ' + $1 + ' ';
-   }).replace(/\s+/g, ' ').trim().split(' ');
-}
-
 function wrap (text, wrap_char) { return [wrap_char, text, wrap_char].join(""); }
 
+function count_words (text) {
+   return text.match(/\S+/g).length ;
+}

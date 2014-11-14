@@ -39,15 +39,25 @@
  * QUnit
  * - setup possible when declaring module and actually should be used not to repeat too much test
  * - split test in different files
-
+ * TYPE
+ * - lots of type errors, functions called with wrong parameters, or expecting wrong output type
+ *   because the signature of the function was forgotten, or forgetting to return the output value
+ *   in closure for example
+ * ON.THE.FLY coding
+ * - wrong scope - function thought to be defined module scope but hidden into another function
+ * - wrong arguments passed o function, or in wrong order, or missing arguments
+ *   because one forgot the EXACT signature and behaviour of the function
  */
 
-define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
-       function ( $, DS, UL, UT, SOCK, CACHE ) {
+define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
+       function ( $, DS, UL, UT, SOCK, CACHE, STATE ) {
 
-
+          // module object
           var RM = {}; // Added so I can trace all member functions more easily
-          var rpc_socket;
+
+          //State objects
+          var stateMap = {rpc_socket : undefined, aNotes : undefined};
+
           var CLASS_SELECTOR_CHAR = ".";
           var ID_SELECTOR_CHAR = "#";
 
@@ -77,7 +87,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
           ////////// Database query functions
           RM.srv_qry_word_translation = function srv_qry_word_translation ( word, callback ) {
              //logEntry("srv_qry_word_translation");
-             rpc_socket.emit('get_translation_info', word, callback);
+             stateMap.rpc_socket.emit('get_translation_info', word, callback);
              //logExit("srv_qry_word_translation");
           };
 
@@ -87,7 +97,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
               callback: executed when the server has finished its processing
               */
              //logEntry("srv_qry_important_words");
-             rpc_socket.emit('highlight_important_words', word, callback);
+             stateMap.rpc_socket.emit('highlight_important_words', word, callback);
              return $.Deferred();
              //logExit("srv_qry_important_words");
           };
@@ -282,8 +292,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
              for (i = 0; i < aDivRow.length; i++) {
                 pdStatRowPartial = aDivRow[i]; //ParagraphData object
                 if (pdStatRowPartial.sum_sentence_number >= MIN_SENTENCE_NUMBER &&
-                    pdStatRowPartial.avg_avg_sentence_length >= MIN_AVG_AVG_SENTENCE_LENGTH)
-                {
+                    pdStatRowPartial.avg_avg_sentence_length >= MIN_AVG_AVG_SENTENCE_LENGTH) {
                    // that div is selected candidate for display
                    selectedDivs.push(pdStatRowPartial);
                    logWrite(DBG.TAG.INFO, "keeping div class, sentence_number, avg w/s", pdStatRowPartial.div,
@@ -298,7 +307,8 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
              return selectedDivs;
           };
 
-          /*
+          /**
+           *
            for each element of the array of selected div elements, highlight its text content
            then put the result in the destination DOM element
            The DOM takes the el from its source and (RE)MOVES it to the destination
@@ -306,9 +316,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
            */
           RM.highlight_important_words = function highlight_important_words ( aData, aSelectedDivs, $dest ) {
 
-             // for all selected Div, get the closest div from aData
-             // move it to dest
-             // parse dest
+             // for all selected Div, get the closest div from aData, move it to dest, parse dest
 
              // append each div to $dest
              var aTarget$el = [];
@@ -332,14 +340,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
              // Add the class mapping for given html tags and attributes
              var mapTagClass = {};
              var mapAttrClass = {};
-             // mapTagClass allows to add some class attribute to the DOM elements with a given tag
-             // Here it is used to add a class for styling the title of the page
-             // mapTagClass[tagName] = class_name
-             // If we process a <title> then add class = 'title'
-             // If we process a <tag class='title'> then add a class='title' i.e. keep it
+
              mapTagClass["TITLE"] = 'title';
-             mapAttrClass["class"] = {};
-             mapAttrClass["class"]["title"] = 'title';
+             mapAttrClass["class"] = {title : 'title'};
 
              // highlight $dest and return the promise
              return RM.highlight_text_in_div($dest, mapTagClass, mapAttrClass);
@@ -349,14 +352,121 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
            * Highlights important words found in $el
            * Does not change el, returns the highlighted text as an HTML string
            * through a promise
+           * mapTagClass allows to add some class attribute to the DOM elements with a given tag
+           * Here it is used to add a class for styling the title of the page
+           * mapTagClass[tagName] = class_name
+           * If we process a <title> then add class = 'title'
+           * If we process a <tag class='title'> then add a class='title' i.e. keep it
            */
           RM.highlight_text_in_div = function highlight_text_in_div ( $el, mapTagClass, mapAttrClass ) {
 
+             //TODO : add the filter for notes here too before the highlight words so it applies first
+             // However, it needs to works also on aHTMLTokens with more than one word per text token
+             // move RC.filter_selected_word to RM module, attention signature differs, we need the aNotes state object
+             // and rewrite it so it works without the one word per token thing
+             // that means I will have to apply the filter to the word and put it back directly with action:identity
+             // e.g. apply the action internally at word level. action:identity necessary so the second action is ignored
+             // and rename filter_selected_word to xxx_words
              return $.when(
-                RM.apply_highlighting_filters_to_text_2(
+                RM.apply_highlighting_filters_to_text(
                    $el,
                    RM.fn_parser_and_transform(mapTagClass, mapAttrClass),
-                   [RM.highlight_words]));
+                   [RM.filter_selected_words, RM.highlight_words]));
+          };
+
+          /**
+           * Highlights words which has been marked as notes by the user
+           * @param aHTMLtokens
+           * @param aNotes {Array} Optional parameter. Used to pass a custom notes object
+           * @returns {aTokenActionMap}
+           */
+          RM.filter_selected_words = function filter_selected_words ( aHTMLtokens, aNotes ) {
+             // Reminder : aHTMLtokens :: {type : 'html_begin_tag', text : xx, word_number: xx, name : xx}
+             // Reminder aNotes :: (word, index)
+             // if called with custom-made notes object, use that, otherwise use the stored one.
+             aNotes = (aNotes && UT.isArray(aNotes)) ? aNotes : RM.get_notes();
+             console.log("aNotes", aNotes);
+             // edge case: no notes -> return the action map with null (no action);
+             if (aNotes.length === 0) {
+                return aHTMLtokens.map(function ( html_token ) {return {token : html_token, action : null}});
+             }
+
+             // main case : sort note word index by ascending order so we can retrieve them in that order
+             aNotes.sort(function sort_notes ( a, b ) {
+                return a.index - b.index;
+             });
+
+             var aIndexes = aNotes.map(function ( note ) {return note.index});
+             var currentNoteIndex = aIndexes.shift(),
+                curr_word_count = 0,
+                next_word_count = 0,
+                aTokenActionMap = [];
+             // 2. Scan through aHTMLTokens and for each text, count the words in it
+             //    If it fits the next index then split it further and perform the transformation on the word at index
+             //    Put an action (identity) in from of that word as tokenActionMap, so it is performed with priority
+
+             aHTMLtokens.forEach(
+                function ( html_token ) {
+                   switch (html_token.type) {
+                      case 'html_begin_tag':
+                      case 'html_end_tag':
+                         aTokenActionMap.push({token : html_token, action : null});
+                         break;
+
+                      case 'text':
+                         // Basically, split into words. Apply the filter iff : real word && in a position found in note
+                         // For that, get a list of the note indexes that will be reached while iterating over the words
+                         // of 'text'. Then iterate over the words of the text, when reaching note indexes, apply filter
+                         var aRelevantIndexes = []; // relevant word indexes from the note for that text
+                         next_word_count = curr_word_count + html_token.word_number;
+                         // if we are scanning a text within within which word number X is, and word number is X is a note
+                         while (currentNoteIndex && (curr_word_count < currentNoteIndex) &&
+                                (currentNoteIndex <= next_word_count)) {
+                            // then keep all those indexes
+                            aRelevantIndexes.push(currentNoteIndex);
+                            currentNoteIndex = aIndexes.shift();
+                         }
+                         var currSelectedIndex = aRelevantIndexes.shift();
+                         html_token.text.split(" ").forEach(function ( word ) {
+                            if (word === "") {
+                               aTokenActionMap.push({token : {type : 'text', text : ' ', word_number : 0}, action : null});
+                            }
+                            else {
+                               curr_word_count++;
+                               if (currSelectedIndex && curr_word_count === currSelectedIndex) {
+                                  // We are processing word X which is also in the notes, apply the highlighting filter
+                                  aTokenActionMap.push({token    : RM.fn_html_highlight_note(word),
+                                                          action : UT.identity});
+                                  // move on to the next word in notes
+                                  currSelectedIndex = aRelevantIndexes.shift();
+                               }
+                               else {
+                                  // else apply nothing
+                                  aTokenActionMap.push(
+                                     {token : {type : 'text', text : word, word_number : undefined}, action : null});
+                               }
+                            }
+                         });
+                         break;
+                      default:
+                         break;
+                   }
+                }
+             );
+             return aTokenActionMap;
+          };
+
+          /**
+           * Purpose : filter function to highlight (via html) a word within an [html_token] structure
+           * @param html_token
+           * @returns {{type: string, text: string}} Returns an html_token structure
+           */
+          RM.fn_html_highlight_note = function fn_html_highlight_note ( word ) {
+             return {
+                type        : 'text',
+                text        : "<span class='airlang-rdt-note-highlight'>" + word + "</span>",
+                word_number : undefined
+             };
           };
 
           /**
@@ -373,8 +483,8 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
               - same goes for span tags, who tend not to have complete sentences
               */
              var tagHTML = "p",
-                 // array which will contain the analysis of text paragraphs
-                 aData = [];
+             // array which will contain the analysis of text paragraphs
+                aData = [];
 
              /*
               For each paragraph, calculate a series of indicators
@@ -399,7 +509,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
                 // this is just to ensure that the javascript native map do not interact badly with reserved names
                 const PREFIX = "z_";
                 var paragraghData = new DS.ParagraphData(),
-                    $el = $(this); // In principle, same as $(element)
+                   $el = $(this); // In principle, same as $(element)
 
                 switch (element.nodeType) {
                    // we only are dealing with paragraphs here, so that will always be the case
@@ -525,7 +635,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
           };
 
           RM.fn_html_highlight = function fn_html_highlight ( html_token ) {
-             return {type:'text', text:[StartSel, html_token.text, StopSel].join("")}
+             return {type : 'text', text : [StartSel, html_token.text, StopSel].join("")}
           };
 
           RM.dataAdapterOStore2TokenActionMap =
@@ -618,6 +728,14 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
              }
           };
 
+          RM.get_notes = function get_notes () {
+             return stateMap.aNotes;
+          };
+
+          RM.set_notes = function set_notes ( aNotes ) {
+             return stateMap.aNotes = aNotes;
+          };
+
           ////////// Filter highlighting functions
           /**
            * Purpose    : highlight words in a text
@@ -626,21 +744,17 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
            * Assumption : - Filter function do not add or remove token, and do not change token order,
            *                i.e. modifies token in place or leave them intact
            *              - The text passed in parameter is already trimmed
-           * @param text {String} character string to be highlighted
+           * @param $el {jQuery} character string to be highlighted
            * @param aFilters {array}  array of filter functions to be applied.
            *                          Filters' index in array is a decreasing function of priority of application.
            *                          i.e. aFilters[0] takes precedence over aFilters[1]
            *                          Filters have to be registered to know they input type and output type
-           * @param tokenizer {Function}     function who takes a string and returns an array of tokens
-           * @param detokenizer {Function}   reverse function of tokenizer which takes an array of tokens and returns a string
-           * @param commentMarker {Function} takes an array of tokens and returns a structure in which are located the indexes of token marked up as comment
-           *                                  Such comments will be ignored by the filters.
            * Algorithm  : Transform a text into tokens, then apply filters to those tokens.
            *              Filters mark the token to be highlighted. When all filters are done, highlighting functions
            *                are applied by order of priority. The corresponding tokens are then converted back to text
            */
-          RM.apply_highlighting_filters_to_text_2 =
-          function apply_highlighting_filters_to_text_2 ( $el, fn_parser, aFilters ) {
+          RM.apply_highlighting_filters_to_text =
+          function apply_highlighting_filters_to_text ( $el, fn_parser, aFilters ) {
 
              /*
               1. Read html from element and tokenize it (two tokens type, html_tag and text)
@@ -680,7 +794,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
                          tokenActionMap.action;
                       });
                    });
-                   //logWrite(DBG.TAG.DEBUG, "aTransposedResults transpose", UT.inspect(aTransposedResults, null, 4));
 
                    /*
                     4. Take the output of each filter and apply precedence rules
@@ -698,9 +811,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
                          return action_a ? action_a : action_b;
                       })
                    });
-                   //console.dir(aTransposedResults);
                    logWriteShort(DBG.TAG.DEBUG, "aTransposedResults - action reduce"
-                      //, UT.inspect(aTransposedResults, null, 4)
                       , aTransposedResults
                    );
 
@@ -737,14 +848,14 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
            * aFilters: array of REGISTERED filters. If the filter is not registered, fields will be missing and it will not work!!
            */
           RM.getTokenActionMap = function getTokenActionMap ( aTokens, aFilters ) {
-             var aFilterResults = [];
              var aPromises = [];
 
              aFilters.forEach(
                 function ( filter, index, array ) {
                    logWrite(DBG.TAG.DEBUG, "analysis of token by filter", UT.inspect(filter, null, 2));
                    if (!filter.input_type || !filter.output_type) {
-                      throw 'getTokenActionMap: type information not available. Possible cause is filter was not registered'
+                      throw 'getTokenActionMap: type information not available. Possible cause is filter was not registered. Check filter ' +
+                            filter.name
                    }
 
                    var i_adapter = DS.filter_get_data_adapter(aTokens.type, filter.input_type);
@@ -752,41 +863,26 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
                    logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens", i_adapter(aTokens));
 
                    var deferred_or_value =
-                          DS.promise_value_adapter(
-                             filter.call(null, i_adapter(aTokens), result_callback),
-                             result_callback);
+                      DS.promise_value_adapter(
+                         filter.call(null, i_adapter(aTokens), result_callback),
+                         result_callback);
 
                    function result_callback ( err, result ) {
                       // if the filter is not asynchronous, it must not expect nor use a second argument
                       // is asynchronous, it must have a second argument
-                      // the oDeferred here must be the same deferred returned by the filter call
-                      // another technique is to call the callback in the context of the object containing the deferred
-                      // however not recommended because it is dangerous to use this that way
                       if (err) {
                          logWrite(DBG.TAG.ERROR,
-                                  "getTokenActionMap: error returned by filter ",
-                                  filter.filter_name,
-                                  err);
-                         deferred_or_value.reject(["error in highlight words",
-                                                   err].join(" : "));
+                                  "getTokenActionMap: error returned by filter ", filter.filter_name, err);
+                         deferred_or_value.reject(["error in highlight words", err].join(" : "));
                       }
                       else {
-                         //associate one action to each token
-                         logWrite(DBG.TAG.DEBUG,
-                                  "executing output adapter",
-                                  o_adapter.name ||
-                                  o_adapter.displayName);
+                         logWrite(DBG.TAG.DEBUG, "executing output adapter", o_adapter.name || o_adapter.displayName);
                          // Note: we pass the tokens as a second optional parameter in case the output adapter needs
                          // that contextual info. Ideally, the adapter should only need the output of the filter
                          // as input
                          var aMapTokenAction = o_adapter(result, aTokens);
-                         //logWrite(DBG.TAG.DEBUG, "returning aMapTokenAction", UT.inspect(aMapTokenAction, null, 4));
-
-                         //push the result in the result array
-                         //aFilterResults.push(aMapTokenAction);
 
                          // the return here si important for the case where deferred_or_value is a value
-                         // In that case, we do not have access to a resolve mechanism for tranfering value out
                          return deferred_or_value.resolve(aMapTokenAction);
                       }
                    }
@@ -797,16 +893,58 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache'],
              return aPromises;
           };
 
+          ///////////// Notes handling function
+          RM.add_notes = function add_notes ( field_value_map ) {
+             // send order through state sockets
+             return STATE.insert_stored_stateful_object('Notes_Collection', field_value_map);
+          };
+
+          RM.get_stored_notes = function get_stored_notes ( criteria ) {
+             var self = this;
+             // Get state info
+             // return a promise that will be resolved when all state data has been retrieved
+             return STATE.get_stored_stateful_object(
+                'Notes_Collection',
+                criteria)
+                .then(function success ( aNotes ) {
+                         //check type
+                         if (!UT.isArray(aNotes)) {
+                            return UT.log_error("get_stored_stateful_object:",
+                                                "result for querying state object Notes_Collection : expected array, returned type",
+                                                typeof aNotes);
+                         }
+                         else {
+                            logWrite(DBG.TAG.DEBUG, "stateMap", UT.inspect(aNotes));
+                            return RM.set_notes(aNotes);
+                         }
+                      },
+                      function failure ( err ) {
+                         return UT.log_error("get_stored_stateful_object:",
+                                             "error querying state object Notes_Collection :", UT.inspect(err));
+                      })
+          };
+
           ////////// Module initialization
           // mostly contains initialization of filters and data adapters for text highlighting
           RM.init = function init () {
-             rpc_socket = SOCK.get_socket();
+             //TODO : later create a version supporting several instances
+             // 1. create function factory RM create new model instance
+             // 2. put the statemap in that instance
+             // 3. bind that instance to RM so this will mean RM
+             // 4. everywhere in RC controller change RM by model
+             // 5. init returns a model instance to main and main pass it to the controller
+             // NOTE : Can construct can be used to that purpose
+             stateMap.rpc_socket = SOCK.get_socket();
+
+             DS.filter_register('text', 'async_cached_postgres_highlighted_text', RM.highlight_words);
+             DS.filter_register('array_of_html_token', 'token_action_map', RM.filter_selected_words,
+                                'filter_selected_word');
 
              DS.filter_register_data_adapters('array_of_html_token', 'text', RM.dataAdapterHTMLTok2Text);
-             DS.filter_register('text', 'async_cached_postgres_highlighted_text', RM.highlight_words);
              DS.filter_register_data_adapters('async_cached_postgres_highlighted_text', 'token_action_map',
                                               RM.dataAdapterOStore2TokenActionMap);
           };
 
           return RM;
-       });
+       })
+;

@@ -88,14 +88,16 @@ requirejs(
     'ReaderModel',
     'ReaderController',
     'socket',
+    'Stateful',
     'utils'
    ],
-   function ( $, RM, RC, SOCK, UT, QU_tRM ) {
+   function ( $, RM, RC, SOCK, STATE, UT ) {
 
       function start () {
          logEntry("start");
+         // TODO : add a login mechanism to have different user ids
          new RC.ReaderToolController("#reader_tool",
-                                     {view : RC.rtView, getViewAdapter : RC.getViewAdapter, model : RM});
+                                     {view : RC.rtView, getViewAdapter : RC.getViewAdapter, model : RM, user_id: 1});
          logExit("start");
       }
 
@@ -105,27 +107,27 @@ requirejs(
          (DBG.TAG.TRACE, true, {by_default : true})
          (DBG.TAG.INFO, true, {by_default : true});
          DBG.disableLog(DBG.TAG.DEBUG, "CachedValues.init")
-            (DBG.TAG.DEBUG, "putValueInCache")
-            (DBG.TAG.DEBUG, "disaggregate_input")
-            (DBG.TAG.DEBUG, "async_cached_f")
-            (DBG.TAG.TRACE, "async_cached_f")
-            (DBG.TAG.TRACE, "propagateResult")
-            (DBG.TAG.TRACE, "async cached callback")
-            (DBG.TAG.DEBUG, "highlight_text_in_div")
-            (DBG.TAG.DEBUG, "search_for_text_to_highlight")
-            (DBG.TAG.TRACE, "search_for_text_to_highlight")
-            (DBG.TAG.TRACE, "get_text_stats")
-            (DBG.TAG.TRACE, "generateTagAnalysisData")
-            (DBG.TAG.TRACE, "get_DOM_select_format_from_class")
-            (DBG.TAG.TRACE, "getHitWord")
-            (DBG.TAG.DEBUG, "getHitWord")
-            (DBG.TAG.TRACE, "is_comment_start_token")
-            (DBG.TAG.TRACE, "is_comment_end_token")
+         (DBG.TAG.DEBUG, "putValueInCache")
+         (DBG.TAG.DEBUG, "disaggregate_input")
+         (DBG.TAG.DEBUG, "async_cached_f")
+         (DBG.TAG.TRACE, "async_cached_f")
+         (DBG.TAG.TRACE, "propagateResult")
+         (DBG.TAG.TRACE, "async cached callback")
+         (DBG.TAG.DEBUG, "highlight_text_in_div")
+         (DBG.TAG.DEBUG, "search_for_text_to_highlight")
+         (DBG.TAG.TRACE, "search_for_text_to_highlight")
+         (DBG.TAG.TRACE, "get_text_stats")
+         (DBG.TAG.TRACE, "generateTagAnalysisData")
+         (DBG.TAG.TRACE, "get_DOM_select_format_from_class")
+         (DBG.TAG.TRACE, "getHitWord")
+         (DBG.TAG.DEBUG, "getHitWord")
+         (DBG.TAG.TRACE, "is_comment_start_token")
+         (DBG.TAG.TRACE, "is_comment_end_token")
             //(DBG.TAG.TRACE, "dataAdapterOStore2TokenActionMap")
             //(DBG.TAG.DEBUG, "dataAdapterOStore2TokenActionMap")
-            (DBG.TAG.TRACE, "default_identity_filter")
-            (DBG.TAG.TRACE, "fn_html_highlight")
-            (DBG.TAG.TRACE, "parseDOMtree");
+         (DBG.TAG.TRACE, "default_identity_filter")
+         (DBG.TAG.TRACE, "fn_html_highlight")
+         (DBG.TAG.TRACE, "parseDOMtree");
       }
 
       function init_fake () {
@@ -142,16 +144,23 @@ requirejs(
          //trace(IO, 'IO');
          //init_fake();
          ////////////
-         // Initialize socket connection
-         SOCK.init();
-         RM.init();
-
-         // Start Qunit if called from test index.html starting page
-         if ('undefined' !== typeof QUnit) {
-            console.log("Starting QUnit tests");
-            QUnit.start();
-         }
-         start();
+         // Initialize socket connection and feature modules
+         $.when(
+            SOCK.init(),
+            STATE.init()
+         ).then(
+            function () {
+               RM.init();
+            }
+         ).then(
+            function () {
+               // Start Qunit if called from test index.html starting page
+               if ('undefined' !== typeof QUnit) {
+                  console.log("Starting QUnit tests");
+                  QUnit.start();
+               }
+               start();
+            });
       });
    });
 // */

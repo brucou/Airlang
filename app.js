@@ -71,6 +71,7 @@ function initialize_string_lib () {
    LOG.exit('initialize_string_lib');
 }
 
+//TODO refactoriser - helper - init des modules - avec promises quand necessaire, le server http listen en dernier?
 initialize_string_lib();
 server = initialize_server();
 LOG.write(LOG.TAG.INFO, "done : server initialized");

@@ -39,48 +39,47 @@ define(['jquery',
           };
 
           RC.combo_load_url = function combo_load_url ( $el, ev ) {
-             var viewAdapter = this.viewAdapter,
+             //TODO : replace by this.model and check it works fine (should)
+             var RM = this.options.model;
+             var viewAdapter = this.stateMap.viewAdapter,
                 my_url = $el.val(),
                 self = this;
              viewAdapter.attr("url_to_load", my_url);
              viewAdapter.setErrorMessage(null);
              viewAdapter.set_HTML_body(null);
 
-             var prm_success; // promise to manage async data reception
-             // TODO: harnomize the signature of callback function to err, result with err and Error object
-             prm_success = RM.make_article_readable(my_url);
-             prm_success
-                .fail(function make_article_readable_error ( Error ) {
-                         if (Error instanceof DS.Error) {
-                            logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error.error_message);
-                            viewAdapter.setErrorMessage(Error.error_message);
-                            viewAdapter.set_HTML_body(null);
-                         }
-                      })
-                .done(function make_article_readable_success ( error, html_text ) {
-                         logWrite(DBG.TAG.INFO, "URL read successfully");
-                         viewAdapter.set_HTML_body(html_text);
-                         viewAdapter.setErrorMessage("");
-                         self.stateSetIsUrlLoaded(true);
+             RM.get_stored_notes(
+                { module   : 'reader tool',
+                   user_id : 1, //TODO : temporary, the user_id should be obtained from some login
+                   url     : my_url})
+                .then(
+                function get_stored_notes_success ( aNotes ) {
+                   console.log('aNotes', UT.inspect(aNotes));
+                   var prm_success; // promise to manage async data reception
+                   // TODO: harnomize the signature of callback function to err, result with err and Error object
+                   prm_success = RM.make_article_readable(my_url);
+                   prm_success
+                      .fail(function make_article_readable_error ( Error ) {
+                               if (Error instanceof DS.Error) {
+                                  logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error.error_message);
+                                  viewAdapter.setErrorMessage(Error.error_message);
+                                  viewAdapter.set_HTML_body(null);
+                               }
+                            })
+                      .done(function make_article_readable_success ( error, html_text ) {
+                               logWrite(DBG.TAG.INFO, "URL read successfully");
+                               viewAdapter.set_HTML_body(html_text);
+                               viewAdapter.setErrorMessage("");
+                               self.stateSetIsUrlLoaded(true);
 
-                         var rtTranslateController = new TC.TranslateRTController(self.element,
-                                                                                  {translate_by : 'point'});
-                         // TODO: add an event that triggers refreshes of the webpage
-                         // put viewAdapter in RC so it can be accessible from the shell
-                         // create the controller with the view and model passed as parameters
-                      });
-          };
+                               var rtTranslateController = new TC.TranslateRTController(self.element,
+                                                                                        {translate_by : 'point'});
+                            });
+                },
+                function get_stored_notes_failure () {
+                   logWrite(DBG.TAG.ERROR, 'RM.get_stored_notes', err);
+                });
 
-          /**
-           * Purpose : filter function to highlight (via html) a word within an [html_token] structure
-           * @param html_token
-           * @returns {{type: string, text: string}} Returns an html_token structure
-           */
-          RC.fn_html_highlight_note = function fn_html_highlight_note ( html_token ) {
-             return {
-                type : 'text',
-                text : "<span class='airlang-rdt-note-highlight'>" + html_token.text + "</span>"
-             };
           };
 
           /**
@@ -153,17 +152,28 @@ define(['jquery',
 
              var self = this;
              var note = TC.getNoteFromWordClickedOn($el, ev, range);
+             // modify the filter selected words to include the closure on the note
+             var modified_filter_selected_words = function ( aHTMLtoken ) {
+                return RM.filter_selected_words(aHTMLtoken, [note])
+             };
+             modified_filter_selected_words.input_type = RM.filter_selected_words.input_type;
+             modified_filter_selected_words.output_type = RM.filter_selected_words.output_type;
+
              return $.when(
-                   RM.apply_highlighting_filters_to_text_2(
-                      $(note.rootNode), RM.fn_parser_and_transform([], [], true),
-                      [RC.filter_selected_word(note.word, note.index - 1, RC.fn_html_highlight_note)]
-                   ))
-                .then(function ( highlighted_text ) {
-                         // update the html in reader controller
-                         // TODO Also don't forget to update state data user.reader_tool.notes.mapURLNotes
-                         self.viewAdapter.setErrorMessage(null);
-                         self.viewAdapter.set_HTML_body(highlighted_text);
-                         return highlighted_text;
+                RM.apply_highlighting_filters_to_text(
+                   $(note.rootNode), RM.fn_parser_and_transform([], [], true),
+                   //[RC.filter_selected_word(note.word, note.index - 1, RC.fn_html_highlight_note)]
+                   [modified_filter_selected_words]
+                )).
+                then(function update_html_text ( highlighted_text ) {
+                        // update the html in reader controller
+                        self.stateMap.viewAdapter.setErrorMessage(null);
+                        self.stateMap.viewAdapter.set_HTML_body(highlighted_text);
+                        return highlighted_text;
+                     })
+                .then(function update_state () {
+                         RM.add_notes({module    : 'reader tool', url : self.stateMap.viewAdapter.url_to_load,
+                                         user_id : self.stateMap.user_id, word : note.word, index : note.index});
                       });
           };
 
@@ -171,25 +181,21 @@ define(['jquery',
              {
                 defaults : {
                    view           : RC.rtView,
-                   getViewAdapter : RC.getViewAdapter,
-                   stateMap       : {
-                      isUrlLoaded : false
-                   } // variable which will gather all the stateful properties
-                   // setter, getter functions
+                   getViewAdapter : RC.getViewAdapter
                 }
              },
              {
                 init : function ( $el, options ) {//el already in jquery form
+                   //TODO : user_id should not be in state here but got through a getter function from the shell
                    //defaults is loaded first in options
                    this.rtView = this.options.view;
-                   this.viewAdapter = this.options.getViewAdapter();
-                   $el.html(this.rtView(this.viewAdapter));
-                   // TODO read from database the persisted notes data user.reader_tool.notes.mapURLNotes
-                   var aNotes = STATE.get_stored_stateful_object(
-                      'Notes_Collection',
-                      { module   : 'reader_tool',
-                         user_id : 1,
-                         url     : 'whatever'})
+                   this.model = this.options.model;
+
+                   // variable which will gather all the stateful properties
+                   // setter, getter functions
+                   this.stateMap =
+                   {isUrlLoaded : false, user_id : this.options.user_id, viewAdapter : this.options.getViewAdapter()};
+                   $el.html(this.rtView(this.stateMap.viewAdapter));
                 },
 
                 '#url_param change' : RC.combo_load_url,
@@ -197,11 +203,11 @@ define(['jquery',
                 'click' : RC.show_and_add_note,
 
                 stateSetIsUrlLoaded : function stateSetIsUrlLoaded ( is_loaded ) {
-                   this.options.stateMap.isUrlLoaded = is_loaded;
+                   this.stateMap.isUrlLoaded = is_loaded;
                 },
 
                 stateGetIsUrlLoaded : function stateGetIsUrlLoaded () {
-                   return this.options.stateMap.isUrlLoaded;
+                   return this.stateMap.isUrlLoaded;
                 }
 
              });
