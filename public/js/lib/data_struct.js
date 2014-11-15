@@ -52,6 +52,9 @@ define(['utils'], function ( UT ) {
 
    DS.Error = function ( error_message ) {
       this.error_message = error_message;
+      this.toString = function (){
+         return this.error_message;
+      };
    };
 
    DS.Tooltip = (function () {

@@ -117,60 +117,44 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
              /*return  $.get('http://www.corsproxy.com/www.voxeurop.eu/cs/content/editorial/4765047-jsme-zpet',
               function(response) {console.log("response:", response);
               document.body.innerHTML = response; });*/
-             UL.url_load(encodeURI(your_url), url_load_callback);
+             UL.url_load(encodeURI(your_url))
+                .then(
+                RM.extract_relevant_text_from_html,
+                function url_load_error ( jqXHR, textStatus, errorThrown ) {
+                   logWrite(DBG.TAG.ERROR, "error encountered while fetching url");
+                   dfr.reject(new DS.Error("<p> ERROR : could not retrieve the webpage : " + errorThrown +
+                                           "</p>"));
+                })
+                .then(function extract_text_from_html_success ( html_highlighted_text ) {
+                         logWrite(DBG.TAG.INFO, "page highlighted!");
+                         dfr.resolve(html_highlighted_text);
+                      },
+                      function extract_text_from_html_failure ( ds_error ) {
+                         dfr.reject(ds_error);
+                      });
+
              return dfr.promise();
-
-             function url_load_callback ( html_text ) {
-                if (html_text) { // the query did not fail to return a non-empty text
-                   // TEST CODE
-                   if (FAKE.should_be(url_load_callback)) {
-                      logWrite(DBG.TAG.INFO, "TEST MODE - page highlighted!");
-                      html_text = FAKE(url_load_callback, this)(dfr, html_text);
-                   }
-                   ///////
-                   window.html_text = html_text;
-                   var extract_promise = RM.extract_relevant_text_from_html(html_text);
-
-                   if (!extract_promise) {
-                      // nothing to display as no selected div were found
-                      logWrite(DBG.TAG.ERROR, "null returned from extract_relevant_text_from_html",
-                               "nothing to display");
-                      dfr.reject(new DS.Error("<p> ERROR : nothing to display </p>" +
-                                              "<p> Possible cause : no important paragraph could be identified </p>"),
-                                 null);
-                      return;
-                   }
-
-                   extract_promise
-                      .done(function extract_relevant_text_from_html_success ( err, html_text ) {
-                               logWrite(DBG.TAG.INFO, "page highlighted!");
-                               //console.log("highlightd text: ", html_text);
-                               dfr.resolve(null, html_text);
-                            })
-                      .fail(function extract_relevant_text_from_html_failure ( err, result ) {
-                               logWrite(DBG.TAG.ERROR, "error in return from extract_relevant_text_from_html");
-                               dfr.reject(new DS.Error(["<p> ERROR :", err.toString(), "</p>"].join(" ")),
-                                          null);
-                            });
-                }
-                else {
-                   logWrite(DBG.TAG.ERROR, "no html_text from url_load");
-                   dfr.reject(new DS.Error("<p> ERROR : could not retrieve the webpage </p>"), null);
-                }
-             }
           };
 
-          RM.extract_relevant_text_from_html = function extract_relevant_text_from_html ( html_text ) {
+          RM.extract_relevant_text_from_html =
+          function extract_relevant_text_from_html ( html_text, textStatus, jqXHR ) {
              /*
               LIMITATION : Will not work for pages who have paragraph directly under body
               This case is currently considered pathological and ignored
               IMPROVEMENT : look if there is an article tag, in which case take the title and add it first with H1 tag before constructing the page
               */
              //logEntry("extract_relevant_text_from_html");
-             var MIN_SENTENCE_NUMBER = 7;
-             var MIN_AVG_AVG_SENTENCE_LENGTH = 10;
-             var SOURCE = "source"; //for temporarily keep the loaded webpage
-             var DEST = "destination";
+             var dfr = $.Deferred(),
+                MIN_SENTENCE_NUMBER = 7,
+                MIN_AVG_AVG_SENTENCE_LENGTH = 10,
+                SOURCE = "source", //for temporarily keep the loaded webpage
+                DEST = "destination";
+
+             if (!html_text) {
+                logWrite(DBG.TAG.WARNING, "empty page!! nothing to display");
+                return dfr.reject(new DS.Error("<p> ERROR : nothing to display </p>" +
+                                               "<p> Possible causes : empty page loaded! </p>"));
+             }
 
              var $source = RM.create_div_in_DOM(SOURCE).html(html_text);
              $source.hide();
@@ -221,9 +205,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
              logWrite(DBG.TAG.INFO, "Identify the div classes to keep in the DOM");
              var selectedDivs = RM.select_div_to_keep(aDivRow, MIN_SENTENCE_NUMBER, MIN_AVG_AVG_SENTENCE_LENGTH);
              if (selectedDivs.length === 0) {
-                logWrite(DBG.TAG.WARNING, "no div selected!!");
-                logExit("extract_relevant_text_from_html");
-                return null;
+                logWrite(DBG.TAG.WARNING, "no div selected!! nothing to display");
+                return dfr.reject(new DS.Error("<p> ERROR : nothing to display </p>" +
+                                               "<p> Possible cause : no important paragraph could be identified </p>"));
              }
 
              logWrite(DBG.TAG.INFO, "Reading and adding title");
@@ -236,7 +220,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
                 aSelectedDivSelectors.push(selectedDiv.div);
              });
 
-             var dfr = $.Deferred();
              var prm_success = RM.highlight_important_words(aData, aSelectedDivSelectors, $dest);
              prm_success
                 .done(function highlight_important_words_success ( html_highlighted_text ) {
@@ -245,12 +228,12 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
                          logWrite(DBG.TAG.INFO, "done processing highlight_important_words");
                          logWrite(DBG.TAG.DEBUG, "dest", $dest.html().substring(0, 300));
 
-                         dfr.resolve(null, html_highlighted_text);
+                         dfr.resolve(html_highlighted_text);
                       })
                 .fail(function highlight_important_words_failure ( error ) {
                          // this happens if one of the selectedDivs provokes an error
                          logWrite(DBG.TAG.WARNING, "error occurred while processing highlight_important_words");
-                         dfr.reject(error, null);
+                         dfr.reject(new DS.Error("<p> " + error + "</p>"));
                       });
              $source.remove();
 
@@ -384,13 +367,11 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
              // Reminder : aHTMLtokens :: {type : 'html_begin_tag', text : xx, word_number: xx, name : xx}
              // Reminder aNotes :: (word, index)
              // if called with custom-made notes object, use that, otherwise use the stored one.
-             aNotes = (aNotes && UT.isArray(aNotes)) ? aNotes : RM.get_notes();
-             console.log("aNotes", aNotes);
-             // edge case: no notes -> return the action map with null (no action);
-             if (aNotes.length === 0) {
-                return aHTMLtokens.map(function ( html_token ) {return {token : html_token, action : null}});
+             //aNotes = (aNotes && UT.isArray(aNotes)) ? aNotes : RM.get_notes();
+             if (!aNotes || !UT.isArray(aNotes)) {
+                aNotes = RM.get_notes();
              }
-
+             console.log("aNotes", aNotes);
              // main case : sort note word index by ascending order so we can retrieve them in that order
              aNotes.sort(function sort_notes ( a, b ) {
                 return a.index - b.index;
@@ -670,9 +651,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
 
              ////
 
+             var highlit_text = OStore.toString(); // the query returns with a OStore object
              logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
              // TODO: to synchronize better with server instead of copying : move to common config file??
-             var highlit_text = OStore.toString(); // the query returns with a OStore object
              highlit_text = highlit_text.replace(new RegExp(StartSel, "g"), StartSel_nospaces);
              highlit_text = highlit_text.replace(new RegExp(StopSel, "g"), StopSel_nospaces);
              // For StopSel not necessary as there is no spaces

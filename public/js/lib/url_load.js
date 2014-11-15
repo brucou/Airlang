@@ -74,13 +74,9 @@ define(['jquery'], function ($) {
              url_load : function (your_url, callback) {
                 var protomatch = /^(https?|ftp):\/\//; // NB: not '.*'
                 var url = your_url.replace(protomatch, '');
-                $.ajax({
+                return $.ajax({
                           crossOrigin: true,
-                          url: 'http://www.corsproxy.com/' + url,
-                          success: function(html_text, error) {
-                             //console.log(html_text);
-                             callback(html_text);
-                          }
+                          url: 'http://www.corsproxy.com/' + url
                        });
              },
              url_load2: function (your_url, callback) {

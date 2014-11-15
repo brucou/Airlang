@@ -60,13 +60,11 @@ define(['jquery',
                    prm_success = RM.make_article_readable(my_url);
                    prm_success
                       .fail(function make_article_readable_error ( Error ) {
-                               if (Error instanceof DS.Error) {
-                                  logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error.error_message);
-                                  viewAdapter.setErrorMessage(Error.error_message);
+                                  logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error);
+                                  viewAdapter.setErrorMessage(Error.toString());
                                   viewAdapter.set_HTML_body(null);
-                               }
                             })
-                      .done(function make_article_readable_success ( error, html_text ) {
+                      .done(function make_article_readable_success ( html_text ) {
                                logWrite(DBG.TAG.INFO, "URL read successfully");
                                viewAdapter.set_HTML_body(html_text);
                                viewAdapter.setErrorMessage("");
