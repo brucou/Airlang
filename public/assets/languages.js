@@ -5,7 +5,7 @@ function getLangDirection(language) {
    var direction;
    TransOverLanguages.forEach(function(lang_array) {
       if (language == lang_array[0]) {
-         direction = lang_array[2]; // TODO change TransOverLanguages from array to object
+         direction = lang_array[2]; //
       }
    });
    return direction;

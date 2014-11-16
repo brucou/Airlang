@@ -8,7 +8,6 @@
 /**
  * TODO: MODULARITY
  * - investigate how to have module both require.js and stand alone in same file
- * - client : remove later UT global variable (to have access to inspect function in debug.js : DBG.set_inspect_function
  * - register function with the language they are associated to ('cs' etc.)
  * - use router : https://github.com/flatiron/director (works server and client side, no dependencies of Jquery and the rest
  * TODO: DOCUMENTATION
@@ -23,7 +22,6 @@
  * TODO: DEPLOYMENT
  * -  CLOUD : when ready to switch to english dictionary, move it to cloud
  * TODO : FEATURES
- * - completely add module reader tool (config, and init (start)
  * - do the structure to add recognizing of language, and get back the language info, passed as param to server calls
  * - full API for the reader tool
  * - - language API : recognize language, similar words, translation API etc.

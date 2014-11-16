@@ -9,6 +9,7 @@
  * cam.trigger is good to generate event on specific OBJECTS (pubsub mechanism)
  * document fragment is nice to perform DOM operations with good performance
  * BUT to have it live (e.g. get dimensions for instance), necessary to display:block and insert it in body
+ - if in the controller there are two identical strings matching to event handlers, only the last one is taken into account
  */
 
 /**
@@ -32,8 +33,6 @@
  - apres celle qui n'ont ni sens ni translation (enlever la ligne vide...)
  TODO : FEATURES : See how to mitigate the fact that ts_lexize cspell do not find the lexeme always
  - for instance, připomněl -> připomněl
- IMPORTANT:
- - if in the controller there are two identical strings matching to event handlers, only the last one is taken into account
  */
 define(['jquery',
         'mustache',
@@ -361,7 +360,7 @@ define(['jquery',
                           aQuery_result.length === 0)
                       { // means server returned empty
                          logWrite(DBG.TAG.WARNING, "Query did not return any values");
-                         return null; //TODO: error management
+                         return null;
                       }
 
                       logWrite(DBG.TAG.INFO, "Translation fetched");
@@ -572,7 +571,7 @@ define(['jquery',
            * Purpose    : return the word index from the first parent element with an existing attribute ID
            * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
            *              i.e. with numbered html tag except for text nodes
-           * @param {JQuery} $el : JQuery element clicked on (target element)
+           * @param {jQuery} $el : jQuery element clicked on (target element)
            * @param {event} ev  : event object
            * @param {range} selectedRange range containing the click selection made by the user
            * @returns {number} index of word (starting with 1) from parent with an existing attribute ID

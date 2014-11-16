@@ -39,8 +39,7 @@ define(['jquery',
           };
 
           RC.combo_load_url = function combo_load_url ( $el, ev ) {
-             //TODO : replace by this.model and check it works fine (should)
-             var RM = this.options.model;
+             var RM = this.model;
              var viewAdapter = this.stateMap.viewAdapter,
                 my_url = $el.val(),
                 self = this;
@@ -54,15 +53,11 @@ define(['jquery',
                    url     : my_url})
                 .then(
                 function get_stored_notes_success ( aNotes ) {
-                   console.log('aNotes', UT.inspect(aNotes));
-                   var prm_success; // promise to manage async data reception
-                   // TODO: harnomize the signature of callback function to err, result with err and Error object
-                   prm_success = RM.make_article_readable(my_url);
-                   prm_success
+                   RM.make_article_readable(my_url)
                       .fail(function make_article_readable_error ( Error ) {
-                                  logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error);
-                                  viewAdapter.setErrorMessage(Error.toString());
-                                  viewAdapter.set_HTML_body(null);
+                               logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error);
+                               viewAdapter.setErrorMessage(Error.toString());
+                               viewAdapter.set_HTML_body(null);
                             })
                       .done(function make_article_readable_success ( html_text ) {
                                logWrite(DBG.TAG.INFO, "URL read successfully");
@@ -76,7 +71,8 @@ define(['jquery',
                 },
                 function get_stored_notes_failure () {
                    logWrite(DBG.TAG.ERROR, 'RM.get_stored_notes', err);
-                });
+                }
+             );
 
           };
 
@@ -148,6 +144,7 @@ define(['jquery',
              //this is a stub for testing
              range = range || window.getSelection().getRangeAt(0);
 
+             var RM = this.model;
              var self = this;
              var note = TC.getNoteFromWordClickedOn($el, ev, range);
              // modify the filter selected words to include the closure on the note

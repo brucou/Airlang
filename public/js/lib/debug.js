@@ -5,8 +5,6 @@
  * Created by bcouriol on 1/06/14.
  */
 /**
- * TODO : MODULARITY
- * - the function inspect is taken from utils.js and should not be exposed in windows like now
  *
  */
 

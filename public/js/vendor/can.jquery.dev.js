@@ -2813,7 +2813,7 @@
                     }
                 },
                 __set: function(prop, value, current) {
-                    // TODO: Check if value is object and transform.
+                    //
                     // Don't do anything if the value isn't changing.
                     if (value !== current) {
                         // Check if we are adding this for the first time --
@@ -4281,11 +4281,11 @@
                 textarea: 'value'
             },
 
-            // 3.0 TODO: remove
+            // 3.0
             attrMap: can.attr.map,
             // matches the attrName of a regexp
             attrReg: /([^\s=]+)[\s]*=[\s]*/,
-            // 3.0 TODO: remove
+            // 3.0
             defaultValue: can.attr.defaultValue,
             // a map of parent element to child elements
 
@@ -4315,11 +4315,11 @@
             getParentNode: function(el, defaultParentNode) {
                 return defaultParentNode && el.parentNode.nodeType === 11 ? defaultParentNode : el.parentNode;
             },
-            // 3.0 TODO: remove
+            // 3.0
             setAttr: can.attr.set,
-            // 3.0 TODO: remove
+            // 3.0
             getAttr: can.attr.get,
-            // 3.0 TODO: remove
+            // 3.0
             removeAttr: can.attr.remove,
             // Gets a "pretty" value for something
             contentText: function(text) {
@@ -4709,7 +4709,7 @@
                                         // We are exiting the quote.
                                         quote = null;
                                         // Otherwise we are creating a quote.
-                                        // TODO: does this handle `\`?
+                                        //
                                         var attr = getAttrName();
                                         if (viewCallbacks.attr(attr)) {
                                             specialStates.attributeHookups.push(attr);
@@ -5815,7 +5815,7 @@
                 parentNode = elements.getParentNode(el, parentNode);
                 data = listen(parentNode, compute, function(ev, newVal, oldVal) {
 
-                    // TODO: remove teardownCheck in 2.1
+                    //
                     var attached = nodeLists.first(nodes).parentNode;
                     // update the nodes in the DOM with the new rendered value
                     if (attached) {
@@ -5877,7 +5877,7 @@
                         node.nodeValue = can.view.toStr(newVal);
                     }
 
-                    // TODO: remove in 2.1
+                    //
                     data.teardownCheck(node.parentNode);
                 });
                 // The text node that will be updated
@@ -8144,7 +8144,7 @@
                 // Make sure that can.Model can react to the request before anything else does.
                 deferred = pipe(jqXHR, modelObj, function(data) {
                     // `method` is here because `"destroyed" !== "destroy" + "d"`.
-                    // TODO: Do something smarter/more consistent here?
+                    //
                     modelObj[method || type + "d"](data, jqXHR);
                     return modelObj;
                 });
@@ -8584,7 +8584,7 @@
                 ___set: function(prop, val) {
                     can.Map.prototype.___set.call(this, prop, val);
                     // If we add or change the ID, update the store accordingly.
-                    // TODO: shouldn't this also delete the record from the old ID in the store?
+                    //
                     if (prop === this.constructor.id && this._bindings) {
                         this.constructor.store[getId(this)] = this;
                     }

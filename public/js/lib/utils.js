@@ -1319,12 +1319,6 @@ function utilsFactory () {
     * nice to have : parameter which allow to return just true or false i.e. no explanation messages (speed concern)
     */
    function assert_type ( argums, aParamTypeSpecs, options ) {
-      // nice to have : add type checking for optional parameters as well
-      // This could take the shape of {aParamTypeSpecs: UT.type.array}, {$el: '*Element'}
-      // that however complicated the algorithm
-      // we would first need to fill in the (key, values) for the non-optional parameters, and then
-      // match the optional parameters (in the order they are passed) on whatever args are left
-
       // First check the arguments passed in parameters :-)
       var bool_no_exception,
          arity = arguments.length;
@@ -1369,20 +1363,16 @@ function utilsFactory () {
          aCheckResults = aProps.map(
             function ( property ) {
                var expected_type = paramTypeSpec[property];
-               if (expected_type === null) {
-                  // an expected type of null means : do not check type for this argument
-                  // this allows to skip type checking of some arguments which have to be part of the specs
-                  // to keep the ordering of later arguments
-                  // TODO: something
-               }
                // this should be a string
                var current_param = aArgs[param_index++];
                // edge cases of null and undefined value for params are dealth with in getClass
                // which turns them into normal cases
                // normal cases, first check expected_type is a string
-               // TODO : write test (simple, just to execute repeteadly in shell chrome F12)
                var aExpected_type = undefined;
                if (expected_type !== null) {
+                  // an expected type of null means : do not check type for this argument
+                  // this allows to skip type checking of some arguments which have to be part of the specs
+                  // to keep the ordering of later arguments
                   if ('string' === typeof expected_type) {
                      aExpected_type = [expected_type];
                   }

@@ -1,7 +1,6 @@
 /**
  * Created by bcouriol on 3/11/14.
  */
-   //TODO : remove the global rpc_socket
 
 define(['socketio', 'utils'], function ( IO, UT ) {
    var SOCK = {},

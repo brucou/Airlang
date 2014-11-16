@@ -110,7 +110,6 @@ function is_type_in_prototype_chain ( object, type ) {
  *                          NOK: xxx -> spec not fulfilled for param
  */
 function assert_type ( argums, aParamTypeSpecs, options ) {
-   // nice to have : add type checking for optional parameters as well
    // This could take the shape of {aParamTypeSpecs: UT.type.array}, {$el: '*Element'}
    // that however complicated the algorithm
    // we would first need to fill in the (key, values) for the non-optional parameters, and then

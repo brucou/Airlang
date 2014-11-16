@@ -5,7 +5,6 @@
  * For example in czech, 1.6.2014 is not three sentence but one date
  * - get_text_stats : same
  * - for each new language support added, all these function should be tested against that language
- * TODO: implement a throw error mechanism
  */
 function get_text_stats(text) {
    /**

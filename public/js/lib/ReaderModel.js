@@ -215,13 +215,11 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
 
              logWrite(DBG.TAG.INFO, "Highlighting important words");
              // extract from selectedDivs only the divs
-             var aSelectedDivSelectors = [];
-             selectedDivs.forEach(function ( selectedDiv ) {
-                aSelectedDivSelectors.push(selectedDiv.div);
+             var aSelectedDivSelectors = selectedDivs.map(function ( selectedDiv ) {
+                return selectedDiv.div;
              });
 
-             var prm_success = RM.highlight_important_words(aData, aSelectedDivSelectors, $dest);
-             prm_success
+             RM.highlight_important_words(aData, aSelectedDivSelectors, $dest)
                 .done(function highlight_important_words_success ( html_highlighted_text ) {
                          //following pattern function(err, result)
                          // if was successfully highlit then pass the $dest that was modified in place
@@ -342,14 +340,6 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
            * If we process a <tag class='title'> then add a class='title' i.e. keep it
            */
           RM.highlight_text_in_div = function highlight_text_in_div ( $el, mapTagClass, mapAttrClass ) {
-
-             //TODO : add the filter for notes here too before the highlight words so it applies first
-             // However, it needs to works also on aHTMLTokens with more than one word per text token
-             // move RC.filter_selected_word to RM module, attention signature differs, we need the aNotes state object
-             // and rewrite it so it works without the one word per token thing
-             // that means I will have to apply the filter to the word and put it back directly with action:identity
-             // e.g. apply the action internally at word level. action:identity necessary so the second action is ignored
-             // and rename filter_selected_word to xxx_words
              return $.when(
                 RM.apply_highlighting_filters_to_text(
                    $el,
@@ -371,7 +361,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
              if (!aNotes || !UT.isArray(aNotes)) {
                 aNotes = RM.get_notes();
              }
-             console.log("aNotes", aNotes);
+             logWrite(DBG.TAG.DEBUG, "aNotes", aNotes);
              // main case : sort note word index by ascending order so we can retrieve them in that order
              aNotes.sort(function sort_notes ( a, b ) {
                 return a.index - b.index;
@@ -438,9 +428,9 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
           };
 
           /**
-           * Purpose : filter function to highlight (via html) a word within an [html_token] structure
-           * @param html_token
-           * @returns {{type: string, text: string}} Returns an html_token structure
+           * Purpose : filter function to highlight (via html) a word
+           * @param word {string}
+           * @returns {{type: string, text: string, word_number: undefined}} Returns an html_token structure
            */
           RM.fn_html_highlight_note = function fn_html_highlight_note ( word ) {
              return {
@@ -452,7 +442,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
 
           /**
            INPUT:
-           @param $source {jquery element} the id of the div source within which to select the text
+           @param $source {jQuery} the id of the div source within which to select the text
            @returns {array} returns an array with text stats in ParagraphData object (div class, sentence number etc.)
            */
           RM.generateTagAnalysisData = function generateTagAnalysisData ( $source ) {
