@@ -10,7 +10,7 @@ const prefix_src_dir = '../../';
 //var assert = require("assert");
 var Util = require('util');
 var LOG = require(prefix_src_dir + './debug');
-var SIO = require(prefix_src_dir + './sio_logic')
+var SIO = require(prefix_src_dir + './sio_logic');
 var DB = require(prefix_src_dir + './db_logic');
 
 describe('database queries', function () {
@@ -25,6 +25,7 @@ describe('database queries', function () {
       var promise = DB.initialize_database();
       return promise;
    });
+
    describe('Translation', function () {
       it('Word : projekt', function ( done ) {
          var expected = [
@@ -71,7 +72,8 @@ describe('database queries', function () {
                                 if (result && result.rows) {
                                    //console.log(result.rows);
                                    assert.equal(result.rows.length, 4, 'projekt has 4 translations rows');
-                                   assert.deepEqual(result.rows, expected, 'expected : scheme (2x), operation (1x), project (1x)');
+                                   assert.deepEqual(result.rows, expected,
+                                                    'expected : scheme (2x), operation (1x), project (1x)');
                                    done();
                                 }
                                 else {

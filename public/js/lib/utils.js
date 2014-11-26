@@ -963,7 +963,7 @@ function utilsFactory () {
       _parseDOMtree($el, aHTMLparsed, aHTMLtokens, aCommentPos);
       var html_parsed_text = aHTMLparsed.join(" ");
 
-      logWrite(DBG.TAG.DEBUG, "parsed HTML", aHTMLparsed.join("\n"));
+      //logWrite(DBG.TAG.DEBUG, "parsed HTML", aHTMLparsed.join("\n"));
       return {
          aHTMLparsed      : aHTMLparsed,
          aHTMLtokens      : aHTMLtokens,
@@ -972,7 +972,6 @@ function utilsFactory () {
          aTokens          : html_parsed_text.split(" ")
          //There are spaces in aHTMLparsed, so this split op is not trivial x->x
       };
-
 
       function _parseDOMtree ( $el, aHTMLparsed, aHTMLtokens, aCommentPos ) {
 
@@ -1032,7 +1031,6 @@ function utilsFactory () {
                arr.push(attribute.nodeName + "='" + attribute.value + "'");
             });
             html_begin_tag = arr.join(" ") + ">";
-            console.log("html_Begin tag", html_begin_tag);
          }
          else {// read the attributes to map from mapAttrTagClass -> array
             var aAttributes = get_own_properties(mapAttrClass);
@@ -1248,7 +1246,6 @@ function utilsFactory () {
 
       var curObj = object,
          inst_of;
-      console.log(typeof object);
 
       //check that object is of type object, otherwise it is a core type, which is out of scope
       // !! : null has type 'object' but is in no prototype chain
@@ -1259,7 +1256,6 @@ function utilsFactory () {
       do {
          inst_of = getInstanceOf(Object.getPrototypeOf(curObj));
          curObj = Object.getPrototypeOf(curObj);
-         //console.log(inst_of, curObj);
       }
       while (inst_of !== 'Object' && inst_of !== type);
       return (inst_of === type);
@@ -1338,6 +1334,9 @@ function utilsFactory () {
       if (!aParamTypeSpecs) {
          throw 'assert_type: expecting argument aParamTypeSpecs, received falsy value';
       }
+      if (aParamTypeSpecs && !aParamTypeSpecs.length) {
+         throw 'assert_type: expecting array argument aParamTypeSpecs, received ' + typeof aParamTypeSpecs;
+      }
 
       // Get the arguments whose type is to be checked as an array
       var aArgs = slice.call(argums),
@@ -1348,7 +1347,6 @@ function utilsFactory () {
       aParamTypeSpecs.forEach(function ( paramTypeSpec ) {
          // paramTypeSpec is similar to {param1: type_spec}
          // aArgs[param_index] will be the argument number index passed as parameter
-         console.log('paramTypeSpec', paramTypeSpec)
          var aProps = get_own_properties(paramTypeSpec);
          if (aProps.length === 0) {
             throw 'assert_type: expected non-empty spec object!';
@@ -1396,7 +1394,7 @@ function utilsFactory () {
                                     (is_proto_chain = true) && !!(exp_index = index + 1)));
                              // different hacks here to avoid doing it on a separate line
                           })
-                     .reduce(_UT.or, false);
+                     .reduce(or, false);
                   if (!type_is_ok) {
                      // one failure to check is enough
                      err = true;
@@ -1418,6 +1416,62 @@ function utilsFactory () {
             ok      : !err,
             results : aCheckResults
          };
+      }
+   }
+
+   function assert_properties ( obj, specMap, options ) {
+      //specMap :: {prop1: 'type1 | type2', prop2: 'type1 | type2', etc.};
+      // First check that all properties exist
+      // Note : if one do not want to check a property it is enough not to include it in the specMap
+      //        so it is assumed that all specified properties must be DEFINED (can have falsy values)
+
+      // validating inputs and setting key variables
+      var err = false,
+         bool_no_exception;
+      var argCheck = assert_type(arguments, [{obj : 'Object', specMap : 'Object'}], {bool_no_exception : true});
+      if (argCheck.ok) {
+         var aProps = get_own_properties(specMap);
+         if (aProps.length === 0) {
+            throw 'assert_properties: expected non-empty spec object!';
+         }
+         if (options) {
+            bool_no_exception = options.bool_no_exception;
+            if (bool_no_exception && 'boolean' !== typeof bool_no_exception) {
+               throw 'assert_properties: expected optional argument bool_no_exception to be boolean, received type ' +
+                     typeof bool_no_exception;
+            }
+         }
+
+         // Actual property type checking
+         var aCheckResults = aProps.map(function ( property ) {
+            // check obj.property is defined && type(obj.property) in type(specMap.property)
+            var curr_obj_prop = obj[property];
+            var curr_prop_spec = specMap[property];
+            if ('undefined' !== typeof curr_obj_prop) {
+               var propCheck = assert_type([curr_obj_prop], [{property: curr_prop_spec}], {bool_no_exception : true});
+               err = err || !propCheck.ok;
+               return propCheck.results[0];
+            }
+            else {
+               // obj[property] is undefined
+               err = true;
+               return ['property', property, 'is undefined in object'].join(" ");
+            }
+         });
+
+         // throws an exception if undefined or false
+         if (!bool_no_exception && err) {
+            throw 'assert_properties: ERROR!\n' + aCheckResults.join("\n");
+         }
+         else {
+            return {
+               ok      : !err,
+               results : aCheckResults
+            };
+         }
+      }
+      else {
+         throw 'assert_properties: ERROR!\n' + argCheck.results.join("\n");
       }
    }
 
@@ -1451,6 +1505,17 @@ function utilsFactory () {
    }
 
    function identity ( token ) {return token;}
+
+   function default_node_callback ( resolve, reject ) {
+      return function ( err, result ) {
+         if (err) {
+            reject(err);
+         }
+         else {
+            resolve(result);
+         }
+      }
+   }
 
    var _UT =
    {
@@ -1490,13 +1555,15 @@ function utilsFactory () {
       parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
       getClass                        : getClass,
       assert_type                     : assert_type,
+      assert_properties               : assert_properties,
       is_type_in_prototype_chain      : is_type_in_prototype_chain,
       getInstanceOf                   : getInstanceOf,
       slice                           : slice,
       log_error                       : log_error,
       sum                             : sum,
       or                              : or,
-      identity                        : identity
+      identity                        : identity,
+      default_node_callback           : default_node_callback
    };
 
    _UT.type = {

@@ -63,4 +63,47 @@ CREATE INDEX pg_notepad_url_idx
   USING btree
   (module, user_id, url);
 
+---------- tables for time-spaced-repetition module
+CREATE TABLE pg_tsr_word_weight
+(
+  id SERIAL,
+  user_id INTEGER,
+  word character varying,
+  box_weight INTEGER,
+  last_revision_time character varying,
+  last_revision_easyness SMALLINT,
+  last_revision_exercise_type SMALLINT,
+  last_revision_grade SMALLINT
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE pg_tsr_word_weight
+  OWNER TO postgres;
+
+CREATE INDEX pg_tsr_word_weight_idx
+  ON pg_tsr_word_weight
+  USING btree
+  (user_id, word);
+---
+CREATE TABLE pg_tsr_word_weight_cfg
+(
+  user_id INTEGER,
+  mem_bucket_size SMALLINT,
+  bucket_weight0 SMALLINT,
+  bucket_weight1 SMALLINT,
+  bucket_weight2 SMALLINT,
+  bucket_weight3 SMALLINT,
+  CONSTRAINT pg_tsr_word_weight_cfg_pkey PRIMARY KEY (user_id)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE pg_tsr_word_weight_cfg
+  OWNER TO postgres;
+
+CREATE INDEX pg_tsr_word_weight_cfg_idx
+  ON pg_tsr_word_weight_cfg
+  USING btree
+  (user_id);
 ----------

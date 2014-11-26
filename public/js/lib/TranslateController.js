@@ -462,7 +462,7 @@ define(['jquery',
            * Purpose    : return a note object containing the word and positional information about the word being clicked on
            * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
            *              i.e. with numbered html tag except for text nodes
-           * @param {JQuery} $el : JQuery element clicked on (target element)
+           * @param {jQuery} $el : jQuery element clicked on (target element)
            * @param {event} ev  : event object
            * @param {range} selectedRange range containing the click selection made by the user
            */
@@ -542,8 +542,8 @@ define(['jquery',
 
           /**
            *
-           * @param startNode {DOM Node}
-           * @returns {DOM Node}
+           * @param startNode {Node}
+           * @returns {Node}
            * @throws {Exception} throws 'findParentWithId: could not find a node with an ID...'
            */
           TC.findParentWithId = function findParentWithId ( startNode ) {

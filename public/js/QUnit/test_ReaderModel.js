@@ -403,15 +403,21 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
           QUnit.asyncTest("highlighting word from selection", function ( assert ) {
              var $el = this.$el;
              var html_expected_text_1 =
-                    "<DIV id='0'> <P id='3'> <SPAN class='highlight'> <span class='airlang-rdt-note-highlight'>Když</span> </SPAN>  končil  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
+                "<DIV id='0'> <P id='3'> <SPAN class='highlight'> <span class='airlang-rdt-note-highlight'>Když</span> </SPAN>  končil  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
              var range = document.createRange();
-             var context = {stateGetIsUrlLoaded : function () {return true}, viewAdapter : {
-                setErrorMessage : function () {},
-                set_HTML_body   : function ( html_text ) {window.html_text = html_text}
-             }};
+             var context = {
+                stateGetIsUrlLoaded : function () {return true},
+                stateMap            : {
+                   viewAdapter : {
+                      setErrorMessage : function () {},
+                      set_HTML_body   : function ( html_text ) {window.html_text = html_text}
+                   }
+                },
+                model               : RM
+             };
 
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
-             RC.show_and_add_note.call(context, undefined, undefined, range)
+             RC.show_note.call(context, undefined, undefined, range)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
                          assert.equal(highlighted_text, html_expected_text_1,
@@ -420,9 +426,9 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                          QUnit.stop();
                       });
              var html_expected_text_2 =
-                    "<DIV id='0'> <P id='3'> <SPAN class='highlight'> Když </SPAN>  <span class='airlang-rdt-note-highlight'>končil</span>  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
+                "<DIV id='0'> <P id='3'> <SPAN class='highlight'> Když </SPAN>  <span class='airlang-rdt-note-highlight'>končil</span>  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 2);
-             RC.show_and_add_note.call(context, undefined, undefined, range)
+             RC.show_note.call(context, undefined, undefined, range)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
                          assert.equal(highlighted_text, html_expected_text_2,

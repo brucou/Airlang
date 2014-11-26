@@ -38,21 +38,23 @@
     // you can register settings like this before require.js is loaded
     var require = {
         //By default load any module IDs from js/lib
-        baseUrl: './js/lib',
+        baseUrl : './js/lib',
         //except, if the module ID starts with "app",
         //load it from the js/app directory. paths
         //config is relative to the baseUrl, and
         //never includes a ".js" extension since
         //the paths config could be for a directory.
-        paths  : {
-            jquery  : '../vendor/jquery-1.10.2.min',
-            cache   : '../vendor/cache',
-            mustache: '../vendor/mustache',
-            css     : '../../css',
-            assets  : '../../assets',
-            socketio: '/socket.io/socket.io'}
+        paths   : {
+            jquery          : '../vendor/jquery-1.10.2.min',
+            cache           : '../vendor/cache',
+            mustache        : '../vendor/mustache',
+            rsvp            : '../vendor/rsvp',
+            "state-machine" : '../vendor/state-machine',
+            css             : '../../css',
+            assets          : '../../assets',
+            socketio        : '/socket.io/socket.io'}
     };
-    </script>
+</script>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>   -->
 <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.js"><\/script>')</script>
 <script type="text/javascript" src="js/vendor/jquery.ajax-cross-origin.min.js"></script>
@@ -155,6 +157,9 @@ Air France
 <div id="error_message"> {{{ error_message }}} </div>
 <div id="content">{{{ webpage_readable }}}</div>
 
+
+
+
 </script>
 <!--  ----------- -->
 
@@ -175,6 +180,28 @@ class='transover-tooltip'
 {{{ tooltip_html_content }}}
 </div>
 
+
+
+
+</script>
+<!--  ----------- -->
+
+<!-- Template for the translating tooltip -->
+<script id='tpl-tsr-tool-main' type="text/mustache">
+<div id='tsr-module-container'>
+    <!--  Icon, word and PoS BEGIN -->
+    <div id='tsr-word-info-container'>
+        <img src="./img/question_mark_with_men.jpg"/>
+        <div id='tsr-word-current'> {{current_word}}</div>
+        <div id='tsr-word-PoS'> {{current_word_PoS}}</div>
+    </div>
+    <!--  Icon, word and PoS END-->
+    <div id='tsr-btn-next'>
+        <button><img src="./img/next.jpg"></button>
+    </div>
+    <div id='tsr-exercise-container'></div>
+</div>
+
 </script>
 <!--  ----------- -->
 
@@ -182,5 +209,7 @@ class='transover-tooltip'
 <div id="reader_tool">
 </div>
 
+<button id="TSR">Review words</button>
+<div id="TSR_div"></div>
 </body>
 </html>

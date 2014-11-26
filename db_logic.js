@@ -3,6 +3,7 @@
  */
 
 /**
+ * TODO : client pooling cf. https://github.com/brianc/node-postgres
  * TODO: instead of copying utils, reuse the one from client side U=require(.../.. etc/utils)
  * @type {exports}
  */
@@ -38,9 +39,22 @@ var registry_adapters = {},
    PG = 'pg';
 
 function init () {
+   register_queries();
+   register_db_adapters();
    // Initialize database connection
-   var promise = init_pg_cnx();
+   return init_pg_cnx();
+}
 
+// Helper functions
+function register_db_adapters () {
+   register_db_adapter('sio_on_REST', {database : PG, table : 'pg_notepad'});
+   register_db_adapter('TSR', {database : PG, mapTable : {
+      TSR_word_weight     : 'pg_tsr_word_weight',
+      TSR_word_weight_cfg : 'pg_tsr_word_weight_cfg'
+   }});
+}
+
+function register_queries () {
    // Register queries
    const queryGetTranslationInfo = "SELECT DISTINCT " +
                                    " pglemmatranslationcz.translation_lemma, " +
@@ -67,17 +81,13 @@ function init () {
 
    pg_register_query('queryGetTranslationInfo', queryGetTranslationInfo, 2, ['cspell', 'default text']);
    pg_register_query('queryHighlightImportantWords', qryHighlightImportantWords, 2, ['cspell', 'default text']);
-
-   register_db_adapter('sio_on_REST', {database : PG, table : 'pg_notepad'});
-
-   return promise;
 }
 
 ///////// Helper functions
 function init_pg_cnx () {
    LOG.write(LOG.TAG.DEBUG, "database URL", process.env.DATABASE_URL);
 
-   var promise = new RSVP.Promise(function ( resolve, reject ) {
+   return new RSVP.Promise(function ( resolve, reject ) {
       pg.connect(process.env.DATABASE_URL, function ( err, client ) {
          if (err) {
             console.error('could not connect to postgres', err);
@@ -90,7 +100,6 @@ function init_pg_cnx () {
          resolve();
       });
    });
-   return promise;
 }
 
 function close_connection () {
@@ -110,6 +119,8 @@ function get_db_client () {
  * @param query_obj {object} Object has the form {entity : entity, criteria : criteria}
  *                            where criteria represent the search criteria for the object to find
  *                            in the database
+ * @param config {object} when defined the properties config.table || config.mapTable allow to identify the tables on
+ *                        which to execute the query. Otherwise, query_obj.entity is used as the table
  * @return {string} returns partial query - to be completed with actual value of params
  */
 function qry_make_sql_query ( query_obj, config ) {
@@ -122,12 +133,11 @@ function qry_make_sql_query ( query_obj, config ) {
       index;
 
    var action = query_obj.action;
-   var table = config.table || query_obj.entity;
+   var table = config.table || (config.mapTable && config.mapTable[query_obj.entity]) || query_obj.entity;
    switch (action) {
       case 'select':
-         qry_array.push('select * from');
-         qry_array.push(table);
-         qry_array.push('where');
+      case 'count':
+         qry_array.push('select ' + (action === 'select' ? '*' : 'count(*)') + ' from', table, 'where');
          wh_criteria = query_obj.criteria;
          index = 0;
          aArgs = [];
@@ -141,16 +151,14 @@ function qry_make_sql_query ( query_obj, config ) {
                aArgs.push(wh_criteria[prop]);
             }
          }
-         LOG.write(DBG.TAG.DEBUG, qry_array.join(" "), "with args", aArgs.join(" "));
-         return {qry_string : qry_array.join(" "), aArgs : aArgs};
+         //LOG.write(DBG.TAG.DEBUG, qry_array.join(" "), "with args", aArgs.join(" "));
+          return {qry_string : qry_array.join(" "), aArgs : aArgs};
          break;
       case 'insert':
          // template :
          // INSERT INTO films (code, title, did, date_prod, kind)
          // VALUES ('T_601', 'Yojimbo', 106, DEFAULT, 'Drama');
-         qry_array.push('INSERT INTO');
-         qry_array.push(table);
-         qry_array.push('(');
+         qry_array.push('INSERT INTO',table, '(' );
          aArgs = [];
          wh_criteria = query_obj.criteria;
          index = 0;
@@ -170,7 +178,7 @@ function qry_make_sql_query ( query_obj, config ) {
          qry_array.push('VALUES (');
          qry_array.push(temp_array.join(" "));
          qry_array.push(')');
-         LOG.write(DBG.TAG.DEBUG, qry_array.join(" "), "with args", aArgs.join(" "));
+         //LOG.write(DBG.TAG.DEBUG, qry_array.join(" "), "with args", aArgs.join(" "));
          return {qry_string : qry_array.join(" "), aArgs : aArgs};
 
          break;
@@ -195,6 +203,7 @@ function exec_qry_freq_word_list () {
 }
 
 function pg_register_query ( query_name, query_string, arg_number, aDefaultArgs ) {
+   //TODO : use assert_type
    // Initializing registry
    var registry = pg_register_query.registry = pg_register_query.registry || {};
 
@@ -265,8 +274,7 @@ function pg_exec_query ( query_name, aArgs ) {
             'and value ' + query_name;
    }
    if (!aArgs && !Util.isArray(aArgs)) {
-      throw 'pg_exec_query: aArgs must be array - found type ' + (typeof aArgs) +
-            'and value ' + aArgs;
+      throw 'pg_exec_query: aArgs must be array - found type ' + (typeof aArgs) + 'and value ' + aArgs;
    }
    //recovering the registered query
    var query_obj = registry[query_name];
@@ -358,10 +366,10 @@ function get_db_adapter ( identifier ) {
          // NOTE : the database client must have been initialized prior in the init function of the module
          var pgClient = get_db_client();
          exec_query = function ( query_obj ) {
-            return new RSVP.Promise(function ( resolve, reject ) {
+            var promise = new RSVP.Promise(function ( resolve, reject ) {
                var qry = qry_make_sql_query(query_obj, config);
-               qry_string = qry.qry_string;
-               aArgs = qry.aArgs;
+               var qry_string = qry.qry_string;
+               var aArgs = qry.aArgs;
 
                // execute the query and resolve the promise
                // NOTE : no exception throw, we use the promise mechanism instead
@@ -374,11 +382,13 @@ function get_db_adapter ( identifier ) {
                                     return;
                                  }
                                  if (result) {
+                                    LOG.write(LOG.TAG.DEBUG, 'executed query', qry_string, 'with args', aArgs);
                                     LOG.write(LOG.TAG.DEBUG, 'db_adapter query returns', Util.inspect(result));
                                     resolve(result.rows);
                                  }
                               });
             });
+            return promise;
          };
 
          break;
@@ -395,8 +405,18 @@ function get_db_adapter ( identifier ) {
 /**
  * Registry configuration facility associated to get_db_adapter
  *
+ * @param config {object} Object of type {database: xx, table || mapTable || {} }
+ *                        Property database can be:
+ *                        - PG : for use with postgresql
+ *                        Table properties allow to get the table on which queries are performed
+ *                        - config.table : this table will be used in every query performed using the adapter
+ *                        - config.mapTable : used to map the query_obj.entity object to a database table
+ *                        - undefined both : query_obj.entity of the qry_param will be used as the table
+ * cf. make_query
+ * var table = config.table || (config.mapTable && config.mapTable[query_obj.entity]) || query_obj.entity;
+ * @param qry {String} hash used to match an adapter to its config. Can be used for one query or a set of queries
+ *                     However, all queries will be executed on the one database configured
  */
-   //so far only Postgres adapter exists. Its identifier is 'pg' (cf var pgAdapter)
 function register_db_adapter ( qry, config ) {
    // checking arguments
    U.assert_type(arguments, [

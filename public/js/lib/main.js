@@ -87,16 +87,27 @@ requirejs(
     'ReaderController',
     'socket',
     'Stateful',
+    'TSRController',
     'utils'
    ],
-   function ( $, RM, RC, SOCK, STATE, UT ) {
+   function ( $, RM, RC, SOCK, STATE, TSR, UT ) {
+      var appState = {};
 
       function start () {
-         logEntry("start");
          // TODO : add a login mechanism to have different user ids
+         appState.user_id = 1;
+         //TODO Change user_id in new RC... to appState, or pass a clone of the object
          new RC.ReaderToolController("#reader_tool",
-                                     {view : RC.rtView, getViewAdapter : RC.getViewAdapter, model : RM, user_id: 1});
-         logExit("start");
+                                     {view : RC.rtView, getViewAdapter : RC.getViewAdapter, model : RM, user_id : 1});
+         // TSR button handler
+         // no controller, just a click handler
+         $("#TSR").click(function ( event ) {
+            TSR.init();
+            //TODO: think about what data to pass the controller
+            // appState is certainly one of them, maybe not views and adapters
+            // put the model in another file
+            new TSR.mainController("#TSR_div", appState); //TODO : appState with user_id
+         });
       }
 
       function init_log () {
@@ -125,7 +136,8 @@ requirejs(
             //(DBG.TAG.DEBUG, "dataAdapterOStore2TokenActionMap")
          (DBG.TAG.TRACE, "default_identity_filter")
          (DBG.TAG.TRACE, "fn_html_highlight")
-         (DBG.TAG.TRACE, "parseDOMtree");
+         (DBG.TAG.TRACE, "parseDOMtree")
+         (DBG.TAG.DEBUG, "apply_highlighting_filters_to_text");
       }
 
       function init_fake () {
@@ -157,6 +169,8 @@ requirejs(
                   console.log("Starting QUnit tests");
                   QUnit.start();
                }
+
+               // Start the app
                start();
             });
       });

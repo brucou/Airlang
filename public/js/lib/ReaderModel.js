@@ -10,6 +10,8 @@
  * TODO : FEATURES
  * - disable click on links anyways - interacts with word info functionality
  * - STYLE : add some style for code div
+ * - when a click is made on a word previously selected to be memorized, take the word out of the database
+ *   ask for confirmation??
 
  * nice to have : treat wikipedia as a special case. More special cases? http://en.wikipedia.org/wiki/Perranzabuloe
  * TODO : BUGS
@@ -28,6 +30,9 @@
  * - could be interesting to look at a library which allows switching from callback to promises
  * - DEBUGGING : state() function of deferred give the state ("pending", "resolved"). So pass the promise in global to look
  * - Also can fail silently, e.g. in case of JS error directly jump to reject without any message visible
+ * - RSVP : !!! if failing (throw error) in a sequence of then : do not display the full stack...
+ * - Be careful not to mix RSVP promises and jQuery promises
+ * - RSVP.all requires an ARRAY of promises, and passed back an ARRAY of results.. not like jQuery
  * JQuery :
  * - Two types of node comparison, strict comparison can be done with ===, the 'same contents' comparison with isEqualNode
  * - there is advantage in knowing how to navigate the DOM with jQuery and with the DOM API directly, lots of time wasted
@@ -39,18 +44,32 @@
  * QUnit
  * - setup possible when declaring module and actually should be used not to repeat too much test
  * - split test in different files
+ * Mocha
+ * - (server side) returning promises instead of using done parameter
+ * - cf. http://mochajs.org/#asynchronous-code
+ * Node
+ * - Lost 3 hours because RSVP was not loaded with require and no error appeared...
  * TYPE
  * - lots of type errors, functions called with wrong parameters, or expecting wrong output type
  *   because the signature of the function was forgotten, or forgetting to return the output value
  *   in closure for example
+ * - in function of function, passed the wrong parameter so the real function parameter was never called
+ *   PS: I would have found this mistake with type control as the parameter passed was not a function
+ * - if something worked before, it is still working, find the cause elsewhere
+ * CAN.js
+ * - if properties in CAN.map are set to undefined, a warning "cannot find key ..." is generated
+ *   It can either be ignored or the value must be initialized to remove the warning
  * ON.THE.FLY coding
  * - wrong scope - function thought to be defined module scope but hidden into another function
  * - wrong arguments passed o function, or in wrong order, or missing arguments
  *   because one forgot the EXACT signature and behaviour of the function
+ * MOCHA
+ * - be careful which assert function is used, they don't have the same number of parameters
+ *   chai assert has only two parameters
  */
 
-define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
-       function ( $, DS, UL, UT, SOCK, CACHE, STATE ) {
+define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
+       function ( $, RSVP, DS, UL, UT, SOCK, CACHE, STATE ) {
 
           // module object
           var RM = {}; // Added so I can trace all member functions more easily
@@ -622,15 +641,13 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
                    mark = true;
                 }
                 if (mark == true && word.indexOf(StopSel_nospaces) > 0) {
-                   //logWrite(DBG.TAG.DEBUG, "found end of marking");
                    word = word.replace(new RegExp(StopSel_nospaces, "g"), "");
-                   //logWrite(DBG.TAG.DEBUG, "word after removal of stopsel marking: ", word);
-                   logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
+                   //logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
                    aTokenActionMap.push({token : {type : 'text', text : word}, action : RM.fn_html_highlight});
                    mark = false;
                 }
                 else if (mark === true) {
-                   logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
+                   //logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
                    aTokenActionMap.push({token : {type : 'text', text : word}, action : RM.fn_html_highlight});
                 }
                 else {
@@ -716,6 +733,7 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
            *                i.e. modifies token in place or leave them intact
            *              - The text passed in parameter is already trimmed
            * @param $el {jQuery} character string to be highlighted
+           * @param fn_parser {Function} Parsing function who turn html_text into parsed_html
            * @param aFilters {array}  array of filter functions to be applied.
            *                          Filters' index in array is a decreasing function of priority of application.
            *                          i.e. aFilters[0] takes precedence over aFilters[1]
@@ -868,6 +886,14 @@ define(['jquery', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Statef
           RM.add_notes = function add_notes ( field_value_map ) {
              // send order through state sockets
              return STATE.insert_stored_stateful_object('Notes_Collection', field_value_map);
+          };
+
+          RM.add_TSR_weight = function add_TSR_weight ( obj ) {
+             // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
+             return new RSVP.Promise(function ( resolve, reject ) {
+                stateMap.rpc_socket.emit('set_TSR_word_weights', obj,
+                                         UT.default_node_callback (resolve, reject));
+             });
           };
 
           RM.get_stored_notes = function get_stored_notes ( criteria ) {
