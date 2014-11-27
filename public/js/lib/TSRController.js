@@ -3,7 +3,7 @@
  * Spec and algorithm in TSR.md
  */
 
-define(['jquery', 'state-machine'], function ( $, STM ) {
+define(['jquery', 'state-machine', 'socket'], function ( $, STM, SOCK ) {
    // define config object with its defect values
    var cfg = {};
    var TSR = {};
@@ -50,15 +50,15 @@ define(['jquery', 'state-machine'], function ( $, STM ) {
          createStateMachine : function createStateMachine () {
             var controller = this;
             var fsm = STM.create({
-                                    initial  : 'INIT',
-                                    events   : [
+                                    initial   : 'INIT',
+                                    events    : [
                                        { name : 'start', from : 'INIT', to : 'EXO' },
                                        { name : 'ok', from : 'EXO, EXO_HINT', to : 'NEXT' },
                                        { name : 'nok', from : 'EXO', to : 'EXO_HINT' },
                                        { name : 'nok', from : 'EXO_HINT', to : 'EXO_REP' },
                                        { name : 'end', from : 'NEXT', to : 'EXIT'  }
                                     ],
-                                    error    : function ( eventName, from, to, args, errorCode, errorMessage ) {
+                                    error     : function ( eventName, from, to, args, errorCode, errorMessage ) {
                                        // TODO : detect the abort event
                                        if (eventName === 'abort') {
                                           abort();
@@ -82,8 +82,22 @@ define(['jquery', 'state-machine'], function ( $, STM ) {
             fsm.onEXO = function onEXO ( event, from, to, args ) {
                // Get the schedules
                console.log("Entered EXO state");
-               controller.mainViewAdapter.set_current_word("Exemple", "Adjective");
+               //TODO : get next word remotely asking
+               var appState = controller.appState;
+               var socket = controller.appState.socket;
+               socket.RSVP_emit('get_word_to_memorize', appState)
+                  .then(
+                  function get_word_to_memorize_success ( result ) {
+                     controller.mainViewAdapter.set_current_word(
+                        "Exemple",
+                        "Adjective");
+                  },
+                  function get_word_to_memorize_error ( err ) {
+                     return appState.error.html(err.toString());
+                  }
+               );
             };
+
             fsm.onEXO_HINT = function onEXO_HINT ( event, from, to, args ) {
 
             };
@@ -101,15 +115,17 @@ define(['jquery', 'state-machine'], function ( $, STM ) {
 
          eventHandler1 : null,
          eventHandler2 : null
-      });
+      })
+   ;
 
    function abort () {
       // TODO : used if the user close the window while in the middle of a TSR session
    }
 
-   TSR.init = function init() {
+   TSR.init = function init () {
 
    };
 
    return TSR;
-});
+})
+;

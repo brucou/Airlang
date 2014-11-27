@@ -2,21 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3e347fb8-ef22-4b99-8a9c-2990b9f7b2c6" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/js/lib/TSRController.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/js/lib/TSRModel.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test/mocha/test_tsr.js" />
-      <change type="DELETED" beforePath="C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\js\vendor\underscore-min.js" afterPath="" />
-      <change type="DELETED" beforePath="C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\js\vendor\underscore-min.map" afterPath="" />
-      <change type="DELETED" beforePath="C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\js\vendor\underscore.js" afterPath="" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/TSRModel.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/ReaderController.js" afterPath="$PROJECT_DIR$/public/js/lib/ReaderController.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/ReaderModel.js" afterPath="$PROJECT_DIR$/public/js/lib/ReaderModel.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/TSRController.js" afterPath="$PROJECT_DIR$/public/js/lib/TSRController.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/TranslateController.js" afterPath="$PROJECT_DIR$/public/js/lib/TranslateController.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/database definition.sql" afterPath="$PROJECT_DIR$/database definition.sql" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db_logic.js" afterPath="$PROJECT_DIR$/db_logic.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/index.html" afterPath="$PROJECT_DIR$/public/index.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/main.js" afterPath="$PROJECT_DIR$/public/js/lib/main.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sio_logic.js" afterPath="$PROJECT_DIR$/sio_logic.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/mocha/test.js" afterPath="$PROJECT_DIR$/test/mocha/test.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/QUnit/test_ReaderModel.js" afterPath="$PROJECT_DIR$/public/js/QUnit/test_ReaderModel.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/socket.js" afterPath="$PROJECT_DIR$/public/js/lib/socket.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/utils.js" afterPath="$PROJECT_DIR$/public/js/lib/utils.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
@@ -41,19 +36,60 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
+      <file leaf-file-name="main.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/public/js/lib/main.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0" vertical-offset="1489" max-vertical-offset="3060">
+              <caret line="101" column="29" selection-start-line="101" selection-start-column="29" selection-end-line="101" selection-end-column="29" />
+              <folding>
+                <element signature="e#3841#4155#0" expanded="true" />
+                <element signature="e#4194#5566#0" expanded="true" />
+                <element signature="e#5784#6595#0" expanded="true" />
+                <element signature="e#6282#6585#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="ReaderController.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderController.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="1028" max-vertical-offset="2499">
-              <caret line="166" column="69" selection-start-line="166" selection-start-column="69" selection-end-line="166" selection-end-column="69" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="984" max-vertical-offset="2193">
+              <caret line="159" column="20" selection-start-line="159" selection-start-column="20" selection-end-line="159" selection-end-column="20" />
               <folding>
-                <element signature="e#9404#10169#0" expanded="true" />
-                <element signature="e#9887#9985#0" expanded="true" />
-                <element signature="e#10043#10155#0" expanded="true" />
-                <element signature="e#10471#11139#0" expanded="true" />
-                <element signature="e#11322#11399#0" expanded="true" />
-                <element signature="e#11472#11544#0" expanded="true" />
+                <element signature="e#8297#8675#0" expanded="true" />
+                <element signature="e#9404#10277#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ReaderModel.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderModel.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-8.2" vertical-offset="1614" max-vertical-offset="5253">
+              <caret line="111" column="37" selection-start-line="111" selection-start-column="33" selection-end-line="111" selection-end-column="37" />
+              <folding>
+                <element signature="e#46834#46990#0" expanded="true" />
+                <element signature="e#47055#47392#0" expanded="true" />
+                <element signature="e#47206#47378#0" expanded="true" />
+                <element signature="e#47898#49116#0" expanded="true" />
+                <element signature="e#49720#50634#0" expanded="true" />
+                <element signature="e#50110#50271#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="TSR.md" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/public/doc/TSR.md">
+          <provider editor-type-id="MarkdownPreviewEditor">
+            <state />
+          </provider>
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="1.6163683" vertical-offset="1017" max-vertical-offset="2363">
+              <caret line="97" column="50" selection-start-line="97" selection-start-column="1" selection-end-line="97" selection-end-column="50" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -61,57 +97,22 @@
       <file leaf-file-name="TSRController.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/public/js/lib/TSRController.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="833">
-              <caret line="9" column="0" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ReaderModel.js" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderModel.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.36533332" vertical-offset="866" max-vertical-offset="4335">
-              <caret line="61" column="20" selection-start-line="61" selection-start-column="20" selection-end-line="61" selection-end-column="20" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="1156" max-vertical-offset="2329">
+              <caret line="87" column="42" selection-start-line="87" selection-start-column="33" selection-end-line="87" selection-end-column="53" />
               <folding>
-                <element signature="e#4337#49824#0" expanded="true" />
-                <element signature="e#46649#46805#0" expanded="true" />
-                <element signature="e#46870#47207#0" expanded="true" />
-                <element signature="e#47021#47193#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="utils.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/public/js/lib/utils.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="7914" max-vertical-offset="9554">
-              <caret line="1508" column="12" selection-start-line="1508" selection-start-column="12" selection-end-line="1508" selection-end-column="12" />
-              <folding>
-                <element signature="n#!!block;n#formatValue#0;n#!!block;n#utilsFactory#0" expanded="true" />
-                <element signature="n#!!block;n#formatProperty#0;n#!!block;n#utilsFactory#0" expanded="true" />
-                <element signature="n#!!block;n#parseDOMtree#0;n#!!block;n#utilsFactory#0" expanded="true" />
-                <element signature="n#!!block;n#get_calling_function_name#0;n#!!block;n#utilsFactory#0" expanded="true" />
-                <element signature="n#!!block;n#some#0;n#!!block;n#utilsFactory#0" expanded="true" />
-                <element signature="n#!!block;n#make_check_type_message#0;n#!!block;n#utilsFactory#0" expanded="true" />
-                <element signature="e#52615#56097#0" expanded="true" />
-                <element signature="e#53573#56077#0" expanded="true" />
-                <element signature="e#57647#58314#0" expanded="true" />
-                <element signature="n#!!block;n#default_node_callback#0;n#!!block;n#utilsFactory#0" expanded="true" />
-                <element signature="e#60041#60162#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test_ReaderModel.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/public/js/QUnit/test_ReaderModel.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="969" max-vertical-offset="1445">
-              <caret line="433" column="38" selection-start-line="433" selection-start-column="25" selection-end-line="433" selection-end-column="38" />
-              <folding>
-                <element signature="e#5191#9028#0" expanded="true" />
+                <element signature="e#276#338#0" expanded="true" />
+                <element signature="e#998#1126#0" expanded="true" />
+                <element signature="e#1186#1626#0" expanded="true" />
+                <element signature="e#2463#3234#0" expanded="true" />
+                <element signature="e#3376#3607#0" expanded="true" />
+                <element signature="e#4206#4366#0" expanded="true" />
+                <element signature="e#4430#4516#0" expanded="true" />
+                <element signature="e#4626#4642#0" expanded="true" />
+                <element signature="e#4717#4733#0" expanded="true" />
+                <element signature="e#4802#4818#0" expanded="true" />
+                <element signature="e#4887#4903#0" expanded="true" />
+                <element signature="e#5039#5132#0" expanded="true" />
+                <element signature="e#5165#5172#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -120,55 +121,65 @@
       <file leaf-file-name="sio_logic.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sio_logic.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="2416" max-vertical-offset="4080">
-              <caret line="166" column="13" selection-start-line="166" selection-start-column="13" selection-end-line="166" selection-end-column="13" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1207">
+              <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
               <folding>
-                <element signature="e#358#843#0" expanded="false" />
-                <element signature="n#!!block;n#error_handler#0" expanded="true" />
-                <element signature="e#966#1010#0" expanded="true" />
-                <element signature="n#!!block;n#callback_ok#0" expanded="true" />
-                <element signature="e#1298#1333#0" expanded="true" />
-                <element signature="n#!!block;n#sio_onHighlight_important_words#0" expanded="true" />
-                <element signature="n#!!block;n#sio_onGet_translation_info#0" expanded="true" />
-                <element signature="n#!!block;n#sio_on_REST#0" expanded="true" />
-                <element signature="e#5322#6528#0" expanded="true" />
-                <element signature="e#6585#7390#0" expanded="true" />
-                <element signature="e#7980#8327#0" expanded="true" />
-                <element signature="e#8012#8324#0" expanded="true" />
-                <element signature="e#8402#8477#0" expanded="true" />
-                <element signature="e#8436#8474#0" expanded="true" />
-                <element signature="e#8578#8683#0" expanded="true" />
-                <element signature="e#8734#9655#0" expanded="true" />
-                <element signature="e#8892#8963#0" expanded="true" />
-                <element signature="e#9021#9443#0" expanded="true" />
-                <element signature="e#9088#9437#0" expanded="true" />
-                <element signature="e#9263#9424#0" expanded="true" />
-                <element signature="e#9497#9650#0" expanded="true" />
-                <element signature="e#9742#9788#0" expanded="true" />
+                <element signature="e#0#43#0" expanded="false" />
+                <element signature="n#!!doc;n#callback_ok#0" expanded="false" />
+                <element signature="e#1441#1462#0" expanded="false" />
+                <element signature="e#1933#2075#0" expanded="false" />
+                <element signature="e#2547#2579#0" expanded="false" />
+                <element signature="e#3006#3100#0" expanded="false" />
+                <element signature="e#3329#3367#0" expanded="false" />
+                <element signature="e#3587#3686#0" expanded="false" />
+                <element signature="e#3868#3887#0" expanded="false" />
+                <element signature="e#4108#4290#0" expanded="false" />
+                <element signature="e#4302#4380#0" expanded="false" />
+                <element signature="e#4795#5716#0" expanded="true" />
+                <element signature="e#4831#4904#0" expanded="false" />
+                <element signature="e#5380#5471#0" expanded="false" />
+                <element signature="e#5852#5861#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="db_logic.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/db_logic.js">
+      <file leaf-file-name="TSRModel.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/TSRModel.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="2766" max-vertical-offset="3978">
-              <caret line="386" column="0" selection-start-line="386" selection-start-column="0" selection-end-line="386" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="587" max-vertical-offset="2074">
+              <caret line="170" column="36" selection-start-line="170" selection-start-column="36" selection-end-line="170" selection-end-column="36" />
               <folding>
-                <element signature="n#!!block;n#qry_make_sql_query#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test_tsr.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test/mocha/test_tsr.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="254" max-vertical-offset="782">
-              <caret line="34" column="33" selection-start-line="34" selection-start-column="33" selection-end-line="34" selection-end-column="33" />
-              <folding>
-                <element signature="e#484#558#0" expanded="true" />
+                <element signature="e#0#43#0" expanded="false" />
+                <element signature="n#!!block;n#set_word_weights#0" expanded="true" />
+                <element signature="e#313#382#0" expanded="false" />
+                <element signature="e#568#803#0" expanded="false" />
+                <element signature="e#661#802#0" expanded="false" />
+                <element signature="e#858#4239#0" expanded="true" />
+                <element signature="e#1142#1346#0" expanded="false" />
+                <element signature="e#1398#1647#0" expanded="false" />
+                <element signature="e#1516#1646#0" expanded="false" />
+                <element signature="e#1745#1827#0" expanded="false" />
+                <element signature="e#2247#2326#0" expanded="false" />
+                <element signature="e#2413#2490#0" expanded="false" />
+                <element signature="e#3173#3858#0" expanded="false" />
+                <element signature="e#3267#3828#0" expanded="false" />
+                <element signature="e#4014#4228#0" expanded="false" />
+                <element signature="e#4280#4354#0" expanded="false" />
+                <element signature="e#4465#4568#0" expanded="false" />
+                <element signature="e#4573#4635#0" expanded="false" />
+                <element signature="e#4758#5382#0" expanded="false" />
+                <element signature="e#4780#5053#0" expanded="false" />
+                <element signature="e#4919#5017#0" expanded="false" />
+                <element signature="e#5090#5367#0" expanded="false" />
+                <element signature="e#5233#5331#0" expanded="false" />
+                <element signature="e#5536#6078#0" expanded="false" />
+                <element signature="e#6094#6486#0" expanded="false" />
+                <element signature="e#6720#6835#0" expanded="false" />
+                <element signature="e#6907#7351#0" expanded="true" />
+                <element signature="e#7711#8067#0" expanded="true" />
+                <element signature="n#!!block;n#tsr_compute_progress#0" expanded="true" />
+                <element signature="e#10111#10179#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -200,31 +211,33 @@
         <option value="$PROJECT_DIR$/public/js/lib/url_load.js" />
         <option value="$PROJECT_DIR$/public/js/lib/data_struct.js" />
         <option value="$PROJECT_DIR$/public/js/lib/debug.js" />
-        <option value="$PROJECT_DIR$/public/js/lib/socket.js" />
         <option value="$PROJECT_DIR$/public/js/lib/temp.js" />
         <option value="$PROJECT_DIR$/public/js/lib/text_handling.js" />
         <option value="$PROJECT_DIR$/bower_components/rsvp/rsvp.js" />
         <option value="$PROJECT_DIR$/public/assets/languages.js" />
         <option value="$PROJECT_DIR$/public/js/vendor/can.jquery.dev.js" />
-        <option value="$PROJECT_DIR$/public/js/lib/TranslateController.js" />
         <option value="$PROJECT_DIR$/public/js/lib/TSR.js" />
         <option value="$PROJECT_DIR$/public/js/lib/TSRModel.js" />
-        <option value="$PROJECT_DIR$/public/index.html" />
-        <option value="$PROJECT_DIR$/public/doc/TSR.md" />
-        <option value="$PROJECT_DIR$/database definition.sql" />
-        <option value="$PROJECT_DIR$/public/js/lib/main.js" />
         <option value="$PROJECT_DIR$/test/mocha/test.js" />
         <option value="$PROJECT_DIR$/test/mocha/test_tsr" />
-        <option value="$PROJECT_DIR$/public/js/lib/utils.js" />
-        <option value="$PROJECT_DIR$/public/js/lib/TSRController.js" />
         <option value="$PROJECT_DIR$/public/test/index.html" />
         <option value="$PROJECT_DIR$/public/js/lib/Stateful.js" />
         <option value="$PROJECT_DIR$/public/js/QUnit/test_ReaderModel.js" />
         <option value="$PROJECT_DIR$/db_logic.js" />
         <option value="$PROJECT_DIR$/test/mocha/test_tsr.js" />
-        <option value="$PROJECT_DIR$/sio_logic.js" />
+        <option value="$PROJECT_DIR$/public/js/lib/utils.js" />
         <option value="$PROJECT_DIR$/public/js/lib/ReaderController.js" />
+        <option value="$PROJECT_DIR$/public/js/lib/TranslateController.js" />
         <option value="$PROJECT_DIR$/public/js/lib/ReaderModel.js" />
+        <option value="$PROJECT_DIR$/database definition.sql" />
+        <option value="$PROJECT_DIR$/public/doc/TSR.md" />
+        <option value="$PROJECT_DIR$/public/index.html" />
+        <option value="$PROJECT_DIR$/public/js/lib/main.js" />
+        <option value="$PROJECT_DIR$/public/js/lib/socket.js" />
+        <option value="$PROJECT_DIR$/public/js/lib/TSRController.js" />
+        <option value="$PROJECT_DIR$/TSR.js" />
+        <option value="$PROJECT_DIR$/sio_logic.js" />
+        <option value="$PROJECT_DIR$/TSRModel.js" />
       </list>
     </option>
   </component>
@@ -317,78 +330,6 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="public" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="public" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="test" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="public" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Airlang" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="public" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="QUnit" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
@@ -430,6 +371,14 @@
     </key>
   </component>
   <component name="RunManager" selected="Node.js.Airlang Node">
+    <configuration default="true" type="DartUnitRunConfigurationType" factoryName="DartUnit">
+      <option name="VMOptions" />
+      <option name="arguments" />
+      <option name="filePath" />
+      <option name="scope" value="ALL" />
+      <option name="testName" />
+      <method />
+    </configuration>
     <configuration default="true" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
       <option name="VMOptions" />
       <option name="arguments" />
@@ -440,18 +389,8 @@
       <option name="showConsoleOnStdOut" value="false" />
       <method />
     </configuration>
-    <configuration default="true" type="DartUnitRunConfigurationType" factoryName="DartUnit">
-      <option name="VMOptions" />
-      <option name="arguments" />
-      <option name="filePath" />
-      <option name="scope" value="ALL" />
-      <option name="testName" />
-      <method />
-    </configuration>
-    <configuration default="true" type="CucumberJavaScriptRunConfigurationType" factoryName="Cucumber.js">
-      <option name="cucumberJsArguments" />
-      <option name="executablePath" />
-      <option name="filePath" />
+    <configuration default="true" type="JavaScriptTestRunnerKarma" factoryName="Karma" config-file="">
+      <envs />
       <method />
     </configuration>
     <configuration default="true" type="JSTestDriver:ConfigurationType" factoryName="JsTestDriver">
@@ -461,8 +400,10 @@
       <setting name="preferredDebugBrowser" value="Chrome" />
       <method />
     </configuration>
-    <configuration default="true" type="JavaScriptTestRunnerKarma" factoryName="Karma" config-file="">
-      <envs />
+    <configuration default="true" type="CucumberJavaScriptRunConfigurationType" factoryName="Cucumber.js">
+      <option name="cucumberJsArguments" />
+      <option name="executablePath" />
+      <option name="filePath" />
       <method />
     </configuration>
     <configuration default="true" type="NodeunitConfigurationType" factoryName="Nodeunit">
@@ -646,7 +587,11 @@
       <created>1416100356060</created>
       <updated>1416100356060</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="added part of the notes storge functionality with the weights, so many bugs with promises and types....">
+      <created>1416976002700</created>
+      <updated>1416976002700</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -673,25 +618,25 @@
     <frame x="132" y="0" width="1148" height="800" extended-state="0" />
     <editor active="true" />
     <layout>
+      <window_info id="Messages" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32791728" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32776934" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.40472674" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.26067746" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="true" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32348597" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="true" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32253313" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2549195" sideWeight="0.6024279" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21000893" sideWeight="0.6710335" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.46824226" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2551111" sideWeight="0.5007587" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3914328" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32053176" sideWeight="0.49910554" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31958762" sideWeight="0.49910554" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3264402" sideWeight="0.49955556" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="true" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="combo" x="233" y="100" width="947" height="600" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32791728" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
@@ -710,7 +655,6 @@
     <option name="myTodoPanelSettings">
       <TodoPanelSettings />
     </option>
-    <MESSAGE value="First commit before even nom install" />
     <MESSAGE value="First commit beflore even nom instal" />
     <MESSAGE value="moved everything to Airlang&#10;tested on local, not on heroku yet&#10;Need to associate a offline repertory to push it to" />
     <MESSAGE value="correcting some debug displaying bugs (now that there is a trace module, no need for LogEntry, that was duplicating things)&#10;also there was one lost LogEntry without a LogExit&#10;also set a name for proxy function when tracing to keep same function name - that was causing inconsistencies, but I had to renounce prefixing by module name for now&#10;correcting a bug with acth reduce of actions, due to the wrong name of proxy functions" />
@@ -734,38 +678,19 @@
     <MESSAGE value="lots of things I forget&#10;but bvasically now notes can be added and retrieved from database storage&#10;so on server side added some abstraction to handle remote storage&#10;on client side added a stateful module and using now rsvp promises instead of jquery" />
     <MESSAGE value="corrected a b ig mistake a the cost of always storing text word by word. &#10;All filters must apply on the same array length so we used the word by word thing in all filters.&#10;A neater solution would be to enforce that at parsing instead of after to avoid errors." />
     <MESSAGE value="some cleaning up of code, removing out-of-date todos" />
-    <option name="LAST_COMMIT_MESSAGE" value="some cleaning up of code, removing out-of-date todos" />
+    <MESSAGE value="added part of the notes storge functionality with the weights, so many bugs with promises and types...." />
+    <MESSAGE value="not TESTED yet, but finished the part of getting the next word to revise" />
+    <option name="LAST_COMMIT_MESSAGE" value="not TESTED yet, but finished the part of getting the next word to revise" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/sio_logic.js</url>
-          <line>160</line>
-          <option name="timeStamp" value="43" />
-        </line-breakpoint>
-      </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="54" />
+      <option name="time" value="55" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderModel.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="14382">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/css/screen.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="17" max-vertical-offset="1666">
@@ -833,13 +758,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/lib/socket.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="357">
-          <caret line="3" column="0" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/temp.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1366" max-vertical-offset="3502">
@@ -895,7 +813,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="5270">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -943,19 +860,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/lib/TranslateController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1326" max-vertical-offset="11866">
-          <caret line="78" column="17" selection-start-line="78" selection-start-column="17" selection-end-line="78" selection-end-column="17" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/TSRModel.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="119">
           <caret line="3" column="0" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -985,40 +893,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/lib/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1559" max-vertical-offset="2550">
-          <caret line="140" column="0" selection-start-line="140" selection-start-column="0" selection-end-line="140" selection-end-column="0" />
-          <folding>
-            <element signature="e#5636#6447#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/package.json">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.25331125" vertical-offset="0" max-vertical-offset="646">
           <caret line="9" column="3" selection-start-line="9" selection-start-column="3" selection-end-line="9" selection-end-column="3" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/database definition.sql">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1240" max-vertical-offset="1955">
-          <caret line="107" column="0" selection-start-line="107" selection-start-column="0" selection-end-line="107" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/doc/TSR.md">
-      <provider editor-type-id="MarkdownPreviewEditor">
-        <state />
-      </provider>
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-12.96" vertical-offset="1563" max-vertical-offset="2176">
-          <caret line="111" column="5" selection-start-line="109" selection-start-column="0" selection-end-line="114" selection-end-column="29" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1034,7 +912,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33243242" vertical-offset="13" max-vertical-offset="816">
           <caret line="8" column="4" selection-start-line="8" selection-start-column="4" selection-end-line="8" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1042,9 +919,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33333334" vertical-offset="6987" max-vertical-offset="19329">
           <caret line="595" column="4" selection-start-line="595" selection-start-column="4" selection-end-line="595" selection-end-column="4" />
-          <folding>
-            <element signature="e#15763#15817#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1056,56 +930,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/lib/utils.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="7914" max-vertical-offset="9554">
-          <caret line="1508" column="12" selection-start-line="1508" selection-start-column="12" selection-end-line="1508" selection-end-column="12" />
-          <folding>
-            <element signature="n#!!block;n#formatValue#0;n#!!block;n#utilsFactory#0" expanded="true" />
-            <element signature="n#!!block;n#formatProperty#0;n#!!block;n#utilsFactory#0" expanded="true" />
-            <element signature="n#!!block;n#parseDOMtree#0;n#!!block;n#utilsFactory#0" expanded="true" />
-            <element signature="n#!!block;n#get_calling_function_name#0;n#!!block;n#utilsFactory#0" expanded="true" />
-            <element signature="n#!!block;n#some#0;n#!!block;n#utilsFactory#0" expanded="true" />
-            <element signature="n#!!block;n#make_check_type_message#0;n#!!block;n#utilsFactory#0" expanded="true" />
-            <element signature="e#52615#56097#0" expanded="true" />
-            <element signature="e#53573#56077#0" expanded="true" />
-            <element signature="e#57647#58314#0" expanded="true" />
-            <element signature="n#!!block;n#default_node_callback#0;n#!!block;n#utilsFactory#0" expanded="true" />
-            <element signature="e#60041#60162#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-4.4615383" vertical-offset="1431" max-vertical-offset="1853">
-          <caret line="188" column="0" selection-start-line="188" selection-start-column="0" selection-end-line="206" selection-end-column="0" />
-          <folding>
-            <element signature="tag#script#15;tag#body#0;tag#html#0" expanded="false" />
-            <element signature="tag#script#16;tag#body#0;tag#html#0" expanded="false" />
-            <element signature="tag#script#17;tag#body#0;tag#html#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/public/test/index.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.57908845" vertical-offset="2878" max-vertical-offset="3315">
           <caret line="216" column="0" selection-start-line="216" selection-start-column="0" selection-end-line="216" selection-end-column="0" />
-          <folding>
-            <element signature="tag#script#15;tag#body#0;tag#html#0" expanded="false" />
-            <element signature="tag#script#16;tag#body#0;tag#html#0" expanded="false" />
-            <marker date="1416956438021" expanded="true" signature="-1:-1" placeholder="..." />
-            <marker date="1416956438021" expanded="true" signature="-1:-1" placeholder="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/lib/TSRController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="833">
-          <caret line="9" column="0" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1113,17 +941,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="310">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="n#!!doc" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/lib/Stateful.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.51331717" vertical-offset="604" max-vertical-offset="1105">
-          <caret line="75" column="0" selection-start-line="75" selection-start-column="0" selection-end-line="75" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1131,7 +948,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="1.0576037" vertical-offset="0" max-vertical-offset="918">
           <caret line="81" column="0" selection-start-line="81" selection-start-column="0" selection-end-line="82" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1139,9 +955,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-0.27844313" vertical-offset="13557" max-vertical-offset="14025">
           <caret line="1582" column="6" selection-start-line="1582" selection-start-column="6" selection-end-line="1582" selection-end-column="6" />
-          <folding>
-            <element signature="e#13895#14067#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1149,9 +962,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="3021" max-vertical-offset="3978">
           <caret line="386" column="0" selection-start-line="386" selection-start-column="0" selection-end-line="386" selection-end-column="0" />
-          <folding>
-            <element signature="n#!!block;n#qry_make_sql_query#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1159,9 +970,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="969" max-vertical-offset="1445">
           <caret line="433" column="38" selection-start-line="433" selection-start-column="25" selection-end-line="433" selection-end-column="38" />
-          <folding>
-            <element signature="e#5191#9028#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1170,10 +979,10 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="1013" max-vertical-offset="1326">
           <caret line="7" column="0" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
           <folding>
-            <element signature="e#445#5035#0" expanded="true" />
-            <element signature="e#998#5031#0" expanded="true" />
-            <element signature="e#1045#4141#0" expanded="true" />
-            <element signature="e#4189#5023#0" expanded="true" />
+            <element signature="e#445#5035#0" expanded="false" />
+            <element signature="e#998#5031#0" expanded="false" />
+            <element signature="e#1045#4141#0" expanded="false" />
+            <element signature="e#4189#5023#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1182,68 +991,226 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="254" max-vertical-offset="782">
           <caret line="34" column="33" selection-start-line="34" selection-start-column="33" selection-end-line="34" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/js/lib/utils.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="4418" max-vertical-offset="6154">
+          <caret line="1530" column="25" selection-start-line="1530" selection-start-column="25" selection-end-line="1530" selection-end-column="25" />
           <folding>
-            <element signature="e#484#558#0" expanded="true" />
+            <element signature="n#!!block;n#default_node_callback#0;n#!!block;n#utilsFactory#0" expanded="false" />
+            <element signature="e#60094#60215#0" expanded="false" />
+            <element signature="n#!!block;n#count_word#0;n#!!block;n#utilsFactory#0" expanded="false" />
+            <element signature="n#!!block;n#is_word#0;n#!!block;n#utilsFactory#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sio_logic.js">
+    <entry file="file://$PROJECT_DIR$/public/js/lib/Stateful.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="2416" max-vertical-offset="4080">
-          <caret line="166" column="13" selection-start-line="166" selection-start-column="13" selection-end-line="166" selection-end-column="13" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="351" max-vertical-offset="1292">
+          <caret line="43" column="12" selection-start-line="43" selection-start-column="12" selection-end-line="43" selection-end-column="12" />
           <folding>
-            <element signature="e#358#843#0" expanded="false" />
-            <element signature="n#!!block;n#error_handler#0" expanded="true" />
-            <element signature="e#966#1010#0" expanded="true" />
-            <element signature="n#!!block;n#callback_ok#0" expanded="true" />
-            <element signature="e#1298#1333#0" expanded="true" />
-            <element signature="n#!!block;n#sio_onHighlight_important_words#0" expanded="true" />
-            <element signature="n#!!block;n#sio_onGet_translation_info#0" expanded="true" />
-            <element signature="n#!!block;n#sio_on_REST#0" expanded="true" />
-            <element signature="e#5322#6528#0" expanded="true" />
-            <element signature="e#6585#7390#0" expanded="true" />
-            <element signature="e#7980#8327#0" expanded="true" />
-            <element signature="e#8012#8324#0" expanded="true" />
-            <element signature="e#8402#8477#0" expanded="true" />
-            <element signature="e#8436#8474#0" expanded="true" />
-            <element signature="e#8578#8683#0" expanded="true" />
-            <element signature="e#8734#9655#0" expanded="true" />
-            <element signature="e#8892#8963#0" expanded="true" />
-            <element signature="e#9021#9443#0" expanded="true" />
-            <element signature="e#9088#9437#0" expanded="true" />
-            <element signature="e#9263#9424#0" expanded="true" />
-            <element signature="e#9497#9650#0" expanded="true" />
-            <element signature="e#9742#9788#0" expanded="true" />
+            <element signature="e#1848#2478#0" expanded="false" />
+            <element signature="e#2597#3514#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderController.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1028" max-vertical-offset="2499">
-          <caret line="166" column="69" selection-start-line="166" selection-start-column="69" selection-end-line="166" selection-end-column="69" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="984" max-vertical-offset="2193">
+          <caret line="159" column="20" selection-start-line="159" selection-start-column="20" selection-end-line="159" selection-end-column="20" />
           <folding>
-            <element signature="e#9404#10169#0" expanded="true" />
-            <element signature="e#9887#9985#0" expanded="true" />
-            <element signature="e#10043#10155#0" expanded="true" />
-            <element signature="e#10471#11139#0" expanded="true" />
-            <element signature="e#11322#11399#0" expanded="true" />
-            <element signature="e#11472#11544#0" expanded="true" />
+            <element signature="e#8297#8675#0" expanded="true" />
+            <element signature="e#9404#10277#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/karma/node_modules/socket.io/node_modules/socket.io-client/bin/builder.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.19224556" vertical-offset="0" max-vertical-offset="2567">
+          <caret line="11" column="4" selection-start-line="11" selection-start-column="4" selection-end-line="11" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/js/lib/TranslateController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.3484375" vertical-offset="1035" max-vertical-offset="5185">
+          <caret line="90" column="50" selection-start-line="90" selection-start-column="50" selection-end-line="90" selection-end-column="50" />
+          <folding>
+            <element signature="e#4454#4881#0" expanded="true" />
+            <element signature="e#22583#25779#0" expanded="true" />
+            <element signature="e#24569#24967#0" expanded="true" />
+            <element signature="e#27973#34111#0" expanded="true" />
+            <element signature="e#29891#32542#0" expanded="true" />
+            <element signature="e#31802#32310#0" expanded="true" />
+            <element signature="e#32813#34098#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderModel.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.36533332" vertical-offset="866" max-vertical-offset="4335">
-          <caret line="61" column="20" selection-start-line="61" selection-start-column="20" selection-end-line="61" selection-end-column="20" />
+        <state vertical-scroll-proportion="-8.2" vertical-offset="1614" max-vertical-offset="5253">
+          <caret line="111" column="37" selection-start-line="111" selection-start-column="33" selection-end-line="111" selection-end-column="37" />
           <folding>
-            <element signature="e#4337#49824#0" expanded="true" />
-            <element signature="e#46649#46805#0" expanded="true" />
-            <element signature="e#46870#47207#0" expanded="true" />
-            <element signature="e#47021#47193#0" expanded="true" />
+            <element signature="e#46834#46990#0" expanded="true" />
+            <element signature="e#47055#47392#0" expanded="true" />
+            <element signature="e#47206#47378#0" expanded="true" />
+            <element signature="e#47898#49116#0" expanded="true" />
+            <element signature="e#49720#50634#0" expanded="true" />
+            <element signature="e#50110#50271#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-16.423077" vertical-offset="2548" max-vertical-offset="3196">
+          <caret line="210" column="26" selection-start-line="210" selection-start-column="9" selection-end-line="210" selection-end-column="26" />
+          <folding>
+            <element signature="tag#script#16;tag#body#0;tag#html#0" expanded="false" />
+            <element signature="tag#script#17;tag#body#0;tag#html#0" expanded="false" />
+            <element signature="tag#div#0;tag#body#0;tag#html#0" expanded="false" />
+            <marker date="1417043969160" expanded="true" signature="-1:-1" placeholder="..." />
+            <marker date="1417043969160" expanded="true" signature="-1:-1" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/js/lib/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1489" max-vertical-offset="3060">
+          <caret line="101" column="29" selection-start-line="101" selection-start-column="29" selection-end-line="101" selection-end-column="29" />
+          <folding>
+            <element signature="e#3841#4155#0" expanded="true" />
+            <element signature="e#4194#5566#0" expanded="true" />
+            <element signature="e#5784#6595#0" expanded="true" />
+            <element signature="e#6282#6585#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/js/lib/socket.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="31" max-vertical-offset="663">
+          <caret line="9" column="8" selection-start-line="9" selection-start-column="8" selection-end-line="9" selection-end-column="8" />
+          <folding>
+            <element signature="e#340#887#0" expanded="false" />
+            <element signature="e#405#469#0" expanded="false" />
+            <element signature="e#520#873#0" expanded="false" />
+            <element signature="e#520#873#0" expanded="false" />
+            <element signature="e#661#844#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/js/lib/TSRController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1156" max-vertical-offset="2329">
+          <caret line="87" column="42" selection-start-line="87" selection-start-column="33" selection-end-line="87" selection-end-column="53" />
+          <folding>
+            <element signature="e#276#338#0" expanded="true" />
+            <element signature="e#998#1126#0" expanded="true" />
+            <element signature="e#1186#1626#0" expanded="true" />
+            <element signature="e#2463#3234#0" expanded="true" />
+            <element signature="e#3376#3607#0" expanded="true" />
+            <element signature="e#4206#4366#0" expanded="true" />
+            <element signature="e#4430#4516#0" expanded="true" />
+            <element signature="e#4626#4642#0" expanded="true" />
+            <element signature="e#4717#4733#0" expanded="true" />
+            <element signature="e#4802#4818#0" expanded="true" />
+            <element signature="e#4887#4903#0" expanded="true" />
+            <element signature="e#5039#5132#0" expanded="true" />
+            <element signature="e#5165#5172#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/database definition.sql">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.30063292" vertical-offset="983" max-vertical-offset="2074">
+          <caret line="69" column="0" selection-start-line="69" selection-start-column="0" selection-end-line="76" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sio_logic.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1207">
+          <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#43#0" expanded="false" />
+            <element signature="n#!!doc;n#callback_ok#0" expanded="false" />
+            <element signature="e#1441#1462#0" expanded="false" />
+            <element signature="e#1933#2075#0" expanded="false" />
+            <element signature="e#2547#2579#0" expanded="false" />
+            <element signature="e#3006#3100#0" expanded="false" />
+            <element signature="e#3329#3367#0" expanded="false" />
+            <element signature="e#3587#3686#0" expanded="false" />
+            <element signature="e#3868#3887#0" expanded="false" />
+            <element signature="e#4108#4290#0" expanded="false" />
+            <element signature="e#4302#4380#0" expanded="false" />
+            <element signature="e#4795#5716#0" expanded="true" />
+            <element signature="e#4831#4904#0" expanded="false" />
+            <element signature="e#5380#5471#0" expanded="false" />
+            <element signature="e#5852#5861#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/TSRModel.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="587" max-vertical-offset="2074">
+          <caret line="170" column="36" selection-start-line="170" selection-start-column="36" selection-end-line="170" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#43#0" expanded="false" />
+            <element signature="n#!!block;n#set_word_weights#0" expanded="true" />
+            <element signature="e#313#382#0" expanded="false" />
+            <element signature="e#568#803#0" expanded="false" />
+            <element signature="e#661#802#0" expanded="false" />
+            <element signature="e#858#4239#0" expanded="true" />
+            <element signature="e#1142#1346#0" expanded="false" />
+            <element signature="e#1398#1647#0" expanded="false" />
+            <element signature="e#1516#1646#0" expanded="false" />
+            <element signature="e#1745#1827#0" expanded="false" />
+            <element signature="e#2247#2326#0" expanded="false" />
+            <element signature="e#2413#2490#0" expanded="false" />
+            <element signature="e#3173#3858#0" expanded="false" />
+            <element signature="e#3267#3828#0" expanded="false" />
+            <element signature="e#4014#4228#0" expanded="false" />
+            <element signature="e#4280#4354#0" expanded="false" />
+            <element signature="e#4465#4568#0" expanded="false" />
+            <element signature="e#4573#4635#0" expanded="false" />
+            <element signature="e#4758#5382#0" expanded="false" />
+            <element signature="e#4780#5053#0" expanded="false" />
+            <element signature="e#4919#5017#0" expanded="false" />
+            <element signature="e#5090#5367#0" expanded="false" />
+            <element signature="e#5233#5331#0" expanded="false" />
+            <element signature="e#5536#6078#0" expanded="false" />
+            <element signature="e#6094#6486#0" expanded="false" />
+            <element signature="e#6720#6835#0" expanded="false" />
+            <element signature="e#6907#7351#0" expanded="true" />
+            <element signature="e#7711#8067#0" expanded="true" />
+            <element signature="n#!!block;n#tsr_compute_progress#0" expanded="true" />
+            <element signature="e#10111#10179#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/doc/TSR.md">
+      <provider editor-type-id="MarkdownPreviewEditor">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="1.6163683" vertical-offset="1017" max-vertical-offset="2363">
+          <caret line="97" column="50" selection-start-line="97" selection-start-column="1" selection-end-line="97" selection-end-column="50" />
+          <folding />
         </state>
       </provider>
     </entry>

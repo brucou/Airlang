@@ -2,12 +2,13 @@
  * Created by bcouriol on 17/09/14.
  */
 define(['jquery',
+        'rsvp',
         'ReaderModel',
         'TranslateController',
         'Stateful',
         'data_struct',
         'utils'],
-       function ( $, RM, TC, STATE, DS, UT ) {
+       function ( $, RSVP, RM, TC, STATE, DS, UT ) {
           //TEST CODE
           trace(RM, 'RM');
           //trace(TC, 'TC');
@@ -136,7 +137,7 @@ define(['jquery',
              return filter_selected_word;
           };
 
-          RC.show_and_add_note = function show_and_add_note ( $el, ev, range ) {
+          RC.show_note = function show_and_add_note ( $el, ev, range ) {
              if (!this.stateGetIsUrlLoaded()) {
                 //that flag is set after a successful load of an url
                 return;
@@ -154,21 +155,45 @@ define(['jquery',
              modified_filter_selected_words.input_type = RM.filter_selected_words.input_type;
              modified_filter_selected_words.output_type = RM.filter_selected_words.output_type;
 
-             return $.when(
-                RM.apply_highlighting_filters_to_text(
-                   $(note.rootNode), RM.fn_parser_and_transform([], [], true),
-                   //[RC.filter_selected_word(note.word, note.index - 1, RC.fn_html_highlight_note)]
-                   [modified_filter_selected_words]
-                )).
-                then(function update_html_text ( highlighted_text ) {
-                        // update the html in reader controller
-                        self.stateMap.viewAdapter.setErrorMessage(null);
-                        self.stateMap.viewAdapter.set_HTML_body(highlighted_text);
-                        return highlighted_text;
-                     })
-                .then(function update_state () {
-                         RM.add_notes({module    : 'reader tool', url : self.stateMap.viewAdapter.url_to_load,
-                                         user_id : self.stateMap.user_id, word : note.word, index : note.index});
+             return RSVP.all(
+                [
+                   RM.apply_highlighting_filters_to_text(
+                      $(note.rootNode), RM.fn_parser_and_transform([], [], true),
+                      [modified_filter_selected_words]
+                   ),
+                   RC.add_note(self, note)
+                ]).then(function update_html_text ( aPromiseResults ) {
+                           // update the html in reader controller
+                           var highlighted_text = aPromiseResults[0];
+                           self.stateMap.viewAdapter.setErrorMessage(null);
+                           self.stateMap.viewAdapter.set_HTML_body(highlighted_text);
+                           return highlighted_text;
+                        });
+             /*
+              .then(function update_state (highlighted_text) {
+              return $.when(RM.add_notes({module    : 'reader tool', url : self.stateMap.viewAdapter.url_to_load,
+              user_id : self.stateMap.user_id, word : note.word, index : note.index}),
+              RM.add_TSR_weight({user_id : self.stateMap.user_id, word : note.word}));
+              })
+              .then(function success_add_note ( param1, param2 ) {logWrite(DBG.TAG.DEBUG, "added note remotely!")},
+              function failure_add_note ( err ) {
+              logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
+              });
+              */
+          };
+
+          RC.add_note = function ( context, note ) {
+             return RSVP.all([
+                                RM.add_notes({module             : 'reader tool', url : context.stateMap.viewAdapter.url_to_load,
+                                                user_id          : context.stateMap.user_id, word : note.word,
+                                                context_sentence : note.context_sentence, index : note.index}),
+                                RM.add_TSR_weight({user_id : context.stateMap.user_id, word : note.word})
+                             ])
+                .then(function success_add_note ( param1, param2 ) {
+                         logWrite(DBG.TAG.DEBUG, "added note remotely!")
+                      },
+                      function failure_add_note ( err ) {
+                         logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
                       });
           };
 
@@ -195,7 +220,7 @@ define(['jquery',
 
                 '#url_param change' : RC.combo_load_url,
 
-                'click' : RC.show_and_add_note,
+                'click' : RC.show_note,
 
                 stateSetIsUrlLoaded : function stateSetIsUrlLoaded ( is_loaded ) {
                    this.stateMap.isUrlLoaded = is_loaded;

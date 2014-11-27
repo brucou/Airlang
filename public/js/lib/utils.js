@@ -1428,7 +1428,9 @@ function utilsFactory () {
       // validating inputs and setting key variables
       var err = false,
          bool_no_exception;
-      var argCheck = assert_type(arguments, [{obj : 'Object', specMap : 'Object'}], {bool_no_exception : true});
+      var argCheck = assert_type(arguments, [
+         {obj : 'Object', specMap : 'Object'}
+      ], {bool_no_exception : true});
       if (argCheck.ok) {
          var aProps = get_own_properties(specMap);
          if (aProps.length === 0) {
@@ -1448,7 +1450,9 @@ function utilsFactory () {
             var curr_obj_prop = obj[property];
             var curr_prop_spec = specMap[property];
             if ('undefined' !== typeof curr_obj_prop) {
-               var propCheck = assert_type([curr_obj_prop], [{property: curr_prop_spec}], {bool_no_exception : true});
+               var propCheck = assert_type([curr_obj_prop], [
+                  {property : curr_prop_spec}
+               ], {bool_no_exception : true});
                err = err || !propCheck.ok;
                return propCheck.results[0];
             }
@@ -1517,6 +1521,20 @@ function utilsFactory () {
       }
    }
 
+   ///Helper notes function
+   function count_word ( word ) {
+      return word ? 1 : 0;
+   }
+
+   /**
+    * will be false if word="", true otherwise
+    * @param word {String}
+    * @returns {String}
+    */
+   function is_word ( word ) {
+      return word;
+   }
+
    var _UT =
    {
       isArray                         : isArray,
@@ -1563,6 +1581,8 @@ function utilsFactory () {
       sum                             : sum,
       or                              : or,
       identity                        : identity,
+      count_word                      : count_word,
+      is_word                         : is_word,
       default_node_callback           : default_node_callback
    };
 

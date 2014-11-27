@@ -95,7 +95,13 @@ requirejs(
 
       function start () {
          // TODO : add a login mechanism to have different user ids
-         appState.user_id = 1;
+         appState = {
+            type : 'appState',
+            $error : $('#application_error'),
+            user_id : 1,
+            socket : SOCK.get_socket()
+            };
+
          //TODO Change user_id in new RC... to appState, or pass a clone of the object
          new RC.ReaderToolController("#reader_tool",
                                      {view : RC.rtView, getViewAdapter : RC.getViewAdapter, model : RM, user_id : 1});

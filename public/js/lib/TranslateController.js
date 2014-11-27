@@ -140,9 +140,9 @@ define(['jquery',
                  */
                 hasMouseReallyMoved : function ( e ) { //or is it a tremor?
                    var left_boundry = parseInt(this.last_mouse_stop.x) - 5,
-                       right_boundry = parseInt(this.last_mouse_stop.x) + 5,
-                       top_boundry = parseInt(this.last_mouse_stop.y) - 5,
-                       bottom_boundry = parseInt(this.last_mouse_stop.y) + 5;
+                      right_boundry = parseInt(this.last_mouse_stop.x) + 5,
+                      top_boundry = parseInt(this.last_mouse_stop.y) - 5,
+                      bottom_boundry = parseInt(this.last_mouse_stop.y) + 5;
                    return e.clientX > right_boundry || e.clientX < left_boundry || e.clientY > bottom_boundry ||
                           e.clientY < top_boundry;
                 },
@@ -297,8 +297,7 @@ define(['jquery',
 
                    //and editable divs
                    if (hit_elem.getAttribute('contenteditable') == 'true' ||
-                       $(hit_elem).parents('[contenteditable=true]').length > 0)
-                   {
+                       $(hit_elem).parents('[contenteditable=true]').length > 0) {
                       return;
                    }
 
@@ -320,8 +319,7 @@ define(['jquery',
                          && selection.containsNode(hit_elem, true)
                       // But what is the point for the first part of condition? Well, without it, pointing at body for instance would also satisfy the second part
                       // resulting in selection translation showing up in random places
-                         )
-                      {
+                         ) {
                          word = selection.toString();
                       }
                       else if (options.translate_by == 'point') {
@@ -357,8 +355,7 @@ define(['jquery',
                          return null;
                       }
                       if (aValues.length === 0 || // means nothing was returned from server and put in store
-                          aQuery_result.length === 0)
-                      { // means server returned empty
+                          aQuery_result.length === 0) { // means server returned empty
                          logWrite(DBG.TAG.WARNING, "Query did not return any values");
                          return null;
                       }
@@ -469,24 +466,15 @@ define(['jquery',
           TC.getNoteFromWordClickedOn = function getNoteFromWordClickedOn ( $el, ev, selectedRange ) {
              // count the number of words to the first element with ID
 
-             ///Helper function
-             function count_word ( word ) {
-                return word ? 1 : 0;
-             }
-
-             function is_word ( word ) {
-                return word;
-             }
-
              // Two cases, the anchor object has an id property or it does not. Most of the time it won't
              var startNode = selectedRange.startContainer,
-                 firstIDNode = TC.findParentWithId(startNode),
-                 // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+                firstIDNode = TC.findParentWithId(startNode),
+             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-                 parent_node_with_id = TC.findParentWithId(startNode),
-                 id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
+                parent_node_with_id = TC.findParentWithId(startNode),
+                id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
 
-                 rootNode = document.getElementById("0");
+                rootNode = document.getElementById("0");
              if (!rootNode) {
                 throw 'getNoteFromWordClickedOn: no element with id="0" - this function can only be called on a DOM parsed with parseDOMTree '
              }
@@ -510,7 +498,7 @@ define(['jquery',
                 .map(function ( node ) {
                         return (node.nodeType === node.TEXT_NODE)
                            //returns number of words in the text node. "" does not count for a word
-                           ? RM.simple_tokenizer(node.textContent).map(count_word).reduce(UT.sum, 0)
+                           ? RM.simple_tokenizer(node.textContent).map(UT.count_word).reduce(UT.sum, 0)
                            // not a text node so no words to count here
                            : 0;
                      })
@@ -525,19 +513,11 @@ define(['jquery',
              if (!full_text) {
                 // that should never happen right?
                 // we let it slip and let the caller decide what to do
-                return {
-                   word  : null,
-                   index : null
-                }
+                return {word : null, index : null, context_sentence : null, rootNode : null}
              }
              var final_index = word_index_to_selected_node + word_index_to_selected_word;
 
-             //TODO : switch index to 0 if first word?
-             return {
-                word  : RM.simple_tokenizer(full_text).filter(is_word)[final_index - 1],
-                index : final_index,
-                rootNode : rootNode /* optional */
-             }
+             return RM.get_note_from_param(full_text, final_index, rootNode);
           };
 
           /**
@@ -551,8 +531,7 @@ define(['jquery',
              var currentNode = startNode;
              var ancestor_level = 0;
              while (currentNode &&
-                    (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") ))
-             {
+                    (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") )) {
                 logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
                 currentNode = currentNode.parentNode;
                 ancestor_level++;
@@ -595,7 +574,7 @@ define(['jquery',
 
              // Init array variables tracing the counting
              var aCharLengths = [],
-                 aWordLengths = [];
+                aWordLengths = [];
 
              // get the first parent with id
              var currentNode = TC.findParentWithId(startNode);
@@ -635,8 +614,7 @@ define(['jquery',
                    }
                    else {
                       // otherwise we have an element node, which do not have a text, just proceed to the next child
-                      if (!currentNode.hasChildNodes())
-                      {
+                      if (!currentNode.hasChildNodes()) {
                          throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
                       }
                       logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
@@ -664,14 +642,13 @@ define(['jquery',
              function count_word_and_char_till_offset ( startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths,
                                                         tokenizer ) {
                 // tokenizer is passed here as a parameter because I need to use the same tokenizer that gave me the token array when highlighting previously
-                if (startNode.nodeType !== startNode.TEXT_NODE)
-                {
+                if (startNode.nodeType !== startNode.TEXT_NODE) {
                    throw 'count_word_and_char_till_node: this is implemented only for text node! Passed ' +
                          startNode.nodeName + " " + startNode.nodeType;
                 }
 
                 var current_offset = 0,
-                    aWords = tokenizer(startNode.textContent);
+                   aWords = tokenizer(startNode.textContent);
                 aWords.some(function ( word, index, array ) {
                    logWrite(DBG.TAG.DEBUG, "processing", word);
                    aCharLengths.push(word.length);

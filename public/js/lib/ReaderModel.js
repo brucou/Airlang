@@ -37,6 +37,8 @@
  * - Two types of node comparison, strict comparison can be done with ===, the 'same contents' comparison with isEqualNode
  * - there is advantage in knowing how to navigate the DOM with jQuery and with the DOM API directly, lots of time wasted
  *   trying to figure out which is which
+ * Javascript:
+ * - ? is evaluated right to left and in last order so x + y?1:0 means x+y evaluated first
  * DOM :
  * - there is advantage in knowing how to navigate the DOM with jQuery and with the DOM API directly, lots of time wasted
  *   trying to figure out which is which
@@ -77,6 +79,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           //State objects
           var stateMap = {rpc_socket : undefined, aNotes : undefined};
 
+          const TSR_WORD_CONTEXT_SENTENCE = 20; //TODO: put in a config object
           var CLASS_SELECTOR_CHAR = ".";
           var ID_SELECTOR_CHAR = "#";
 
@@ -896,6 +899,12 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              });
           };
 
+          /**
+           * Retrieve the remotely stored notes corresponding to some criteria (similar to SQL WHERE clause)
+           * @param criteria {Object} Object containing the query fields of the notes collection whose corresponding
+           *                          data is to be retrieved
+           * @returns {RSVP.Promise} returns a promise that will be resolved when all state data has been retrieved
+           */
           RM.get_stored_notes = function get_stored_notes ( criteria ) {
              var self = this;
              // Get state info
@@ -919,6 +928,38 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                          return UT.log_error("get_stored_stateful_object:",
                                              "error querying state object Notes_Collection :", UT.inspect(err));
                       })
+          };
+
+          /**
+           * Makes and returns a note object containing:
+           * - the word
+           * - the word index (non-empty words i.e. spaces do not count)
+           * - the DOM element from which the text was obtained
+           * - a few words surrounding the word selected
+           * @param full_text {String}
+           * @param final_index {Number}
+           * @param rootNode {Element}
+           * @returns {{word: *, index: *, rootNode: *, context_sentence: *}}
+           */
+          RM.get_note_from_param = function get_note_from_param ( full_text, final_index, rootNode ) {
+             var note = {
+                word     : RM.simple_tokenizer(full_text).filter(UT.is_word)[final_index - 1],
+                index    : final_index,
+                rootNode : rootNode
+             };
+
+             var word_index = 0;
+             var real_index = 0;
+             var aWords = RM.simple_tokenizer(full_text);
+             aWords.some(function ( word, index ) {
+                word_index = word_index + (word ? 1 : 0);
+                real_index = index;
+                return final_index === word_index;
+             });
+             // Note: the edge cases (word not found) are not considered as we get here after already finding the word
+             note.context_sentence = aWords.slice(Math.max(real_index - TSR_WORD_CONTEXT_SENTENCE, 0),
+                                                  real_index + TSR_WORD_CONTEXT_SENTENCE).join(" ");
+             return note;
           };
 
           ////////// Module initialization

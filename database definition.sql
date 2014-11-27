@@ -44,6 +44,7 @@ CREATE TABLE pg_notepad
   user_id integer,
   url character varying,
   word character varying,
+  context_sentence character varying,
   index integer,
   CONSTRAINT pg_notepad_pkey PRIMARY KEY (note_id)
 )
@@ -90,6 +91,12 @@ CREATE TABLE pg_tsr_word_weight_cfg
 (
   user_id INTEGER,
   mem_bucket_size SMALLINT,
+  age_param1 SMALLINT,
+  age_param2 SMALLINT,
+  progress_param1 SMALLINT,
+  progress_param2 SMALLINT,
+  difficulty_param1 SMALLINT,
+  difficulty_param2 SMALLINT,
   bucket_weight0 SMALLINT,
   bucket_weight1 SMALLINT,
   bucket_weight2 SMALLINT,

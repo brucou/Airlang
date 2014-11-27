@@ -1,14 +1,14 @@
 /**
  * Created by bcouriol on 15/09/14.
  */
-reject_global_var=null;
 var SIO = {},
    LOG = require('./debug'),
    DB = require('./db_logic'),
    Util = require('util'),
    U = require('./public/js/lib/utils'), // load the client side utils
    RSVP = require('rsvp'),
-   io;
+   io,
+   TSR = require('./TSRModel');
 const RPC_NAMESPACE = '/rpc';
 const STATE_NAMESPACE = '/state';
 
@@ -17,7 +17,8 @@ var mapListeners = {
    topic_handlers : [
       {channel : RPC_NAMESPACE, topic : 'highlight_important_words', handler : sio_onHighlight_important_words},
       {channel : RPC_NAMESPACE, topic : 'get_translation_info', handler : sio_onGet_translation_info},
-      {channel : RPC_NAMESPACE, topic : 'set_TSR_word_weights', handler : sio_onSet_TSR_word_weights},
+      {channel : RPC_NAMESPACE, topic : 'set_TSR_word_weights', handler : TSR.set_word_weights},
+      {channel : RPC_NAMESPACE, topic : 'get_word_to_memorize', handler : TSR.get_word_to_memorize},
       {channel : STATE_NAMESPACE, topic : 'REST_operation', handler : sio_on_REST}
    ]};
 
@@ -36,7 +37,7 @@ function error_handler ( callback ) {
  */
 function callback_ok ( callback ) {
    return function call_callback ( result ) {
-      callback(null,result);
+      callback(null, result);
    }
 }
 
@@ -97,79 +98,6 @@ function sio_on_REST ( qry_param, callback ) {
    // Ex: MongoDB code
    //db.collection.find(criteria)
 
-}
-
-// Memorization module handlers
-function sio_onSet_TSR_word_weights ( obj, callback ) {
-   // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
-   //check inputs
-   if (obj.user_id && obj.word) {
-      // check that the word is not already being revised
-      var dbAdapter = DB.get_db_adapter('TSR');
-      dbAdapter.exec_query({action     : 'select', entity : 'TSR_word_weight',
-                              criteria : {
-                                 user_id : obj.user_id,
-                                 word    : obj.word
-                              }})
-         .then(
-         function success ( result ) {
-            if (result.length === 0) {
-               // the word is not already being revised
-               RSVP.all([
-                           dbAdapter.exec_query({action     : 'count', entity : 'TSR_word_weight',
-                                                   criteria : {
-                                                      user_id : obj.user_id,
-                                                      word    : obj.word
-                                                   }}),
-                           dbAdapter.exec_query({action     : 'select', entity : 'TSR_word_weight_cfg',
-                                                   criteria : {
-                                                      user_id : obj.user_id
-                                                   }})]
-               ).then(
-                  function success ( aResolves ) {
-                     // calculate which weight to apply according to the bucket in which the word falls
-                     // config has bucket_weight_0, bucket_weight_1, bucket_weight_2
-                     // sends an exception if there is no configuration value
-                     var word_list_length_a = aResolves[0],
-                        row_tsr_config_a = aResolves[1],
-                        word_list_length,
-                        row_tsr_config;
-                     U.assert_type([word_list_length_a], [{word_list_length_a : 'Array'}], {bool_no_exception : false});
-                     U.assert_type([row_tsr_config_a], [{row_tsr_config_a : 'Array'}], {bool_no_exception : false});
-                     word_list_length = word_list_length_a[0];
-                     row_tsr_config = row_tsr_config_a[0];
-                     U.assert_properties(row_tsr_config, {mem_bucket_size : 'Number'}, {bool_no_exception : false});
-
-                     var modulo = word_list_length.count / row_tsr_config.mem_bucket_size;
-                     modulo = modulo > 2 ? 2 : Math.floor(modulo);
-                     return box_weight = row_tsr_config['bucket_weight' + modulo];
-                  }//
-               ).then(function success ( box_weight ) {
-                         return promise = dbAdapter.exec_query(
-                            {action     : 'insert', entity : 'TSR_word_weight',
-                               criteria : {
-                                  user_id                     : obj.user_id,
-                                  word                        : obj.word,
-                                  BOX_weight                  : box_weight,
-                                  last_revision_time          : new Date(),
-                                  last_revision_easyness      : undefined,
-                                  last_revision_exercise_type : undefined,
-                                  last_revision_grade         : undefined
-                               }
-                            });
-                      }//, error_handler(callback)
-               ).then(callback_ok (callback), error_handler(callback));
-            }
-            else {
-               // word already there
-               LOG.Write(LOG.TAG.WARNING, "Word is already being revised - ignoring");
-               callback(null, "Word is already being revised - ignoring");
-            }
-         }, error_handler(callback));
-   }
-   else {
-      callback('sio_onSet_TSR_word_weights: malformed parameters');
-   }
 }
 
 // Helper functions
