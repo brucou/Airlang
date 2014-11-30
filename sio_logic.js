@@ -2,7 +2,7 @@
  * Created by bcouriol on 15/09/14.
  */
 var SIO = {},
-   LOG = require('./debug'),
+   LOG = require('./public/js/lib/debug'),
    DB = require('./db_logic'),
    Util = require('util'),
    U = require('./public/js/lib/utils'), // load the client side utils
@@ -21,25 +21,6 @@ var mapListeners = {
       {channel : RPC_NAMESPACE, topic : 'get_word_to_memorize', handler : TSR.get_word_to_memorize},
       {channel : STATE_NAMESPACE, topic : 'REST_operation', handler : sio_on_REST}
    ]};
-
-//Helper function - error handling in promises
-function error_handler ( callback ) {
-   return function failure ( err ) {
-      callback(err.toString(), null);
-   }
-}
-
-/**
- * This is to bridge promise and node-style callbacks. The promise returns always one argument
- * which is in second position in node-style callback
- * @param callback
- * @returns {call_callback}
- */
-function callback_ok ( callback ) {
-   return function call_callback ( result ) {
-      callback(null, result);
-   }
-}
 
 // kept there for now
 // TODO : create a query object or file? with an init module for sio which gets the query from the query module
@@ -93,7 +74,7 @@ function sio_on_REST ( qry_param, callback ) {
    // cf. sio_onGet_translation_info
    dbAdapter.exec_query(qry_param)
       .then(function success ( result ) {callback(null, result);},
-            error_handler(callback));
+            U.error_handler(callback));
 
    // Ex: MongoDB code
    //db.collection.find(criteria)
@@ -165,5 +146,4 @@ SIO.set_frequent_word_list = function set_frequent_word_list ( listImportantWord
 
 // Export
 // added to the SIO module for testing purpose
-SIO.sio_onSet_TSR_word_weights = sio_onSet_TSR_word_weights;
 module.exports = SIO;

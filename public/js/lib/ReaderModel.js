@@ -61,6 +61,7 @@
  * CAN.js
  * - if properties in CAN.map are set to undefined, a warning "cannot find key ..." is generated
  *   It can either be ignored or the value must be initialized to remove the warning
+ * - Incredible but TRUE, you cannot put any CAPS letter in the name of the view template...
  * ON.THE.FLY coding
  * - wrong scope - function thought to be defined module scope but hidden into another function
  * - wrong arguments passed o function, or in wrong order, or missing arguments

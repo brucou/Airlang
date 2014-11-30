@@ -23,8 +23,8 @@ var pgClient; //postgresSQL connection variable
 _ = require('underscore');
 var Util = require('util');
 //var Promise = require('es6-promise').Promise;
-var LOG = require('./debug');
-var U = require('./utils');
+var LOG = require('./public/js/lib/debug');
+var U = require('./public/js/lib/utils');
 var SIO = require('./sio_logic');
 var DB = require('./db_logic');
 
@@ -70,6 +70,9 @@ function initialize_string_lib () {
    _.str.include('Underscore.string', 'string'); // => true
    LOG.exit('initialize_string_lib');
 }
+
+// Initialize DEBUG module
+LOG.init({FORCE_TRACE : false});
 
 //TODO refactoriser - helper - init des modules - avec promises quand necessaire, le server http listen en dernier?
 initialize_string_lib();

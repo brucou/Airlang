@@ -97,7 +97,7 @@ requirejs(
          // TODO : add a login mechanism to have different user ids
          appState = {
             type : 'appState',
-            $error : $('#application_error'),
+            error_div : '#application_error',
             user_id : 1,
             socket : SOCK.get_socket()
             };
@@ -112,12 +112,12 @@ requirejs(
             //TODO: think about what data to pass the controller
             // appState is certainly one of them, maybe not views and adapters
             // put the model in another file
-            new TSR.mainController("#TSR_div", appState); //TODO : appState with user_id
+            new TSR.mainController("#TSR_div", {appState: appState}); //TODO : appState with user_id
          });
       }
 
       function init_log () {
-         FORCE_TRACE = false;
+         DBG.init({FORCE_TRACE : false});
          DBG.setConfig(DBG.TAG.DEBUG, true, {by_default : true})
          (DBG.TAG.TRACE, true, {by_default : true})
          (DBG.TAG.INFO, true, {by_default : true});

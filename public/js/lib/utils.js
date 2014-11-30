@@ -553,10 +553,6 @@ function utilsFactory () {
       return origin;
    };
 
-   function hasOwnProperty ( obj, prop ) {
-      return Object.prototype.hasOwnProperty.call(obj, prop);
-   }
-
    // definition of helper function format, similar to sprintf of C
    // usage : String.format('{0} is dead, but {1} is alive! {0} {2}', 'ASP', 'ASP.NET');
    // result : ASP is dead, but ASP.NET is alive! ASP {2}
@@ -871,6 +867,10 @@ function utilsFactory () {
       });
    }
 
+   function wrap_string ( wrap_begin, word, wrap_end ) {
+      return [wrap_begin, word, wrap_end].join("");
+   }
+
    // left padding s with c to a total of n chars
    function padding_left ( s, c, n ) {
       if (!s || !c || s.length >= n) {
@@ -918,6 +918,20 @@ function utilsFactory () {
          }
       }
       return aProperties;
+   }
+
+   function copy_own_properties ( obj ) {
+      var copy_obj = {};
+      for (var prop in obj) {
+         if (obj.hasOwnProperty(prop)) {
+            copy_obj[prop] = obj[prop];
+         }
+      }
+      return copy_obj;
+   }
+
+   function hasOwnProperty ( obj, prop ) {
+      return Object.prototype.hasOwnProperty.call(obj, prop);
    }
 
    function fn_get_prop ( prop_name ) {
@@ -1134,8 +1148,15 @@ function utilsFactory () {
     * - Also, it is evaluated at runtime, so it would not work for tracing purpose for example.
     * @return {string} the name of the immediately enclosing function in which this function is called
     */
-   function get_calling_function_name () {
-      return /^ *at (.*)\(/.exec(Error("function_name").stack.split("\n")[3])[1].trim();
+   function get_calling_function_name ( depth ) {
+      depth = depth || 3;
+      var lines = /^ *at (.*)\(/.exec(Error("function_name").stack.split("\n")[depth]);
+      if (lines) {
+         return lines[1].trim();
+      }
+      else {
+         return "";
+      }
       // Another regexp should work for Firefox
       // Sample stack trace function s() {return Error("something").stack}
       // "s@debugger eval code:1:15
@@ -1245,7 +1266,14 @@ function utilsFactory () {
    function is_type_in_prototype_chain ( object, type ) {
 
       var curObj = object,
-         inst_of;
+         inst_of,
+         aTypes;
+
+      if (typeof type !== 'string' && 'undefined' === typeof type.length) {
+         // neither array nor string
+         throw 'is_type_in_prototype_chain: wrong parameter type for parameter type: expected string or array'
+      }
+      aTypes = (typeof type === 'string') ? [type] : type;
 
       //check that object is of type object, otherwise it is a core type, which is out of scope
       // !! : null has type 'object' but is in no prototype chain
@@ -1257,8 +1285,23 @@ function utilsFactory () {
          inst_of = getInstanceOf(Object.getPrototypeOf(curObj));
          curObj = Object.getPrototypeOf(curObj);
       }
-      while (inst_of !== 'Object' && inst_of !== type);
-      return (inst_of === type);
+      while (inst_of !== 'Object' && aTypes.indexOf(inst_of) === -1);
+      return (aTypes.indexOf(inst_of) !== -1);
+   }
+
+   function filter_out_prop ( obj, aProps ) {
+      //for instance: UT.filter_out_prop(appState, ['jQuery', 'Element']);
+      // imagine appState has a big jQuery object in a property, we want to remove it
+      for (var obj_prop in obj) {
+         if (obj.hasOwnProperty(obj_prop)) {
+            var current_value = obj[obj_prop];
+            if (aProps.indexOf(UT.getClass(current_value)) > -1 ||
+                UT.is_type_in_prototype_chain(current_value, aProps)) {
+               delete obj[obj_prop];
+            }
+         }
+      }
+      return obj;
    }
 
    /**
@@ -1365,7 +1408,7 @@ function utilsFactory () {
                var current_param = aArgs[param_index++];
                // edge cases of null and undefined value for params are dealth with in getClass
                // which turns them into normal cases
-               // normal cases, first check expected_type is a string
+               // normal cases, first check expected_type is a string or an array
                var aExpected_type = undefined;
                if (expected_type !== null) {
                   // an expected type of null means : do not check type for this argument
@@ -1450,9 +1493,9 @@ function utilsFactory () {
             var curr_obj_prop = obj[property];
             var curr_prop_spec = specMap[property];
             if ('undefined' !== typeof curr_obj_prop) {
-               var propCheck = assert_type([curr_obj_prop], [
-                  {property : curr_prop_spec}
-               ], {bool_no_exception : true});
+               var curr_obj_prop_spec = {};
+               curr_obj_prop_spec[property] = curr_prop_spec;
+               var propCheck = assert_type([curr_obj_prop], [curr_obj_prop_spec], {bool_no_exception : true});
                err = err || !propCheck.ok;
                return propCheck.results[0];
             }
@@ -1462,6 +1505,8 @@ function utilsFactory () {
                return ['property', property, 'is undefined in object'].join(" ");
             }
          });
+
+         aCheckResults.unshift('calling function: ' + get_calling_function_name(4));
 
          // throws an exception if undefined or false
          if (!bool_no_exception && err) {
@@ -1475,6 +1520,7 @@ function utilsFactory () {
          }
       }
       else {
+         argCheck.results.unshift('calling function: ' + get_calling_function_name(4));
          throw 'assert_properties: ERROR!\n' + argCheck.results.join("\n");
       }
    }
@@ -1494,6 +1540,25 @@ function utilsFactory () {
       }
    }
 
+   //Helper function - error handling in promises
+   function error_handler ( callback ) {
+      return function failure ( err ) {
+         callback(err.toString(), null);
+      }
+   }
+
+   /**
+    * This is to bridge promise and node-style callbacks. The promise returns always one argument
+    * which is in second position in node-style callback
+    * @param callback
+    * @returns {call_callback}
+    */
+   function callback_ok ( callback ) {
+      return function call_callback ( result ) {
+         callback(null, result);
+      }
+   }
+
    function disaggregate_input ( sWords ) {
       /* for now, just takes a string and returns an array of word tokens
        Consecutive spaces are reduced to one
@@ -1509,6 +1574,10 @@ function utilsFactory () {
    }
 
    function identity ( token ) {return token;}
+
+   function f_none () {
+      // the empty function - used when there is no action to perform in a callback context
+   }
 
    function default_node_callback ( resolve, reject ) {
       return function ( err, result ) {
@@ -1533,6 +1602,18 @@ function utilsFactory () {
     */
    function is_word ( word ) {
       return word;
+   }
+
+   /**
+    * Returns a rejected promise which can be used to pass down a chain of promises and be caught down the road
+    * skipping the normal processing of intermediate non-catching then calls
+    * @param message {String} Error message to pass in the promise
+    * @returns {RSVP.Promise}
+    */
+   function delegate_promise_error ( message ) {
+      return new RSVP.Promise(function ( resolve, reject ) {
+         reject(message);
+      })
    }
 
    var _UT =
@@ -1560,6 +1641,7 @@ function utilsFactory () {
       CachedValues                    : CachedValues,
       getIndexInArray                 : getIndexInArray,
       escape_html                     : escape_html,
+      wrap_string                     : wrap_string,
       padding_left                    : padding_left,
       padding_right                   : padding_right,
       fragmentFromString              : fragmentFromString,
@@ -1567,6 +1649,7 @@ function utilsFactory () {
       get_calling_function_name       : get_calling_function_name,
       parseDOMtree                    : parseDOMtree,
       get_own_properties              : get_own_properties,
+      copy_own_properties             : copy_own_properties,
       some                            : some,
       traverse_DOM_depth_first        : traverse_DOM_depth_first,
       fn_get_prop                     : fn_get_prop,
@@ -1576,13 +1659,18 @@ function utilsFactory () {
       assert_properties               : assert_properties,
       is_type_in_prototype_chain      : is_type_in_prototype_chain,
       getInstanceOf                   : getInstanceOf,
+      filter_out_prop                 : filter_out_prop,
       slice                           : slice,
       log_error                       : log_error,
       sum                             : sum,
       or                              : or,
       identity                        : identity,
+      f_none                          : f_none,
       count_word                      : count_word,
       is_word                         : is_word,
+      delegate_promise_error          : delegate_promise_error,
+      error_handler                   : error_handler,
+      callback_ok                     : callback_ok,
       default_node_callback           : default_node_callback
    };
 

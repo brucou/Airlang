@@ -2,7 +2,7 @@
  * Created by bcouriol on 27/11/14.
  */
 
-var LOG = require('./debug'),
+var LOG = require('./public/js/lib/debug'),
    DB = require('./db_logic'),
    Util = require('util'),
    U = require('./public/js/lib/utils'), // load the client side utils
@@ -21,7 +21,7 @@ function set_word_weights ( obj, callback ) {
                                  word    : obj.word
                               }})
          .then(
-         function success ( result ) {
+         function success_qry_word_weight ( result ) {
             if (result.length === 0) {
                // the word is not already being revised
                RSVP.all([
@@ -35,7 +35,7 @@ function set_word_weights ( obj, callback ) {
                                                       user_id : obj.user_id
                                                    }})]
                ).then(
-                  function success ( aResolves ) {
+                  function success_qry_weight_and_cfg ( aResolves ) {
                      // calculate which weight to apply according to the bucket in which the word falls
                      // config has bucket_weight_0, bucket_weight_1, bucket_weight_2
                      // sends an exception if there is no configuration value
@@ -65,35 +65,36 @@ function set_word_weights ( obj, callback ) {
                                   word                        : obj.word,
                                   BOX_weight                  : box_weight,
                                   last_revision_time          : new Date(),
-                                  last_revision_easyness      : undefined,
+                                  last_revision_easyness      : 1,
                                   last_revision_exercise_type : undefined,
-                                  last_revision_grade         : undefined
+                                  last_revision_grade         : 0
                                }
                             });
                       }//, error_handler(callback)
-               ).then(callback_ok(callback), error_handler(callback));
+               ).then(U.callback_ok(callback), U.error_handler(callback));
             }
             else {
                // word already there
                LOG.Write(LOG.TAG.WARNING, "Word is already being revised - ignoring");
                callback(null, "Word is already being revised - ignoring");
             }
-         }, error_handler(callback));
+         }, U.error_handler(callback));
    }
    else {
-      callback('sio_onSet_TSR_word_weights: malformed parameters');
+      callback('set_word_weights: malformed parameters');
    }
 }
 
 function get_word_to_memorize ( appState, callback ) {
-   var user_id = appState.user_id;
-   if (!user_id) {
-      callback('sio_onGet_word_to_memorize: param appState.user_id has falsy value - aborting');
+   var check = U.assert_properties(appState, {user_id : 'Number'}, {bool_no_exception : false});
+   if (!check.ok) {
+      callback('get_word_to_memorize: parameter error\n' + check.results);
    }
 
    // Get the list of word and weight parameters for that user_id
    // Get the adapter for executing query
-   var dbAdapter = DB.get_db_adapter('sio_onGet_word_to_memorize');
+   var dbAdapter = DB.get_db_adapter('TSR'),
+      user_id = appState.user_id;
    RSVP.all([dbAdapter.exec_query({action     : 'select',
                                      entity   : 'TSR_word_weight',
                                      criteria : {
@@ -107,7 +108,7 @@ function get_word_to_memorize ( appState, callback ) {
                                      }
                                   })
             ])
-      .then(function ( aDb_rows ) {
+      .then(function success_qry_weight_and_cfg ( aDb_rows ) {
                // TODO : remove duplicate words? Or assume there are none (removed at another stage)
                /* reminder specs for config rows are:
                 user_id INTEGER,
@@ -139,7 +140,23 @@ function get_word_to_memorize ( appState, callback ) {
                   total_weight,
                   selected_word;
                if (aDb_rows[1].length !== 1) {
-                  throw 'get_word_to_memorize: found several rows in TSR_word_weight_cfg table!'
+                  return U.throw_promise_error('get_word_to_memorize: found several rows in TSR_word_weight_cfg table!');
+               }
+               if (weight_rows.length == 0) {
+                  return "";
+               }
+               var check = U.assert_properties(weight_cfg_row,
+                                               {age_param1          : 'Number', age_param2 : 'Number',
+                                                  progress_param1   : 'Number', progress_param2 : 'Number',
+                                                  difficulty_param1 : 'Number', difficulty_param2 : 'Number'},
+                                               {bool_no_exception : false}).ok ||
+                           U.assert_properties(weight_rows,
+                                               {user_id                       : 'Number', word : 'String',
+                                                  last_revision_time          : 'Number', last_revision_easyness : 'Number',
+                                                  last_revision_exercise_type : 'Number', last_revision_grade : 'Number'},
+                                               {bool_no_exception : false}).ok;
+               if (!check) {
+                  return U.delegate_promise_error('get_word_to_memorize: wrong data format extracted from weight tables');
                }
 
                var aWeights = weight_rows.map(function ( weight_row ) {
@@ -150,6 +167,7 @@ function get_word_to_memorize ( appState, callback ) {
 
                   return box_weight * age_component * progress_component * difficulty_component;
                });
+
                total_weight = aWeights.reduce(function ( prev, next ) {return prev + next}, 0);
 
                //get a randon number between 0 and total_weight
@@ -168,12 +186,15 @@ function get_word_to_memorize ( appState, callback ) {
                });
                //return word at selected index
                selected_word = weight_rows[selected_index].word;
+               //TODO : don't forget to implement a mechanism under which there is no more words to review
                return selected_word;
             })
+      .then(function success ( result ) {callback(null, result)}, callback)
 }
 
 // compute age component as
 // age_param1 * age_param2 ^ (now - last_revision_time in days)
+// ASSUMPTION : argument checking is made before calling this function, so none is done here
 function tsr_compute_age ( weight_row, weight_cfg_row ) {
    const day_in_ms = 86400000;
    var last_revision_time = Date.parse(weight_row.last_revision_time),

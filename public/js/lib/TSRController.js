@@ -3,7 +3,7 @@
  * Spec and algorithm in TSR.md
  */
 
-define(['jquery', 'state-machine', 'socket'], function ( $, STM, SOCK ) {
+define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, UT ) {
    // define config object with its defect values
    var cfg = {};
    var TSR = {};
@@ -15,6 +15,26 @@ define(['jquery', 'state-machine', 'socket'], function ( $, STM, SOCK ) {
    // Views and corresponding view adapters
    // View adapter contain the {{parameters}} used in view templates and their setters
    TSR.mainView = can.view('tpl-tsr-tool-main');
+   TSR.EXO_view = can.view('tpl-tsr-tool-exo');
+//   TSR.EXO_HINT_view = can.view('tpl-tsr-tool-EXO-HINT');
+//   TSR.EXO_REP_view = can.view('tpl-tsr-tool-EXO-REP');
+
+   TSR.EXO_controller = can.Control.extend(
+      //static property of control is first argument
+      { defaults : {}
+      }, {
+         // for now very simple viewAdapter, e.g. no reactive component
+         viewAdapter : undefined,
+
+         init : function ( $el, options ) {
+            logWrite(DBG.TAG.INFO, "initializing TSR EXO Controller with options", options);
+            var sub_controller = this;
+            this.appState = this.options.appState;
+
+            // Show the view
+            $el.html(TSR.EXO_view());
+         }
+      });
 
    TSR.mainController = can.Control.extend(
       //static property of control is first argument
@@ -33,9 +53,10 @@ define(['jquery', 'state-machine', 'socket'], function ( $, STM, SOCK ) {
             }),
 
          init : function ( $el, options ) {
-            logWrite(DBG.TAG.INFO, "initializing TSR Controller with options", UT.inspect(options));
+            logWrite(DBG.TAG.INFO, "initializing TSR Controller with options", options);
             var controller = this;
             this.appState = this.options.appState;
+            this.EXO_controller = this.EXO_HINT_controller = this.EXO_REP_controller = undefined;
 
             // Show the view
             $el.html(TSR.mainView(this.mainViewAdapter));
@@ -58,7 +79,8 @@ define(['jquery', 'state-machine', 'socket'], function ( $, STM, SOCK ) {
                                        { name : 'nok', from : 'EXO_HINT', to : 'EXO_REP' },
                                        { name : 'end', from : 'NEXT', to : 'EXIT'  }
                                     ],
-                                    error     : function ( eventName, from, to, args, errorCode, errorMessage ) {
+                                    error     : function ( eventName, from, to, args, errorCode, errorMessage,
+                                                           exception ) {
                                        // TODO : detect the abort event
                                        if (eventName === 'abort') {
                                           abort();
@@ -66,7 +88,7 @@ define(['jquery', 'state-machine', 'socket'], function ( $, STM, SOCK ) {
                                        }
                                        else {
                                           logWrite(DBG.TAG.ERROR, "error occurred while operating state machine",
-                                                   'event ' + eventName + ' was naughty :- ' + errorMessage);
+                                                   'event ' + eventName + ' : ' + (exception || errorMessage));
                                           //TODO: and then what? fail silently? or close the window and pass an error up?
                                        }
                                     },
@@ -80,20 +102,37 @@ define(['jquery', 'state-machine', 'socket'], function ( $, STM, SOCK ) {
 
             // callback handling state transitions
             fsm.onEXO = function onEXO ( event, from, to, args ) {
+               //HELPER FUNCTION
+               function filter_prop_EXO ( appState ) {
+                  return UT.filter_out_prop(appState, ['jQuery', 'Element']);
+               }
+
                // Get the schedules
-               console.log("Entered EXO state");
+               logWrite(DBG.TAG.INFO, "Entered EXO state");
                //TODO : get next word remotely asking
                var appState = controller.appState;
                var socket = controller.appState.socket;
-               socket.RSVP_emit('get_word_to_memorize', appState)
+               // !!!!! Cannot emit object with too many properties
+               // as socket.io does a recursive search for binary prop which
+               // exceeds stack size (and take time)
+               // So for example no jQuery element
+               socket.RSVP_emit('get_word_to_memorize', filter_prop_EXO(appState))
                   .then(
                   function get_word_to_memorize_success ( result ) {
+                     logWrite(DBG.TAG.DEBUG, 'result', UT.inspect(result, null, 3));
                      controller.mainViewAdapter.set_current_word(
-                        "Exemple",
-                        "Adjective");
+                        result.toString(),
+                        "TOBEDONE");
+                     controller.EXO_controller = new TSR.EXO_controller('#tsr-exercise-container',
+                                                                        {appState: appState});
+
                   },
                   function get_word_to_memorize_error ( err ) {
-                     return appState.error.html(err.toString());
+                     if (err.stack) {
+                        logWrite(DBG.TAG.ERROR, 'stack:', err.stack);
+                     }
+                     logWrite(DBG.TAG.ERROR, 'error:', UT.inspect(err, null, 3));
+                     return $(appState.error_div).html(err.toString());
                   }
                );
             };

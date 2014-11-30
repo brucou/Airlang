@@ -15,10 +15,11 @@ define(['socketio', 'utils'], function ( IO, UT ) {
    SOCK.get_socket = function () {
       return {
          emit      : function ( /*arguments*/ ) {
-            rpc_socket.emit.apply(null, arguments);
+            rpc_socket.emit.apply(rpc_socket, arguments);
          },
          RSVP_emit : function ( topic, message ) {
             return new RSVP.Promise(function ( resolve, reject ) {
+               logWrite(DBG.TAG.INFO, 'socket: emitting topic', topic);
                rpc_socket.emit(topic, message, function ( err, result ) {
                   if (err) {
                      reject(err)

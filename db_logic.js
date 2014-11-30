@@ -8,7 +8,7 @@
  * @type {exports}
  */
 
-var LOG = require('./debug'),
+var LOG = require('./public/js/lib/debug'),
    U = require('./public/js/lib/utils'), // load the client side utils
    Util = require('util'), // load the node server side util
    RSVP = require('rsvp');
@@ -152,13 +152,13 @@ function qry_make_sql_query ( query_obj, config ) {
             }
          }
          //LOG.write(DBG.TAG.DEBUG, qry_array.join(" "), "with args", aArgs.join(" "));
-          return {qry_string : qry_array.join(" "), aArgs : aArgs};
+         return {qry_string : qry_array.join(" "), aArgs : aArgs};
          break;
       case 'insert':
          // template :
          // INSERT INTO films (code, title, did, date_prod, kind)
          // VALUES ('T_601', 'Yojimbo', 106, DEFAULT, 'Drama');
-         qry_array.push('INSERT INTO',table, '(' );
+         qry_array.push('INSERT INTO', table, '(');
          aArgs = [];
          wh_criteria = query_obj.criteria;
          index = 0;
@@ -235,7 +235,7 @@ function pg_register_query ( query_name, query_string, arg_number, aDefaultArgs 
    var query_obj = registry[query_name];
    if (query_obj) {
       // Here just warns, it could be in other cases to throw an exception
-      LOG.write(DBG.TAG.WARNING, "Found another query with the same name - overwriting it!");
+      LOG.write(LOG.TAG.WARNING, "Found another query with the same name - overwriting it!");
    }
 
    // copying default arguments
@@ -383,7 +383,7 @@ function get_db_adapter ( identifier ) {
                                  }
                                  if (result) {
                                     LOG.write(LOG.TAG.DEBUG, 'executed query', qry_string, 'with args', aArgs);
-                                    LOG.write(LOG.TAG.DEBUG, 'db_adapter query returns', Util.inspect(result));
+                                    LOG.write(LOG.TAG.DEBUG, 'db_adapter query returns', Util.inspect(result.rows));
                                     resolve(result.rows);
                                  }
                               });
@@ -427,7 +427,7 @@ function register_db_adapter ( qry, config ) {
    var query_obj = registry_adapters[qry];
    if (query_obj) {
       // Here just warns, it could be in other cases to throw an exception
-      LOG.write(DBG.TAG.WARNING, "Found another database adapter with the same name - overwriting it!");
+      LOG.write(LOG.TAG.WARNING, "Found another database adapter with the same name - overwriting it!");
    }
 
    registry_adapters [qry] = config;
