@@ -19,6 +19,7 @@ var mapListeners = {
       {channel : RPC_NAMESPACE, topic : 'get_translation_info', handler : sio_onGet_translation_info},
       {channel : RPC_NAMESPACE, topic : 'set_TSR_word_weights', handler : TSR.set_word_weights},
       {channel : RPC_NAMESPACE, topic : 'get_word_to_memorize', handler : TSR.get_word_to_memorize},
+      {channel : RPC_NAMESPACE, topic : 'update_word_weight_post_tsr_exo', handler : TSR.update_word_weight_post_exo},
       {channel : STATE_NAMESPACE, topic : 'REST_operation', handler : sio_on_REST}
    ]};
 
@@ -40,8 +41,8 @@ function sio_onHighlight_important_words ( msg, callback ) {
    var promise = DB.pg_exec_query('queryHighlightImportantWords', [msg, freq_word_list]);
    // Note : escaping of query is done by using client.query API
    promise.then(
-      SIO.pg_exec_query_success(callback, function send_back ( result ) {return result.rows[0].highlit_text;}),
-      SIO.pg_exec_query_failure(callback)
+      DB.pg_exec_query_success(callback, function send_back ( result ) {return result.rows[0].highlit_text;}),
+      DB.pg_exec_query_failure(callback)
    );
 }
 
@@ -52,8 +53,8 @@ function sio_onGet_translation_info ( msg, callback ) {
    // The right left -1 -1 is dedicated to removing the begin and end parenthesis
    var promise = DB.pg_exec_query('queryGetTranslationInfo', ['cspell', msg]);
    promise.then(
-      SIO.pg_exec_query_success(callback, function send_back ( result ) {return result.rows;}),
-      SIO.pg_exec_query_failure(callback)
+      DB.pg_exec_query_success(callback, function send_back ( result ) {return result.rows;}),
+      DB.pg_exec_query_failure(callback)
    );
 }
 
@@ -67,7 +68,7 @@ function sio_on_REST ( qry_param, callback ) {
    // This should identify in particular:
    // - which database system to use (postgres, MongoDB)
    // - how to query that database for objects
-   var dbAdapter = DB.get_db_adapter('sio_on_REST');
+   var dbAdapter = DB.get_db_adapter(qry_param.entity);
    // change of name just to make it clear what is in msg
 
    // a second argument is possible to transform the output of the query before emitting on the socket
@@ -80,26 +81,6 @@ function sio_on_REST ( qry_param, callback ) {
    //db.collection.find(criteria)
 
 }
-
-// Helper functions
-SIO.pg_exec_query_success = function pg_exec_query_success ( callback, extractDataFromResult ) {
-   return function ( result ) {
-      if (result && result.rows) {
-         var returnedResult = extractDataFromResult(result);
-         LOG.write(LOG.TAG.DEBUG, "callback results", returnedResult);
-         callback(null, returnedResult);
-      }
-      else {
-         callback(Error('query executed but no rows found?'), null);
-      }
-   };
-};
-
-SIO.pg_exec_query_failure = function pg_exec_query_failure ( callback ) {
-   return function ( errError ) {
-      callback(errError, null);
-   };
-};
 
 // Initialization functions
 SIO.initialize_socket_cnx = function initialize_socket_cnx ( server ) {

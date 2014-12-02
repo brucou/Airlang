@@ -3,7 +3,7 @@
  * Spec and algorithm in TSR.md
  */
 
-define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, UT ) {
+define(['jquery', 'state-machine', 'TSRModel', 'socket', 'utils'], function ( $, STM, TSRM, SOCK, UT ) {
    // define config object with its defect values
    var cfg = {};
    var TSR = {};
@@ -16,8 +16,8 @@ define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, 
    // View adapter contain the {{parameters}} used in view templates and their setters
    TSR.mainView = can.view('tpl-tsr-tool-main');
    TSR.EXO_view = can.view('tpl-tsr-tool-exo');
-//   TSR.EXO_HINT_view = can.view('tpl-tsr-tool-EXO-HINT');
-//   TSR.EXO_REP_view = can.view('tpl-tsr-tool-EXO-REP');
+   //   TSR.EXO_HINT_view = can.view('tpl-tsr-tool-exo-hint');
+   //   TSR.EXO_REP_view = can.view('tpl-tsr-tool-exo-rep');
 
    TSR.EXO_controller = can.Control.extend(
       //static property of control is first argument
@@ -30,9 +30,39 @@ define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, 
             logWrite(DBG.TAG.INFO, "initializing TSR EXO Controller with options", options);
             var sub_controller = this;
             this.appState = this.options.appState;
+            this.word_info = this.options.word_info;
+            this.word_info.timeCreated = new Date();
 
             // Show the view
             $el.html(TSR.EXO_view());
+         },
+
+         'submit' : function ( $el, ev ) {
+            ev.preventDefault();
+            logWrite(DBG.TAG.DEBUG, 'submit event received');
+            console.log($el);
+            var sub_controller = this;
+            var $input = $('#answer');
+            var answer = $input.val().trim();
+            logWrite(DBG.TAG.DEBUG, 'value entered', answer);
+            sub_controller.word_info.timeSubmitted = new Date();
+
+            // validate result
+            // validate answer return ok: bool, mistake: some idea of the mistake
+            // specData is information about the word that allows to find the mistake
+            // or to evaluate correctness
+            // minimally this is only the word in the same form it was stored
+            // it could also the word in lemma form, the word without punct. signs,
+            // a list of common spelling mistakes etc.
+            //{answer, time_taken_sec, mistake, grade, easyness}
+            var analyzed_answer = TSRM.analyze_answer(answer, sub_controller.word_info);
+            logWrite(DBG.TAG.DEBUG, 'analyzed answer', UT.inspect(analyzed_answer));
+
+            // send event corresponding to validation
+            sub_controller.element.trigger(analyzed_answer.ok ? 'EXO_OK' : 'EXO_NOK', analyzed_answer);
+            // Note : it is the controller who decides to create and destroy its subcontrollers
+            // mistake identification will not be done at client level or we need a drop down
+            // maybe in REP stage
          }
       });
 
@@ -68,19 +98,39 @@ define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, 
             // TODO :
          },
 
+         '#tsr-exercise-container EXO_OK' : function ( $el, ev, analyzed_answer ) {
+            var controller = this;
+            logWrite(DBG.TAG.DEBUG, 'event EXO_OK received in main controller');
+            logWrite(DBG.TAG.DEBUG, 'args received', UT.inspect(analyzed_answer));
+            controller.appState.analyzed_answer = analyzed_answer;
+
+            // Go to next state (state NEXT)
+            fsm.ok();
+         },
+
+         '#tsr-exercise-container EXO_NOK' : function ( $el, ev ) {
+            var controller = this;
+            logWrite(DBG.TAG.DEBUG, 'event EXO_NOK received in main controller');
+            // advance to next state in state machine
+            // TODO: Think about if I need to pass value
+            // put value in controller accessible by all modules?
+            // or pass value around via args of event triggered?
+            controller.fsm.nok();
+         },
+
          createStateMachine : function createStateMachine () {
             var controller = this;
             var fsm = STM.create({
                                     initial   : 'INIT',
                                     events    : [
                                        { name : 'start', from : 'INIT', to : 'EXO' },
-                                       { name : 'ok', from : 'EXO, EXO_HINT', to : 'NEXT' },
+                                       { name : 'ok', from : 'EXO, EXO_HINT, EXO_REP', to : 'NEXT' },
                                        { name : 'nok', from : 'EXO', to : 'EXO_HINT' },
                                        { name : 'nok', from : 'EXO_HINT', to : 'EXO_REP' },
+                                       { name : 'next', from : 'NEXT', to : 'EXO'  },
                                        { name : 'end', from : 'NEXT', to : 'EXIT'  }
                                     ],
-                                    error     : function ( eventName, from, to, args, errorCode, errorMessage,
-                                                           exception ) {
+                                    error     : function ( eventName, from, to, args, errorCode, errorMessage, exception ) {
                                        // TODO : detect the abort event
                                        if (eventName === 'abort') {
                                           abort();
@@ -104,7 +154,7 @@ define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, 
             fsm.onEXO = function onEXO ( event, from, to, args ) {
                //HELPER FUNCTION
                function filter_prop_EXO ( appState ) {
-                  return UT.filter_out_prop(appState, ['jQuery', 'Element']);
+                  return UT.filter_out_prop_by_type(appState, ['jQuery', 'Element']);
                }
 
                // Get the schedules
@@ -119,14 +169,35 @@ define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, 
                socket.RSVP_emit('get_word_to_memorize', filter_prop_EXO(appState))
                   .then(
                   function get_word_to_memorize_success ( result ) {
+                     /* Result (cf. server TSRModel.get_word_to_memorize.get_word_info
+                      rowsNoteInfo  : aPromiseResults[0],
+                      rowWordWeight : aPromiseResults[1][0]
+                      */
                      logWrite(DBG.TAG.DEBUG, 'result', UT.inspect(result, null, 3));
+                     var rowsNoteInfo = result.rowsNoteInfo;
+                     var rowWordWeight = result.rowWordWeight;
+
+                     //NOTE : there might be several rows in rowsNoteInfo but they should all have the same word by construction
+                     var word_to_memorize = rowsNoteInfo[0].word;
+                     // TODO: move to EXO_HINT, no use elsewhere a priori
+                     var aExampleSentences = rowsNoteInfo.map(UT.get_prop('context_sentence'));
+                     logWrite(DBG.TAG.DEBUG, 'exemple sentences', UT.inspect(aExampleSentences));
+
+                     controller.appState.word_info =
+                     {current_word   : word_to_memorize, // keep it because it is the fundamental unit here
+                        rowsNoteInfo : rowsNoteInfo, rowWordWeight : rowWordWeight};
+
                      controller.mainViewAdapter.set_current_word(
-                        result.toString(),
-                        "TOBEDONE");
-                     controller.EXO_controller = new TSR.EXO_controller('#tsr-exercise-container',
-                                                                        {appState: appState});
+                        word_to_memorize,
+                        "PoS: TOBEDONE");
+
+                     controller.EXO_controller =
+                     new TSR.EXO_controller('#tsr-exercise-container',
+                                            {appState    : appState,
+                                               word_info : controller.appState.word_info});
 
                   },
+
                   function get_word_to_memorize_error ( err ) {
                      if (err.stack) {
                         logWrite(DBG.TAG.ERROR, 'stack:', err.stack);
@@ -143,17 +214,34 @@ define(['jquery', 'state-machine', 'socket', 'utils'], function ( $, STM, SOCK, 
             fsm.onEXO_REP = function onEXO_REP ( event, from, to, args ) {
 
             };
-            fsm.onNEXT = function onNEXT ( event, from, to, args ) {
 
+            fsm.onNEXT = function onNEXT ( event, from, to, args ) {
+               //
+               logWrite(DBG.TAG.INFO, "Entered NEXT state");
+               // Store the result of the word exercise
+               // Ask for next word TODO: impossible, necessary link from EXO to EXIT, and NEXT to EXO
+               // If no more then go to exit
+               var appState = controller.appState;
+               var socket = controller.appState.socket;
+
+               socket.RSVP_emit('update_word_weight_post_tsr_exo',
+                                UT.copy_prop_from_obj(appState.analyzed_answer), {user_id : appState.user_id})
+                  .then(
+                  function update_word_weight_post_tsr_exo_success ( result ) {
+                     // result comes from just an update so nothing much interesting should be there
+                     // maybe some info to check that the operation was successful
+                     // So go directly to next state (back to EXO state)
+                     logWrite(DBG.TAG.DEBUG, "result from update_word_weight", UT.inspect(result));
+                     fsm.next();
+                  });
             };
+
             fsm.onEXIT = function onEXIT ( event, from, to, args ) {
 
             };
             return fsm;
-         },
+         }
 
-         eventHandler1 : null,
-         eventHandler2 : null
       })
    ;
 

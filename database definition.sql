@@ -113,4 +113,33 @@ CREATE INDEX pg_tsr_word_weight_cfg_idx
   ON pg_tsr_word_weight_cfg
   USING btree
   (user_id);
+--- Corresponding historical tables
+---------- tables for time-spaced-repetition module
+CREATE TABLE pg_tsr_word_weight_hist
+(
+  id INTEGER, -- not serial, as we copy the serial from the original table
+  user_id INTEGER,
+  word character varying,
+  box_weight INTEGER,
+  last_revision_time character varying,
+  last_revision_easyness SMALLINT,
+  last_revision_exercise_type SMALLINT,
+  last_revision_grade SMALLINT,
+  created_time character varying -- new historical field
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE pg_tsr_word_weight_hist
+  OWNER TO postgres;
+
+CREATE INDEX pg_tsr_word_weight_hist_word_idx
+  ON pg_tsr_word_weight_hist
+  USING btree
+  (user_id, word);
+
+  CREATE INDEX pg_tsr_word_weight_hist_id_idx
+  ON pg_tsr_word_weight_hist
+  USING btree
+  (id);
 ----------

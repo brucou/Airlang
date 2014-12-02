@@ -920,14 +920,19 @@ function utilsFactory () {
       return aProperties;
    }
 
-   function copy_own_properties ( obj ) {
-      var copy_obj = {};
-      for (var prop in obj) {
-         if (obj.hasOwnProperty(prop)) {
-            copy_obj[prop] = obj[prop];
+   /**
+    * Copies the properties of the origin object into the destination object
+    * @param destination {Object}
+    * @param origin {Object}
+    * Returns the destination object in case chaining is needed (with a second origin object for instance)
+    */
+   function copy_prop_from_obj (destination, origin) {
+      for (var prop in origin) {
+         if (origin.hasOwnProperty(prop)) {
+            destination[prop] = origin[prop];
          }
       }
-      return copy_obj;
+      return destination;
    }
 
    function hasOwnProperty ( obj, prop ) {
@@ -968,11 +973,11 @@ function utilsFactory () {
       }
 
       var node_index = 0,
-         comment_index = 0,
-         aHTMLparsed = [],
-         aHTMLtokens = [],
-         aCommentPos = [],
-         elemPos = {};
+          comment_index = 0,
+          aHTMLparsed = [],
+          aHTMLtokens = [],
+          aCommentPos = [],
+          elemPos = {};
 
       _parseDOMtree($el, aHTMLparsed, aHTMLtokens, aCommentPos);
       var html_parsed_text = aHTMLparsed.join(" ");
@@ -1033,7 +1038,7 @@ function utilsFactory () {
          }
 
          var html_begin_tag,
-            tag_name = $el.prop("tagName");
+             tag_name = $el.prop("tagName");
 
          if ('undefined' !== flag_no_transform && flag_no_transform) {
             // case when flag_no_transform is true
@@ -1266,8 +1271,8 @@ function utilsFactory () {
    function is_type_in_prototype_chain ( object, type ) {
 
       var curObj = object,
-         inst_of,
-         aTypes;
+          inst_of,
+          aTypes;
 
       if (typeof type !== 'string' && 'undefined' === typeof type.length) {
          // neither array nor string
@@ -1289,7 +1294,7 @@ function utilsFactory () {
       return (aTypes.indexOf(inst_of) !== -1);
    }
 
-   function filter_out_prop ( obj, aProps ) {
+   function filter_out_prop_by_type ( obj, aProps ) {
       //for instance: UT.filter_out_prop(appState, ['jQuery', 'Element']);
       // imagine appState has a big jQuery object in a property, we want to remove it
       for (var obj_prop in obj) {
@@ -1302,6 +1307,12 @@ function utilsFactory () {
          }
       }
       return obj;
+   }
+
+   function get_prop ( property ) {
+      return function ( obj ) {
+         return obj[property];
+      }
    }
 
    /**
@@ -1360,7 +1371,7 @@ function utilsFactory () {
    function assert_type ( argums, aParamTypeSpecs, options ) {
       // First check the arguments passed in parameters :-)
       var bool_no_exception,
-         arity = arguments.length;
+          arity = arguments.length;
       if (arity !== 2 && arity !== 3) {
          throw 'assert_type: expecting 2 or 3 arguments, received ' + arity;
       }
@@ -1383,9 +1394,9 @@ function utilsFactory () {
 
       // Get the arguments whose type is to be checked as an array
       var aArgs = slice.call(argums),
-         aCheckResults = {},
-         param_index = 0, //1 is starting index to skip arguments
-         err;
+          aCheckResults = {},
+          param_index = 0, //1 is starting index to skip arguments
+          err;
 
       aParamTypeSpecs.forEach(function ( paramTypeSpec ) {
          // paramTypeSpec is similar to {param1: type_spec}
@@ -1428,8 +1439,8 @@ function utilsFactory () {
 
                if (aExpected_type) {// if expected_type is null we skip the type checking for that parameter
                   var is_proto_chain = undefined,
-                     exp_index = undefined,
-                     actual_instanceof = getClass(current_param);
+                      exp_index = undefined,
+                      actual_instanceof = getClass(current_param);
                   var type_is_ok = aExpected_type
                      .map(function ( expected_type, index ) {
                              return (expected_type === actual_instanceof
@@ -1470,7 +1481,7 @@ function utilsFactory () {
 
       // validating inputs and setting key variables
       var err = false,
-         bool_no_exception;
+          bool_no_exception;
       var argCheck = assert_type(arguments, [
          {obj : 'Object', specMap : 'Object'}
       ], {bool_no_exception : true});
@@ -1541,6 +1552,7 @@ function utilsFactory () {
    }
 
    //Helper function - error handling in promises
+   // a priori useless function for node callback, just use callback directly instead
    function error_handler ( callback ) {
       return function failure ( err ) {
          callback(err.toString(), null);
@@ -1551,7 +1563,7 @@ function utilsFactory () {
     * This is to bridge promise and node-style callbacks. The promise returns always one argument
     * which is in second position in node-style callback
     * @param callback
-    * @returns {call_callback}
+    * @returns {Function}
     */
    function callback_ok ( callback ) {
       return function call_callback ( result ) {
@@ -1605,6 +1617,62 @@ function utilsFactory () {
    }
 
    /**
+    * Source : http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#JavaScript
+    * The Levenshtein distance is a string metric for measuring the difference between two sequences. Informally, the Levenshtein distance between two words is the minimum number of single-character edits (i.e. insertions, deletions or substitutions) required to change one word into the other
+    * Computes the Levenshtein distance between two strings
+    * Ex:
+    * > getEditDistance ("Bruno", "Burnal")
+    * 4
+    * > getEditDistance ("uživat", "užit")
+    * 2
+    * > getEditDistance ("uživat", "uživat")
+    * 0
+    * > getEditDistance ("last", "same")
+    * 3
+    * @param a {String}
+    * @param b {String}
+    * @returns {Number}
+    */
+   function getEditDistance ( a, b ) {
+      if (a.length === 0) {
+         return b.length;
+      }
+      if (b.length === 0) {
+         return a.length;
+      }
+
+      var matrix = [];
+
+      // increment along the first column of each row
+      var i;
+      for (i = 0; i <= b.length; i++) {
+         matrix[i] = [i];
+      }
+
+      // increment each column in the first row
+      var j;
+      for (j = 0; j <= a.length; j++) {
+         matrix[0][j] = j;
+      }
+
+      // Fill in the rest of the matrix
+      for (i = 1; i <= b.length; i++) {
+         for (j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) == a.charAt(j - 1)) {
+               matrix[i][j] = matrix[i - 1][j - 1];
+            }
+            else {
+               matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, // substitution
+                                       Math.min(matrix[i][j - 1] + 1, // insertion
+                                                matrix[i - 1][j] + 1)); // deletion
+            }
+         }
+      }
+
+      return matrix[b.length][a.length];
+   };
+
+   /**
     * Returns a rejected promise which can be used to pass down a chain of promises and be caught down the road
     * skipping the normal processing of intermediate non-catching then calls
     * @param message {String} Error message to pass in the promise
@@ -1617,62 +1685,64 @@ function utilsFactory () {
    }
 
    var _UT =
-   {
-      isArray                         : isArray,
-      trimInput                       : trimInput,
-      isNotEmpty                      : isNotEmpty,
-      inspect                         : inspect,
-      isRegExp                        : isRegExp,
-      isDate                          : isDate,
-      isError                         : isError,
-      timestamp                       : timestamp,
-      inherits                        : inherits,
-      _extend                         : _extend,
-      hasOwnProperty                  : hasOwnProperty,
-      isString                        : isString,
-      isPunct                         : isPunct,
-      isFunction                      : isFunction,
-      sPrintf                         : String.format,
-      disaggregate_input              : disaggregate_input,
-      timeStamp                       : timeStamp,
-      isNumberString                  : isNumberString,
-      async_cached                    : async_cached,
-      OutputStore                     : OutputStore,
-      CachedValues                    : CachedValues,
-      getIndexInArray                 : getIndexInArray,
-      escape_html                     : escape_html,
-      wrap_string                     : wrap_string,
-      padding_left                    : padding_left,
-      padding_right                   : padding_right,
-      fragmentFromString              : fragmentFromString,
-      injectArray                     : injectArray,
-      get_calling_function_name       : get_calling_function_name,
-      parseDOMtree                    : parseDOMtree,
-      get_own_properties              : get_own_properties,
-      copy_own_properties             : copy_own_properties,
-      some                            : some,
-      traverse_DOM_depth_first        : traverse_DOM_depth_first,
-      fn_get_prop                     : fn_get_prop,
-      parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
-      getClass                        : getClass,
-      assert_type                     : assert_type,
-      assert_properties               : assert_properties,
-      is_type_in_prototype_chain      : is_type_in_prototype_chain,
-      getInstanceOf                   : getInstanceOf,
-      filter_out_prop                 : filter_out_prop,
-      slice                           : slice,
-      log_error                       : log_error,
-      sum                             : sum,
-      or                              : or,
-      identity                        : identity,
-      f_none                          : f_none,
-      count_word                      : count_word,
-      is_word                         : is_word,
-      delegate_promise_error          : delegate_promise_error,
-      error_handler                   : error_handler,
-      callback_ok                     : callback_ok,
-      default_node_callback           : default_node_callback
-   };
+       {
+          isArray                         : isArray,
+          trimInput                       : trimInput,
+          isNotEmpty                      : isNotEmpty,
+          inspect                         : inspect,
+          isRegExp                        : isRegExp,
+          isDate                          : isDate,
+          isError                         : isError,
+          timestamp                       : timestamp,
+          inherits                        : inherits,
+          _extend                         : _extend,
+          hasOwnProperty                  : hasOwnProperty,
+          isString                        : isString,
+          isPunct                         : isPunct,
+          isFunction                      : isFunction,
+          sPrintf                         : String.format,
+          disaggregate_input              : disaggregate_input,
+          timeStamp                       : timeStamp,
+          isNumberString                  : isNumberString,
+          async_cached                    : async_cached,
+          OutputStore                     : OutputStore,
+          CachedValues                    : CachedValues,
+          getIndexInArray                 : getIndexInArray,
+          escape_html                     : escape_html,
+          wrap_string                     : wrap_string,
+          padding_left                    : padding_left,
+          padding_right                   : padding_right,
+          fragmentFromString              : fragmentFromString,
+          injectArray                     : injectArray,
+          get_calling_function_name       : get_calling_function_name,
+          parseDOMtree                    : parseDOMtree,
+          get_own_properties              : get_own_properties,
+          copy_prop_from_obj              : copy_prop_from_obj,
+          some                            : some,
+          traverse_DOM_depth_first        : traverse_DOM_depth_first,
+          fn_get_prop                     : fn_get_prop,
+          parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
+          getClass                        : getClass,
+          assert_type                     : assert_type,
+          assert_properties               : assert_properties,
+          is_type_in_prototype_chain      : is_type_in_prototype_chain,
+          getInstanceOf                   : getInstanceOf,
+          filter_out_prop_by_type         : filter_out_prop_by_type,
+          get_prop                        : get_prop,
+          slice                           : slice,
+          log_error                       : log_error,
+          sum                             : sum,
+          or                              : or,
+          identity                        : identity,
+          f_none                          : f_none,
+          count_word                      : count_word,
+          is_word                         : is_word,
+          getEditDistance                 : getEditDistance,
+          delegate_promise_error          : delegate_promise_error,
+          error_handler                   : error_handler,
+          callback_ok                     : callback_ok,
+          default_node_callback           : default_node_callback
+       };
 
    _UT.type = {
       string : 'String', array : 'Array', function : 'Function',

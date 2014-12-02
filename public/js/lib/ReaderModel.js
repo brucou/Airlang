@@ -889,7 +889,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           ///////////// Notes handling function
           RM.add_notes = function add_notes ( field_value_map ) {
              // send order through state sockets
-             return STATE.insert_stored_stateful_object('Notes_Collection', field_value_map);
+             return STATE.insert_stored_stateful_object('Notes', field_value_map);
           };
 
           RM.add_TSR_weight = function add_TSR_weight ( obj ) {
@@ -910,14 +910,12 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              var self = this;
              // Get state info
              // return a promise that will be resolved when all state data has been retrieved
-             return STATE.get_stored_stateful_object(
-                'Notes_Collection',
-                criteria)
+             return STATE.get_stored_stateful_object('Notes', criteria)
                 .then(function success ( aNotes ) {
                          //check type
                          if (!UT.isArray(aNotes)) {
                             return UT.log_error("get_stored_stateful_object:",
-                                                "result for querying state object Notes_Collection : expected array, returned type",
+                                                "result for querying state object Notes : expected array, returned type",
                                                 typeof aNotes);
                          }
                          else {
@@ -927,7 +925,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                       },
                       function failure ( err ) {
                          return UT.log_error("get_stored_stateful_object:",
-                                             "error querying state object Notes_Collection :", UT.inspect(err));
+                                             "error querying state object Notes :", UT.inspect(err));
                       })
           };
 
