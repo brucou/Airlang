@@ -69,6 +69,9 @@
  * MOCHA
  * - be careful which assert function is used, they don't have the same number of parameters
  *   chai assert has only two parameters
+ * SOCKET
+ * - functions are not serialized, so any attempt to pass a function over socket will fail SILENTLY
+ * - OR the function will be removed of the object - in any case there will be no error!!!
  */
 
 define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
@@ -132,11 +135,6 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           RM.make_article_readable = function make_article_readable ( your_url ) {
              var dfr = $.Deferred(); // to handle async results
 
-             // TEST CODE
-             if (FAKE.should_be(RM.make_article_readable)) {
-                return FAKE(RM.make_article_readable, this)(dfr, url_load_callback, your_url);
-             }
-             ///////
              /*return  $.get('http://www.corsproxy.com/www.voxeurop.eu/cs/content/editorial/4765047-jsme-zpet',
               function(response) {console.log("response:", response);
               document.body.innerHTML = response; });*/
@@ -384,7 +382,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              if (!aNotes || !UT.isArray(aNotes)) {
                 aNotes = RM.get_notes();
              }
-             logWrite(DBG.TAG.DEBUG, "aNotes", aNotes);
+             logWrite(DBG.TAG.DEBUG, "aNotes", UT.inspect(aNotes));
              // main case : sort note word index by ascending order so we can retrieve them in that order
              aNotes.sort(function sort_notes ( a, b ) {
                 return a.index - b.index;
@@ -941,6 +939,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
            * @returns {{word: *, index: *, rootNode: *, context_sentence: *}}
            */
           RM.get_note_from_param = function get_note_from_param ( full_text, final_index, rootNode ) {
+             full_text = UT.remove_extra_spaces(full_text);
              var note = {
                 word     : RM.simple_tokenizer(full_text).filter(UT.is_word)[final_index - 1],
                 index    : final_index,

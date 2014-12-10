@@ -26,6 +26,107 @@ describe('database queries', function () {
       return promise;
    });
 
+   describe('Query constructor', function () {
+      it('select - simple', function () {
+         var mapTable = {
+            TSR_word_weight      : 'pg_tsr_word_weight',
+            TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
+            TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
+         };
+         var result = DB.qry_make_sql_query({action     : 'select',
+                                               entity   : 'TSR_word_weight',
+                                               criteria : {
+                                                  user_id : 1,
+                                                  word    : "mot"
+                                               }
+                                            }, 1, mapTable);
+         var expected = 'select * from TSR_word_weight WHERE user_id = $1 AND word = $2';
+         assert.equal(result.qry_string, expected);
+         assert.deepEqual(result.aArgs, [1, "mot"]);
+      });
+
+      it('select - count', function () {
+         var mapTable = {
+            TSR_word_weight      : 'pg_tsr_word_weight',
+            TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
+            TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
+         };
+         var result = DB.qry_make_sql_query({action     : 'count',
+                                               entity   : 'TSR_word_weight',
+                                               criteria : {
+                                                  user_id : 1,
+                                                  word    : "mot"
+                                               }
+                                            }, 1, mapTable);
+         var expected = 'select count(*) from TSR_word_weight WHERE user_id = $1 AND word = $2';
+         assert.equal(result.qry_string, expected);
+         assert.deepEqual(result.aArgs, [1, "mot"]);
+      });
+
+      it('insert - simple', function () {
+         var mapTable = {
+            TSR_word_weight      : 'pg_tsr_word_weight',
+            TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
+            TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
+         };
+         var result = DB.qry_make_sql_query({action     : 'insert',
+                                               entity   : 'TSR_word_weight',
+                                               criteria : {
+                                                  user_id : 1,
+                                                  word    : "mot"
+                                               }
+                                            }, 1, mapTable);
+         var expected = 'INSERT INTO TSR_word_weight ( user_id, word ) VALUES ( $1, $2 )';
+         assert.equal(result.qry_string, expected);
+         assert.deepEqual(result.aArgs, [1, "mot"]);
+      });
+
+      it('insert - select', function () {
+         var mapTable = {
+            TSR_word_weight      : 'pg_tsr_word_weight',
+            TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
+            TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
+         };
+         var result = DB.qry_make_sql_query({action     : 'insert',
+                                               entity   : 'TSR_word_weight',
+                                               criteria : {
+                                                  action   : 'select',
+                                                  entity   : 'TSR_word_weight_cfg',
+                                                  criteria : {
+                                                     user_id : 1,
+                                                     word    : "mot"
+                                                  }}
+                                            }, 1, mapTable);
+         var expected = 'INSERT INTO TSR_word_weight ' +
+                        '( select * from TSR_word_weight_cfg WHERE user_id = $1 AND word = $2 )';
+         assert.equal(result.qry_string, expected);
+         assert.deepEqual(result.aArgs, [1, "mot"]);
+      });
+
+      it('udpate', function () {
+         var mapTable = {
+            TSR_word_weight      : 'pg_tsr_word_weight',
+            TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
+            TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
+         };
+         var result = DB.qry_make_sql_query({action     : 'update',
+                                               entity   : 'TSR_word_weight',
+                                               criteria : {
+                                                  user_id : 1,
+                                                  word    : "mot"
+                                               },
+                                               update   : {
+                                                  field1 : 256,
+                                                  field2 : "nn"
+                                               }
+                                            }, 1, mapTable);
+         var expected = 'UPDATE  TSR_word_weight SET ( field1, field2 ) = ( $1, $2 ) WHERE user_id = $3 AND word = $4';
+         assert.equal(result.qry_string, expected);
+         assert.deepEqual(result.aArgs, [256, "nn", 1, "mot"]);
+      });
+
+   });
+
    describe('Translation', function () {
       it('Word : projekt', function ( done ) {
          var expected = [
@@ -102,4 +203,5 @@ describe('database queries', function () {
       });
 
    });
-});
+})
+;

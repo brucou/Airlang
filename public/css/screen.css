@@ -370,3 +370,10 @@ tfoot {
     font-family: '"Essays 1743"';
     font-size: 24px;
 }
+
+#airlang-tsr-module-container  {
+    white-space: nowrap
+}
+#airlang-tsr-module-container > div {
+    display: inline-block
+}

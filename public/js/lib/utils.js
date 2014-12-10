@@ -137,6 +137,7 @@ function utilsFactory () {
             }
             if (err) {
                logWrite(DBG.TAG.ERROR, "error while executing async query on server", err);
+               console.log(err);
                dfr.reject(err);
                osStore.setErr(err);
                osStore.invalidateAt(index);
@@ -853,6 +854,27 @@ function utilsFactory () {
       }
    }
 
+   function remove_extra_spaces ( text ) {
+      // Example : "    This    should  become   something          else   too . ";
+      // -> "This should become something else too.";
+      return text.replace(/\s+/g, " ");
+   }
+
+   /**
+    * Return the text without punctuation sign ; extra spaces are also removed
+    * @param text
+    * @returns {String}
+    */
+   function remove_punct ( text ) {
+      // cf: http://stackoverflow.com/questions/4328500/how-can-i-strip-all-punctuation-from-a-string-in-javascript-using-regex
+      // Example :"This, -/ is #! an $ % ^ & * example ;: {} of a = -_ string with `~)() punctuation";
+      var punctRE = /[\u2000-\u206F\u2E00-\u2E7F\\'!"#\$%&\(\)\*\+,\-\.\/:;<=>\?@\[\]\^_`\{\|\}~]/g;
+      var spaceRE = /\s+/g;
+      return text
+         .replace(punctRE, '')
+         .replace(spaceRE, ' ');
+   }
+
    function escape_html ( text ) {
       // utility function taken from TransOver google extension
       return text.replace(XRegExp("(<|>|&)", 'g'), function ( $0, $1 ) {
@@ -921,12 +943,31 @@ function utilsFactory () {
    }
 
    /**
+    * Returns two arrays containing the object properties on one hand, and the properties' value on the other hand
+    * @param obj {Object}
+    * @returns {{properties: Array, values: Array}}
+    */
+   function separate_obj_prop ( obj ) {
+      var aArgs = [],
+          prop_array = [],
+          temp_array = [], // temp_array holds the $1, $2, for the arguments. 1 is offset by $index_param
+          index = 0,
+          aProp = get_own_properties(obj);
+
+      aProp.forEach(function ( prop, index, array ) {
+         prop_array.push(prop);
+         aArgs.push(obj[prop]);
+      });
+      return {properties : prop_array, values : aArgs}
+   }
+
+   /**
     * Copies the properties of the origin object into the destination object
     * @param destination {Object}
     * @param origin {Object}
     * Returns the destination object in case chaining is needed (with a second origin object for instance)
     */
-   function copy_prop_from_obj (destination, origin) {
+   function copy_prop_from_obj ( destination, origin ) {
       for (var prop in origin) {
          if (origin.hasOwnProperty(prop)) {
             destination[prop] = origin[prop];
@@ -1709,6 +1750,8 @@ function utilsFactory () {
           CachedValues                    : CachedValues,
           getIndexInArray                 : getIndexInArray,
           escape_html                     : escape_html,
+          remove_extra_spaces             : remove_extra_spaces,
+          remove_punct                    : remove_punct,
           wrap_string                     : wrap_string,
           padding_left                    : padding_left,
           padding_right                   : padding_right,
@@ -1717,6 +1760,7 @@ function utilsFactory () {
           get_calling_function_name       : get_calling_function_name,
           parseDOMtree                    : parseDOMtree,
           get_own_properties              : get_own_properties,
+          separate_obj_prop               : separate_obj_prop,
           copy_prop_from_obj              : copy_prop_from_obj,
           some                            : some,
           traverse_DOM_depth_first        : traverse_DOM_depth_first,

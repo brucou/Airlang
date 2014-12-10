@@ -28,12 +28,12 @@ tbody tr:hover {
     background: yellow;
 }
 
-tbody tr .sample_sentence_from {
+tbody tr .airlang-rdt-tt-sample_sentence_from {
     font-size: 0.8em;
     background: #ee0;
 }
 
-.transover-tooltip {
+.airlang-rdt-tt-transover {
     border: 1px solid rgb(204, 204, 204);
     box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 5px;
     border-top-left-radius: 5px;
@@ -44,8 +44,8 @@ tbody tr .sample_sentence_from {
     background: rgb(252, 247, 217);
 }
 
-.sample_sentence_to {
-    font-weight: bold;
+.airlang-rdt-tt-input {
+    background: rgb(252, 247, 217);
 }
 
 .translation {

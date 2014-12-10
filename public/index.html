@@ -165,9 +165,9 @@ Air France
 
 <!-- Template for the translating tooltip -->
 <script id="tpl-translate-tooltip" type="text/mustache">
-
-<div id="reader-tool-tooltip"
-class='transover-tooltip'
+<!-- rdt: reader tool | tt : tooltip -->
+<div id="airlang-rdt-tt"
+class='airlang-rdt-tt-transover'
      style="top: {{top}};
          left: {{left}};
          width:{{width}};
@@ -178,9 +178,12 @@ class='transover-tooltip'
              white-space : nowrap;
          ">
 {{{ tooltip_html_content }}}
+<div class='airlang-rdt-tt-input'>
+  <label>Write translation:
+        <input id="airlang-rdt-trans-input" type="text" placeholder="Enter text here" autofocus>
+  </label>
 </div>
-
-
+</div>
 
 
 </script>
@@ -188,18 +191,18 @@ class='transover-tooltip'
 
 <!-- Template for the translating tooltip -->
 <script id='tpl-tsr-tool-main' type="text/mustache">
-<div id='tsr-module-container'>
+<div id='airlang-tsr-module-container'>
     <!--  Icon, word and PoS BEGIN -->
-    <div id='tsr-word-info-container'>
+    <div id='airlang-tsr-word-info-container'>
         <img src="./img/question_mark_with_men.jpg"/>
-        <div id='tsr-word-current'> {{current_word}}</div>
-        <div id='tsr-word-PoS'> {{current_word_PoS}}</div>
+        <div id='airlang-tsr-word-current'> {{current_word}}</div>
+        <div id='airlang-tsr-word-PoS'> {{current_word_PoS}}</div>
     </div>
     <!--  Icon, word and PoS END-->
-    <div id='tsr-btn-next'>
+    <div id='airlang-tsr-btn-next'>
         <button><img src="./img/next.jpg"></button>
     </div>
-    <div id='tsr-exercise-container'></div>
+    <div id='airlang-tsr-exercise-container'></div>
 </div>
 
 </script>
@@ -212,7 +215,7 @@ class='transover-tooltip'
     <legend> Enter the translation for the word </legend>
     <p>
       <label>Meaning :
-        <input id="answer" type="text" placeholder="Enter text here" autofocus>
+        <input id="airlang-tsr-answer" type="text" placeholder="Enter text here" autofocus>
       </label>
     </p>
   </fieldset>

@@ -128,76 +128,98 @@ function qry_make_sql_query ( query_obj, index_$param, config ) {
    // query_obj :: {entity : entity, criteria : criteria}
    // NOTE : we do not include the parameters in the query here
    // We will use the escaping mechanism of the particular database in question for security reasons
+
+   // Helper functions: [arg1, arg2,...].map(subs...)) -> [$1, $2, ...] with offset index_$param
+   function substitute_val_by_$x ( index_$param ) {
+      return function ( value, index ) {
+         return '$' + (index_$param + index);
+      }
+   }
+
+   function make_where_clause_obj ( index_$param, criteria ) {
+      var split_obj = U.separate_obj_prop(criteria);
+      var aArgs = split_obj.values;
+      var a$params = aArgs.map(substitute_val_by_$x(index_$param));
+      return {
+         where_clause : ['WHERE', split_obj.properties
+            .map(function ( property, index ) {
+                    return [property, "=", a$params[index]].join(" "); // Ex: city = $1
+                 })
+            .join(" AND ")].join(" "),
+         aArgs        : aArgs}
+   }
+
    var aArgs = [],
        wh_criteria,
+       where_clause = "",
+       select_clause,
+       insert_clause,
        index;
    var action = query_obj.action;
    var table = config.table || (config.mapTable && config.mapTable[query_obj.entity]) || query_obj.entity;
    switch (action) {
       case 'select':
       case 'count':
-         var select_clause = ['select', action === 'select' ? '*' : 'count(*)'].join(" ");
+         select_clause = ['select', action === 'select' ? '*' : 'count(*)'].join(" ");
          var from_clause = ['from', table].join(" ");
-         var where_clause_a = ['where'];
 
-         wh_criteria = query_obj.criteria;
-         index = 0;
-         aArgs = [];
-         for (var prop in wh_criteria) {
-            if (wh_criteria.hasOwnProperty(prop)) {
-               if (index > 0) {
-                  where_clause_a.push("AND");
-               }
-               where_clause_a.push(prop);
-               where_clause_a.push('=$' + (index_$param + index++));
-               aArgs.push(wh_criteria[prop]);
-            }
-         }
-         return {qry_string : [select_clause, from_clause, where_clause_a.join(" ")].join(" "), aArgs : aArgs};
+         var where_clause_objj = make_where_clause_obj(index_$param, query_obj.criteria);
+         aArgs = where_clause_objj.aArgs;
+         index_$param += aArgs.length;
+         where_clause = [where_clause_objj.where_clause].join(" ");
+
+         return {qry_string : [select_clause, from_clause, where_clause].join(" "), aArgs : aArgs};
          break;
 
-      case 'insert':
-         var insert_into_clause_a = ['INSERT INTO', table];
-         var values_clause = "";
+      case 'insert': //TODO test the new version
+         var insert_into_clause_a = ['INSERT INTO', table],
+             insert_into_clause;
 
          wh_criteria = query_obj.criteria;
-         var action_toggle = wh_criteria.action;
-         if (action_toggle && action_toggle === 'select') {
+         if (wh_criteria.action && wh_criteria.action === 'select') {
             // case INSERT INTO table (SELECT ...)
             var sub_query = qry_make_sql_query(wh_criteria, 1, config);
             insert_into_clause_a.push('(', sub_query.qry_string, ')');
+            insert_into_clause = insert_into_clause_a.join(" ");
             aArgs = sub_query.aArgs;
             index_$param += aArgs.length; // NOT USED as of now but allow to have the right index for further param down the road
-
          }
          else {
             // case INSERT INTO table (f1, f2...) VALUES (v1, v2...)
             // Ex: INSERT INTO products (code, title, did, date_prod, kind)
             // VALUES ('T_601', 'Yojimbo', 106, DEFAULT, 'Drama');
-            insert_into_clause_a.push('(');
-
-            //set the fileds f1...fn
-            aArgs = [];
-            index = 0;
-            var temp_array = []; // temp_array holds the $1, $2, for the arguments. 1 is offset by $index_param
-            for (var prop in wh_criteria) {
-               if (wh_criteria.hasOwnProperty(prop)) {
-                  if (index > 0) {
-                     insert_into_clause_a.push(",");
-                     temp_array.push(',');
-                  }
-                  insert_into_clause_a.push(prop);
-                  temp_array.push('$' + (index_$param + index++));
-                  aArgs.push(wh_criteria[prop]);
-               }
-            }
-            insert_into_clause_a.push(')');
-
-            // set VALUES clause
-            values_clause = ['VALUES (', temp_array.join(" "), ')'].join(" ");
+            var split_obj = U.separate_obj_prop(wh_criteria);
+            // Produce the (f1, f2...) part
+            insert_into_clause_a.push('(', split_obj.properties.join(", "), ')');
+            insert_into_clause = insert_into_clause_a.join(" ");
+            // Now compute values_clause : VALUES ($1, $2...)
+            aArgs = split_obj.values;
+            var values_clause = ['VALUES', '(',
+                                 aArgs.map(substitute_val_by_$x(index_$param)).join(", "),
+                                 ')'].join(" ");
          }
-         return {qry_string : [insert_into_clause_a.join(" "), values_clause].join(" "), aArgs : aArgs};
+         return {qry_string : [insert_into_clause, values_clause].join(" ").trim(), aArgs : aArgs};
          break;
+
+      case 'update':
+         // Example query
+         // UPDATE weather SET (temp_lo, temp_hi, prcp) = (temp_lo+1, temp_lo+15, DEFAULT)
+         // WHERE city = 'San Francisco' AND date = '2003-07-03';
+         var update_clause = ['UPDATE ', table].join(" ");
+         var split_objj = U.separate_obj_prop(query_obj.update);
+         aArgs = split_objj.values; // corresponds to (temp_lo, temp_hi, prcp) part
+         var set_clause = ['SET', // SET
+                           "(", split_objj.properties.join(", "), ")", "=", // (temp_lo, temp_hi, prcp) =
+                           "(", aArgs.map(substitute_val_by_$x(index_$param)).join(", "), ")"] // ($1, $2...)
+            .join(" ");
+         index_$param += aArgs.length;
+
+         if (wh_criteria = query_obj.criteria) {// put criteria in wh_criteria and test for truthy
+            var where_clause_obj = make_where_clause_obj(index_$param, wh_criteria);
+            where_clause = where_clause_obj.where_clause;
+            aArgs = aArgs.concat(where_clause_obj.aArgs); // Add the extra values for the $x generated by the where_clause
+         }
+         return {qry_string : [update_clause, set_clause, where_clause].join(" "), aArgs : aArgs};
 
       default:
          break;
@@ -479,6 +501,7 @@ module.exports = {
    get_important_words   : get_important_words,
    get_db_client         : get_db_client,
    pg_register_query     : pg_register_query,
+   qry_make_sql_query    : qry_make_sql_query,
    pg_exec_query         : pg_exec_query,
    pg_exec_query_success : pg_exec_query_success,
    pg_exec_query_failure : pg_exec_query_failure,

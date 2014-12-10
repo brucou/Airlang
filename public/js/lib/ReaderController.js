@@ -42,8 +42,8 @@ define(['jquery',
           RC.combo_load_url = function combo_load_url ( $el, ev ) {
              var RM = this.model;
              var viewAdapter = this.stateMap.viewAdapter,
-                my_url = $el.val(),
-                self = this;
+                 my_url = $el.val(),
+                 self = this;
              viewAdapter.attr("url_to_load", my_url);
              viewAdapter.setErrorMessage(null);
              viewAdapter.set_HTML_body(null);
@@ -66,8 +66,8 @@ define(['jquery',
                                viewAdapter.setErrorMessage("");
                                self.stateSetIsUrlLoaded(true);
 
-                               var rtTranslateController = new TC.TranslateRTController(self.element,
-                                                                                        {translate_by : 'point'});
+                               var rtTranslateController = new
+                                  TC.TranslateRTController(self.element, {translate_by : 'click', dismiss_on : 'escape-key'});
                             });
                 },
                 function get_stored_notes_failure () {
@@ -138,6 +138,10 @@ define(['jquery',
           };
 
           RC.show_note = function show_and_add_note ( $el, ev, range ) {
+             //TEMP CODE
+             return;
+             ///////////
+
              if (!this.stateGetIsUrlLoaded()) {
                 //that flag is set after a successful load of an url
                 return;
@@ -148,6 +152,7 @@ define(['jquery',
              var RM = this.model;
              var self = this;
              var note = TC.getNoteFromWordClickedOn($el, ev, range);
+             note.word = UT.remove_punct(note.word);
              // modify the filter selected words to include the closure on the note
              var modified_filter_selected_words = function ( aHTMLtoken ) {
                 return RM.filter_selected_words(aHTMLtoken, [note])

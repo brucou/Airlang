@@ -88,9 +88,9 @@ requirejs(
     'socket',
     'Stateful',
     'TSRController',
-    'utils'
+    'utils', 'url_load'
    ],
-   function ( $, RM, RC, SOCK, STATE, TSR, UT ) {
+   function ( $, RM, RC, SOCK, STATE, TSR, UT, UL ) {
       var appState = {};
 
       function start () {
@@ -147,8 +147,9 @@ requirejs(
       }
 
       function init_fake () {
-         //FAKE.config('make_article_readable', FAKE.fn.fake_make_article_readable);
-         //FAKE.config('url_load_callback', FAKE.fn.url_load_callback);
+         FAKE.replace(UL, 'UL.url_load', FAKE.fn.url_load);
+         FAKE.replace(RM, 'RM.get_stored_notes', FAKE.fn.get_stored_notes);
+         RM.set_notes([]);
       }
 
       $(function () {
@@ -158,7 +159,7 @@ requirejs(
          //trace(RM, 'RM');
          //trace(RC, 'RC');
          //trace(IO, 'IO');
-         //init_fake();
+         init_fake();
          ////////////
          // Initialize socket connection and feature modules
          $.when(

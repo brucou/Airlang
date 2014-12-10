@@ -24,7 +24,7 @@ describe('TSR', function () {
       return promise;
    });
 
-   it('set weights new word', function test_set_weight( done ) {
+      it('set weights new word', function test_set_weight( done ) {
       // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
       //DB.initialize_database();
       //U.assert_properties({user: 1}, {user: 'Numbe'});
@@ -43,7 +43,7 @@ describe('TSR', function () {
          })
    });
 
-   it.only('get_word_to_memorize', function ( done ) {
+   it('get_word_to_memorize', function ( done ) {
       TSR.get_word_to_memorize(appState, function ( err, result ) {
          if (err) {
             done(Error(err));

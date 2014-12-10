@@ -117,7 +117,7 @@ function update_word_weight_post_exo ( obj, callback ) {
     time_analyzed:
     grade    : compute_grade(correct_word, answer, word_info), // NOT USED FOR NOW
     easyness : compute_easyness(correct_word, answer, word_info, time_taken_sec)
-*/
+    */
    // TODO add a check of properties here
    return get_specific_word_weight(analyzed_answer_merged.user_id, analyzed_answer_merged.correct_word)
       .then(function update_word_weight ( rows ) {
@@ -128,10 +128,12 @@ function update_word_weight_post_exo ( obj, callback ) {
                // Age component:
                // time is set to the time of now : in the formula it will be used to compute days difference
 
-               return update_specific_word_weight(time_updated, analyzed_answer_merged.easyness,
+               return update_specific_word_weight(analyzed_answer_merged.user_id, analyzed_answer_merged.correct_word,
+                                                  time_updated, analyzed_answer_merged.easyness,
                                                   analyzed_answer_merged.exercise_type, analyzed_answer_merged.grade)
+                  .then(set_word_weight_hist(word_weight_row, time_updated));
             })
-      .then(set_word_weight_hist(word_weight_row, time_updated));
+      .then (U.callback_ok(callback), callback);
 }
 
 function set_word_weight_hist ( word_weight_row, time_updated ) {
@@ -145,7 +147,7 @@ function set_word_weight_hist ( word_weight_row, time_updated ) {
    }
 }
 
-function update_specific_word_weight ( time, easyness, exercise_type, grade ) {
+function update_specific_word_weight ( user_id, word, time, easyness, exercise_type, grade ) {
    return DB.get_db_adapter('TSR').exec_query(
       {action     : 'update',
          entity   : 'TSR_word_weight',
@@ -159,7 +161,7 @@ function update_specific_word_weight ( time, easyness, exercise_type, grade ) {
             last_revision_exercise_type : exercise_type,
             last_revision_grade         : grade
          }
-      })
+      });
 }
 
 function get_word_weights_cfg ( user_id ) {

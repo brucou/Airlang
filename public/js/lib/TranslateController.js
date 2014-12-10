@@ -65,7 +65,7 @@ define(['jquery',
 
           // The controller will manage mousestop event and tooltip display and dismissal
           // Options :
-          // dismiss_on : enum(mousemove, click) -> event which dismissed/hide the tooltip
+          // dismiss_on : enum(mousemove, click, escape-key) -> event which dismissed/hide the tooltip
           // translate_by : enum(point, click) -> show the tooltip by pointing the mouse on the word or clicking on it
           TC.TranslateRTController = can.Control.extend
           (//static property of control is first argument
@@ -75,7 +75,7 @@ define(['jquery',
                    logWrite(DBG.TAG.INFO, "initializing tooltip with options", UT.inspect(options));
                    var self = this;
                    $("body").append(TC.rtTranslateView(TC.viewTranslateAdapter));
-                   this.$tooltip = $("#reader-tool-tooltip");
+                   this.$tooltip = $("#airlang-rdt-tt");
                 },
 
                 $tooltip        : null,
@@ -84,21 +84,20 @@ define(['jquery',
 
                 '{document} mousestop' : function ( $el, ev ) {
                    if (this.options.translate_by != 'point') {
-                      return;
+                      return true;
                    }
                    this.process(ev, this.$tooltip, this.options);
                 },
                 'click'                : function click ( $el, ev ) {
                    if (this.options.translate_by != 'click') {
-                      //return;
+                      return true; // bubble to another element who might process it
                    }
                    else {
                       logEntry('Translate : click');
                       this.process(ev, this.$tooltip, this.options);
+                      return false; // don't bubble the click, we dealt with it here
                       logExit('Translate : click');
                    }
-
-                   return true; // TODO : what does return true mean?
                 },
                 'mousemove'            : function ( $el, ev ) {
                    var self = this;
@@ -128,16 +127,11 @@ define(['jquery',
 
                 '{window} keydown'  : function ( $el, ev ) {
                    logWrite(DBG.TAG.DEBUG, "keydown event", ev.keyCode);
-                   if (ev.keyCode == 27) {
+                   if (ev.keyCode == 27 && this.options.dismiss_on == 'escape-key') {
                       this.empty_and_hide();
                    }
                 },
-                /*                 function setup_dismiss(tt) {
-                 if (opts.dismiss_on == 'mousemove') {
-                 $(document).on('mousemove_without_noise', self.hide);
-                 $(window).scroll(self.hide);
-                 }
-                 */
+
                 hasMouseReallyMoved : function ( e ) { //or is it a tremor?
                    var left_boundry = parseInt(this.last_mouse_stop.x) - 5,
                       right_boundry = parseInt(this.last_mouse_stop.x) + 5,

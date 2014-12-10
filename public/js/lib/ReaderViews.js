@@ -18,7 +18,7 @@ define([], function () {
   tpl.push("<td> {{sense}}</td>");
   tpl.push("</tr>");
   tpl.push("<tr>");
-  tpl.push("<td colspan='3' class='sample_sentence_from'> {{example_sentence_from}}<br>");
+  tpl.push("<td colspan='3' class='airlang-rdt-tt-sample_sentence_from'> {{example_sentence_from}}<br>");
   tpl.push("                                                <strong>{{example_sentence_to}}</strong></td>");
   tpl.push("</tr>");
   /**             tpl.push("<tr>");

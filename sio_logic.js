@@ -15,12 +15,7 @@ const STATE_NAMESPACE = '/state';
 var mapListeners = {
    channels       : [RPC_NAMESPACE, STATE_NAMESPACE],
    topic_handlers : [
-      {channel : RPC_NAMESPACE, topic : 'highlight_important_words', handler : sio_onHighlight_important_words},
-      {channel : RPC_NAMESPACE, topic : 'get_translation_info', handler : sio_onGet_translation_info},
-      {channel : RPC_NAMESPACE, topic : 'set_TSR_word_weights', handler : TSR.set_word_weights},
-      {channel : RPC_NAMESPACE, topic : 'get_word_to_memorize', handler : TSR.get_word_to_memorize},
-      {channel : RPC_NAMESPACE, topic : 'update_word_weight_post_tsr_exo', handler : TSR.update_word_weight_post_exo},
-      {channel : STATE_NAMESPACE, topic : 'REST_operation', handler : sio_on_REST}
+
    ]};
 
 // kept there for now
