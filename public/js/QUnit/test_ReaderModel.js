@@ -209,78 +209,78 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              /* should be TEXT_NODE Když*/
              //next sibling becuase of the space before the span tag
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 1,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 1,
                           'word "když" - middle position - first ancestor with id : 2 levels higher');
 
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 0);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 1,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 1,
                           'word " když" - beginning position - first ancestor with id : 2 levels higher');
 
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 4);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 1,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 1,
                           'word " když" - end position - first ancestor with id : 2 levels higher');
 
              /* should be TEXT_NODE " končil "*/
              /* selecting the space */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 0);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 1,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 1,
                           'word končil - space before - first ancestor with id : 1 level higher');
 
              /* selecting the beginning of končil */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 1);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 2,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 2,
                           'word končil - beginning position - first ancestor with id : 1 level higher');
 
              /* selecting the middle of končil */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 2);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 2,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 2,
                           'word končil - middle position - first ancestor with id : 1 level higher');
 
              /* selecting the end of končil */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 7);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 2,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 2,
                           'word končil - end position - first ancestor with id : 1 level higher');
 
              /* selecting the space at the end of končil -> take the next word if there is one but there is none*/
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 8);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 2,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 2,
                           'word končil - space at end position - first ancestor with id : 1 level higher');
 
              /* should be TEXT_NODE " psali jsme "*/
              /* selecting the space */
              this.setup_range(range, $("#4", $el)[0].firstChild, 0);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 0,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 0,
                           'word " psali jsme " - space at beginning position - first ancestor with id : 1 level higher');
 
              /* selecting the beginning of psali */
              this.setup_range(range, $("#4", $el)[0].firstChild, 1);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 1,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 1,
                           'word " psali jsme " - beginning position - first ancestor with id : 1 level higher');
 
              /* selecting the end of psali -> psali  */
              this.setup_range(range, $("#4", $el)[0].firstChild, 6);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 1,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 1,
                           'word " psali jsme " - end position - first ancestor with id : 1 level higher');
 
              /* selecting the beginning of jsme */
              this.setup_range(range, $("#4", $el)[0].firstChild, 7);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 2,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 2,
                           'word " psali jsme " - beginning position of jsme - first ancestor with id : 1 level higher');
 
              this.setup_range(range, $("#4", $el)[0].nextSibling, 0);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 6,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 6,
                           'word " , že " - space at beginning position - first ancestor with id : 1 level higher');
 
              this.setup_range(range, $("#4", $el)[0].nextSibling, 1);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 7,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 7,
                           'word " , že " - comma at beginning position - first ancestor with id : 1 level higher');
 
              this.setup_range(range, $("#4", $el)[0].nextSibling, 2);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 7,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 7,
                           'word " , že " - space after comma - first ancestor with id : 1 level higher');
 
              this.setup_range(range, $("#4", $el)[0].nextSibling, 3);
-             assert.equal(TC.getWordIndexFromIDParent(undefined, undefined, range), 8,
+             assert.equal(RC.getWordIndexFromIDParent(undefined, range), 8,
                           'word " , že " - beginning of že- first ancestor with id : 1 level higher');
 
           });
@@ -291,111 +291,111 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              var range = document.createRange();
 
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 1,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 1,
                           'word "Když" - middle position - first ancestor with id : 2 levels higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'Když',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'Když',
                           'word "Když" - middle position - first ancestor with id : 2 levels higher');
 
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 0);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 1,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 1,
                           'word " Když" - beginning position - first ancestor with id : 2 levels higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'Když',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'Když',
                           'word " Když" - beginning position - first ancestor with id : 2 levels higher');
 
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 4);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 1,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 1,
                           'word " Když" - end position - first ancestor with id : 2 levels higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'Když',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'Když',
                           'word " Když" - end position - first ancestor with id : 2 levels higher');
 
              /* should be TEXT_NODE " končil "*/
              /* selecting the space */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 0);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 1,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 1,
                           'word " končil " - space before - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'Když',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'Když',
                           'word " končil " - space before - first ancestor with id : 1 level higher');
 
              /* selecting the beginning of končil */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 1);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 2,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 2,
                           'word končil - beginning position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'končil',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'končil',
                           'word končil - beginning position - first ancestor with id : 1 level higher');
 
              /* selecting the middle of končil */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 2);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 2,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 2,
                           'word končil - middle position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'končil',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'končil',
                           'word končil - middle position - first ancestor with id : 1 level higher');
 
              /* selecting the end of končil */
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 7);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 2,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 2,
                           'word končil - end position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'končil',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'končil',
                           'word končil - end position - first ancestor with id : 1 level higher');
 
              /* selecting the space at the end of končil -> take the next word if there is one but there is none*/
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 8);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 2,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 2,
                           'word končil - space at end position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'končil',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'končil',
                           'word končil - space at end position - first ancestor with id : 1 level higher');
 
              /* should be TEXT_NODE " psali jsme "*/
              /* selecting the space */
              this.setup_range(range, $("#4", $el)[0].firstChild, 0);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 4,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 4,
                           'word " psali jsme " - space at beginning position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'Presseurop,',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'Presseurop,',
                           'word " psali jsme " - space at beginning position - first ancestor with id : 1 level higher');
 
              /* selecting the beginning of psali */
              this.setup_range(range, $("#4", $el)[0].firstChild, 1);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 5,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 5,
                           'word " psali jsme " - beginning position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'psali',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'psali',
                           'word " psali jsme " - beginning position - first ancestor with id : 1 level higher');
 
              /* selecting the end of psali -> psali  */
              this.setup_range(range, $("#4", $el)[0].firstChild, 6);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 5,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 5,
                           'word " psali jsme " - end position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'psali',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'psali',
                           'word " psali jsme " - end position - first ancestor with id : 1 level higher');
 
              /* selecting the beginning of jsme */
              this.setup_range(range, $("#4", $el)[0].firstChild, 7);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 6,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 6,
                           'word " psali jsme " - beginning position of jsme - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'jsme',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'jsme',
                           'word " psali jsme " - beginning position of jsme - first ancestor with id : 1 level higher');
 
              /* word , že */
              this.setup_range(range, $("#4", $el)[0].nextSibling, 0);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 6,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 6,
                           'word " , že " - space at beginning position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'jsme',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'jsme',
                           'word " , že " - space at beginning position - first ancestor with id : 1 level higher');
 
              this.setup_range(range, $("#4", $el)[0].nextSibling, 1);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 7,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 7,
                           'word " , že " - comma at beginning position - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, ',',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, ',',
                           'word " , že " - comma at beginning position - first ancestor with id : 1 level higher');
 
              this.setup_range(range, $("#4", $el)[0].nextSibling, 2);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 7,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 7,
                           'word " , že " - space after comma - first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, ',',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, ',',
                           'word " , že " - space after comma - first ancestor with id : 1 level higher');
 
              this.setup_range(range, $("#4", $el)[0].nextSibling, 3);
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).index, 8,
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).index, 8,
                           'word " , že " - beginning of že- first ancestor with id : 1 level higher');
-             assert.equal(TC.getNoteFromWordClickedOn(undefined, undefined, range).word, 'že',
+             assert.equal(RC.getNoteFromWordClickedOn(undefined, range).word, 'že',
                           'word " , že " - beginning of že- first ancestor with id : 1 level higher');
 
           });
@@ -417,7 +417,7 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              };
 
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
-             RC.show_note.call(context, undefined, undefined, range)
+             RC.show_and_add_note.call(context, undefined, range)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
                          assert.equal(highlighted_text, html_expected_text_1,
@@ -428,7 +428,7 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              var html_expected_text_2 =
                 "<DIV id='0'> <P id='3'> <SPAN class='highlight'> Když </SPAN>  <span class='airlang-rdt-note-highlight'>končil</span>  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 2);
-             RC.show_note.call(context, undefined, undefined, range)
+             RC.show_and_add_note.call(context, undefined, range)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
                          assert.equal(highlighted_text, html_expected_text_2,

@@ -81,7 +81,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           var RM = {}; // Added so I can trace all member functions more easily
 
           //State objects
-          var stateMap = {rpc_socket : undefined, aNotes : undefined};
+          var stateMap = {aNotes : undefined};
 
           const TSR_WORD_CONTEXT_SENTENCE = 20; //TODO: put in a config object
           var CLASS_SELECTOR_CHAR = ".";
@@ -113,7 +113,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           ////////// Database query functions
           RM.srv_qry_word_translation = function srv_qry_word_translation ( word, callback ) {
              //logEntry("srv_qry_word_translation");
-             stateMap.rpc_socket.emit('get_translation_info', word, callback);
+             SOCK.emit('get_translation_info', word, callback);
              //logExit("srv_qry_word_translation");
           };
 
@@ -123,7 +123,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               callback: executed when the server has finished its processing
               */
              //logEntry("srv_qry_important_words");
-             stateMap.rpc_socket.emit('highlight_important_words', word, callback);
+             SOCK.emit('highlight_important_words', word, callback);
              return $.Deferred();
              //logExit("srv_qry_important_words");
           };
@@ -893,7 +893,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           RM.add_TSR_weight = function add_TSR_weight ( obj ) {
              // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
              return new RSVP.Promise(function ( resolve, reject ) {
-                stateMap.rpc_socket.emit('set_TSR_word_weights', obj,
+                SOCK.emit('set_TSR_word_weights', obj,
                                          UT.default_node_callback (resolve, reject));
              });
           };
@@ -970,7 +970,6 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              // 4. everywhere in RC controller change RM by model
              // 5. init returns a model instance to main and main pass it to the controller
              // NOTE : Can construct can be used to that purpose
-             stateMap.rpc_socket = SOCK.get_socket();
 
              DS.filter_register('text', 'async_cached_postgres_highlighted_text', RM.highlight_words);
              DS.filter_register('array_of_html_token', 'token_action_map', RM.filter_selected_words,

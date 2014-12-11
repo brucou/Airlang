@@ -12,12 +12,12 @@ define([], function () {
   tpl.push("</thead>");
   tpl.push("<tbody>");
   tpl.push("{{#result_rows}}");
-  tpl.push("<tr>");
-  tpl.push("<td> {{translation_sense}}</td>");
-  tpl.push("<td> {{lemma}}</td>");
-  tpl.push("<td> {{sense}}</td>");
+  tpl.push("<tr class='airlang-rdt-tt-row-translation'>");
+  tpl.push("<td class='airlang-rdt-tt-col-tsense'> {{translation_sense}} </td>");
+  tpl.push("<td class='airlang-rdt-tt-col-lemma'> {{lemma}} </td>");
+  tpl.push("<td class='airlang-rdt-tt-col-sense'> {{sense}} </td>");
   tpl.push("</tr>");
-  tpl.push("<tr>");
+  tpl.push("<tr class='airlang-rdt-tt-row-example'>");
   tpl.push("<td colspan='3' class='airlang-rdt-tt-sample_sentence_from'> {{example_sentence_from}}<br>");
   tpl.push("                                                <strong>{{example_sentence_to}}</strong></td>");
   tpl.push("</tr>");

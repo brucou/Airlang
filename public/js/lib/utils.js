@@ -1657,6 +1657,12 @@ function utilsFactory () {
       return word;
    }
 
+   function compose_fn ( context, f, g ) {
+      return function ( /*arguments*/ ) {
+         return f(g.apply(context, arguments));
+      }
+   }
+
    /**
     * Source : http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#JavaScript
     * The Levenshtein distance is a string metric for measuring the difference between two sequences. Informally, the Levenshtein distance between two words is the minimum number of single-character edits (i.e. insertions, deletions or substitutions) required to change one word into the other
@@ -1781,6 +1787,7 @@ function utilsFactory () {
           f_none                          : f_none,
           count_word                      : count_word,
           is_word                         : is_word,
+          compose_fn                      : compose_fn,
           getEditDistance                 : getEditDistance,
           delegate_promise_error          : delegate_promise_error,
           error_handler                   : error_handler,

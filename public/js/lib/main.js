@@ -96,15 +96,16 @@ requirejs(
       function start () {
          // TODO : add a login mechanism to have different user ids
          appState = {
-            type : 'appState',
+            type      : 'appState',
             error_div : '#application_error',
-            user_id : 1,
-            socket : SOCK.get_socket()
-            };
+            user_id   : 1
+         };
 
          //TODO Change user_id in new RC... to appState, or pass a clone of the object
          new RC.ReaderToolController("#reader_tool",
-                                     {view : RC.rtView, getViewAdapter : RC.getViewAdapter, model : RM, user_id : 1});
+                                     {view           : RC.rtView, getViewAdapter : RC.getViewAdapter,
+                                        model        : RM, user_id : 1,
+                                        translate_by : 'click'});
          // TSR button handler
          // no controller, just a click handler
          $("#TSR").click(function ( event ) {
@@ -112,7 +113,7 @@ requirejs(
             //TODO: think about what data to pass the controller
             // appState is certainly one of them, maybe not views and adapters
             // put the model in another file
-            new TSR.mainController("#TSR_div", {appState: appState}); //TODO : appState with user_id
+            new TSR.mainController("#TSR_div", {appState : appState}); //TODO : appState with user_id
          });
       }
 
@@ -135,7 +136,7 @@ requirejs(
          (DBG.TAG.TRACE, "generateTagAnalysisData")
          (DBG.TAG.TRACE, "get_DOM_select_format_from_class")
          (DBG.TAG.TRACE, "getHitWord")
-         (DBG.TAG.DEBUG, "getHitWord")
+         //(DBG.TAG.DEBUG, "getHitWord")
          (DBG.TAG.TRACE, "is_comment_start_token")
          (DBG.TAG.TRACE, "is_comment_end_token")
             //(DBG.TAG.TRACE, "dataAdapterOStore2TokenActionMap")
@@ -164,11 +165,8 @@ requirejs(
          // Initialize socket connection and feature modules
          $.when(
             SOCK.init(),
-            STATE.init()
-         ).then(
-            function () {
-               RM.init();
-            }
+            STATE.init(),
+            RM.init()
          ).then(
             function () {
                // Start Qunit if called from test index.html starting page

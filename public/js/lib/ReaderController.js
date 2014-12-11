@@ -39,44 +39,6 @@ define(['jquery',
                                 })
           };
 
-          RC.combo_load_url = function combo_load_url ( $el, ev ) {
-             var RM = this.model;
-             var viewAdapter = this.stateMap.viewAdapter,
-                 my_url = $el.val(),
-                 self = this;
-             viewAdapter.attr("url_to_load", my_url);
-             viewAdapter.setErrorMessage(null);
-             viewAdapter.set_HTML_body(null);
-
-             RM.get_stored_notes(
-                { module   : 'reader tool',
-                   user_id : 1, //TODO : temporary, the user_id should be obtained from some login
-                   url     : my_url})
-                .then(
-                function get_stored_notes_success ( aNotes ) {
-                   RM.make_article_readable(my_url)
-                      .fail(function make_article_readable_error ( Error ) {
-                               logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error);
-                               viewAdapter.setErrorMessage(Error.toString());
-                               viewAdapter.set_HTML_body(null);
-                            })
-                      .done(function make_article_readable_success ( html_text ) {
-                               logWrite(DBG.TAG.INFO, "URL read successfully");
-                               viewAdapter.set_HTML_body(html_text);
-                               viewAdapter.setErrorMessage("");
-                               self.stateSetIsUrlLoaded(true);
-
-                               var rtTranslateController = new
-                                  TC.TranslateRTController(self.element, {translate_by : 'click', dismiss_on : 'escape-key'});
-                            });
-                },
-                function get_stored_notes_failure () {
-                   logWrite(DBG.TAG.ERROR, 'RM.get_stored_notes', err);
-                }
-             );
-
-          };
-
           /**
            * Purpose : take a token and
            * @param  {string} word word to be highlighted
@@ -137,69 +99,209 @@ define(['jquery',
              return filter_selected_word;
           };
 
-          RC.show_note = function show_and_add_note ( $el, ev, range ) {
-             //TEMP CODE
-             return;
-             ///////////
+          /**
+           * Purpose    : return a note object containing the word and positional information about the word being clicked on
+           * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
+           *              i.e. with numbered html tag except for text nodes
+           * @param {jQuery} $el : jQuery element clicked on (target element)
+           * @param {range} selectedRange range containing the click selection made by the user
+           */
+          RC.getNoteFromWordClickedOn = function getNoteFromWordClickedOn ( $el, selectedRange ) {
+             // count the number of words to the first element with ID
 
-             if (!this.stateGetIsUrlLoaded()) {
-                //that flag is set after a successful load of an url
-                return;
+             // Two cases, the anchor object has an id property or it does not. Most of the time it won't
+             var startNode = selectedRange.startContainer,
+                 firstIDNode = RC.findParentWithId(startNode),
+                 // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+
+                 parent_node_with_id = RC.findParentWithId(startNode),
+                 id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
+
+                 rootNode = document.getElementById("0");
+             if (!rootNode) {
+                throw 'getNoteFromWordClickedOn: no element with id="0" - this function can only be called on a DOM parsed with parseDOMTree '
              }
-             //this is a stub for testing
-             range = range || window.getSelection().getRangeAt(0);
 
-             var RM = this.model;
-             var self = this;
-             var note = TC.getNoteFromWordClickedOn($el, ev, range);
-             note.word = UT.remove_punct(note.word);
-             // modify the filter selected words to include the closure on the note
-             var modified_filter_selected_words = function ( aHTMLtoken ) {
-                return RM.filter_selected_words(aHTMLtoken, [note])
-             };
-             modified_filter_selected_words.input_type = RM.filter_selected_words.input_type;
-             modified_filter_selected_words.output_type = RM.filter_selected_words.output_type;
+             // NOTE TODO :: Solve the dependence introduced with the parseDOMTree function
+             // if at some point the id changes in parseDomTree, it has to be updated here too
+             var aDomNodes = UT.traverse_DOM_depth_first("===", rootNode, firstIDNode);
 
-             return RSVP.all(
-                [
-                   RM.apply_highlighting_filters_to_text(
-                      $(note.rootNode), RM.fn_parser_and_transform([], [], true),
-                      [modified_filter_selected_words]
-                   ),
-                   RC.add_note(self, note)
-                ]).then(function update_html_text ( aPromiseResults ) {
-                           // update the html in reader controller
-                           var highlighted_text = aPromiseResults[0];
-                           self.stateMap.viewAdapter.setErrorMessage(null);
-                           self.stateMap.viewAdapter.set_HTML_body(highlighted_text);
-                           return highlighted_text;
-                        });
-             /*
-              .then(function update_state (highlighted_text) {
-              return $.when(RM.add_notes({module    : 'reader tool', url : self.stateMap.viewAdapter.url_to_load,
-              user_id : self.stateMap.user_id, word : note.word, index : note.index}),
-              RM.add_TSR_weight({user_id : self.stateMap.user_id, word : note.word}));
-              })
-              .then(function success_add_note ( param1, param2 ) {logWrite(DBG.TAG.DEBUG, "added note remotely!")},
-              function failure_add_note ( err ) {
-              logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
-              });
-              */
+             // remove the startNode as we do not wish to count the words in it
+             if (!aDomNodes.pop()) {
+                // if for some reason there is no nodes returned by the traversal, throw an error
+                // there should always one node by construction, the rootNode
+                // TODO: test the edge case if rootnode = startnode in which case there is no words (0) to count
+                // in that case the array is empty, the map leaves it empty and the reduce gives 0
+                // BECAUSE I set 0 as initial value, otherwise error
+                throw 'getNoteFromWordClickedOn: internal error? traverse_DOM_depth_first returns an empty array!'
+             }
+
+             var word_index_to_selected_node = aDomNodes
+                // first for each node get the number of words in the node
+                .map(function ( node ) {
+                        return (node.nodeType === node.TEXT_NODE)
+                           //returns number of words in the text node. "" does not count for a word
+                           ? RM.simple_tokenizer(node.textContent).map(UT.count_word).reduce(UT.sum, 0)
+                           // not a text node so no words to count here
+                           : 0;
+                     })
+                // the sum all those numbers
+                .reduce(UT.sum, 0);
+
+             // now calculate the number of words from selected node to selected word
+             var word_index_to_selected_word = RC.getWordIndexFromIDParent($el, selectedRange);
+
+             // get selected word from the index
+             var full_text = rootNode.textContent;
+             if (!full_text) {
+                // that should never happen right?
+                // we let it slip and let the caller decide what to do
+                return {word : null, index : null, context_sentence : null, rootNode : null}
+             }
+             var final_index = word_index_to_selected_node + word_index_to_selected_word;
+
+             return RM.get_note_from_param(full_text, final_index, rootNode);
           };
 
-          RC.add_note = function ( context, note ) {
-             return RSVP.all([
-                                RM.add_notes({module             : 'reader tool', url : context.stateMap.viewAdapter.url_to_load,
-                                                user_id          : context.stateMap.user_id, word : note.word,
-                                                context_sentence : note.context_sentence, index : note.index}),
-                                RM.add_TSR_weight({user_id : context.stateMap.user_id, word : note.word})
-                             ])
-                .then(function success_add_note ( param1, param2 ) {
-                         logWrite(DBG.TAG.DEBUG, "added note remotely!")
-                      },
-                      function failure_add_note ( err ) {
-                         logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
+          /**
+           *
+           * @param startNode {Node}
+           * @returns {Node}
+           * @throws {Exception} throws 'findParentWithId: could not find a node with an ID...'
+           */
+          RC.findParentWithId = function findParentWithId ( startNode ) {
+             // Find an ancestor node to startNode with an attribute id
+             var currentNode = startNode;
+             var ancestor_level = 0;
+             while (currentNode &&
+                    (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") )) {
+                logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
+                currentNode = currentNode.parentNode;
+                ancestor_level++;
+             }
+             if (currentNode === null) {
+                // we reached the top of the tree and we found no node with an attribute ID...
+                throw 'findParentWithId: could not find a node with an ID...'
+             }
+
+             logWrite(DBG.TAG.DEBUG,
+                      "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
+             return currentNode;
+          };
+
+          /**
+           * Purpose    : return the word index from the first parent element with an existing attribute ID
+           * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
+           *              i.e. with numbered html tag except for text nodes
+           * @param {jQuery} $el : jQuery element clicked on (target element)
+           * @param {range} selectedRange range containing the click selection made by the user
+           * @returns {number} index of word (starting with 1) from parent with an existing attribute ID
+           * TODO : treat the case where startNode is not a text node : as this is a click, it should always be the case
+           *          unless we click on a tag (is that possible? on an image for instance? what if there is a selection before the click?
+           */
+          RC.getWordIndexFromIDParent = function getWordIndexFromIDParent ( $el, selectedRange ) {
+
+             //var selectedRange = window.getSelection().getRangeAt(0);
+             // if it is just a click, then anchor and focus point to the same location
+             // but that means there is no selection having been done previously
+             // For the moment we just deal with anchor
+
+             // Two cases, the anchor object has an id property or it does not. Most of the time it won't
+             var startNode = selectedRange.startContainer;
+             var startOffset = selectedRange.startOffset;
+             var textContent = startNode.textContent;
+             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+
+             logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
+
+             // Init array variables tracing the counting
+             var aCharLengths = [],
+                 aWordLengths = [];
+
+             // get the first parent with id
+             var currentNode = RC.findParentWithId(startNode);
+
+             // traverse tree till startNode and count words and characters while doing so
+             count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
+
+             logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
+
+             count_word_and_char_till_offset(startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
+
+             //finished! Now count the number of words we have skipped to reach the final one and the chars
+             selectedRange.detach();
+
+             return aWordLengths.reduce(UT.sum, 0);
+
+             ////// Helper functions
+             function count_word_and_char_till_node ( currentNode, startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths, tokenizer ) {
+                // tokenizer is passed here as a parameter because I need to use the same tokenizer that gave me the token array when highlighting previously
+                if (!currentNode.isEqualNode(startNode)) {
+                   // by construction, currentNode cannot be a TEXT_NODE the first time, as ancestor node have an ID
+                   // and text node cannot have id
+                   if (currentNode.nodeType === currentNode.TEXT_NODE) {
+                      logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
+                      var text_content = currentNode.textContent;
+                      var text_content_trim = text_content.trim();
+                      var aWords = tokenizer(text_content_trim);
+                      aCharLengths.push(text_content.length);
+
+                      if (text_content_trim) {
+                         logWrite(DBG.TAG.DEBUG, "non empty string: adding to word array");
+                         // if text_content is only spaces, there is no words to count!!
+                         aWordLengths.push(aWords.length);
+                      }
+                      return false;
+                   }
+                   else {
+                      // otherwise we have an element node, which do not have a text, just proceed to the next child
+                      if (!currentNode.hasChildNodes()) {
+                         throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
+                      }
+                      logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
+                               currentNode.childNodes.length);
+                      var nodeChildren = currentNode.childNodes;
+                      return UT.some(nodeChildren, function some ( nodeChild, index, array ) {
+                         logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
+                                  currentNode.nodeName);
+
+                         var result = count_word_and_char_till_node(nodeChild, startNode, aCharLengths, aWordLengths,
+                                                                    tokenizer);
+                         logWrite(DBG.TAG.DEBUG, "some returns ", result);
+                         return result;
                       });
+                   }
+                }
+                else {
+                   // found startNode!!
+                   logWrite(DBG.TAG.DEBUG, "found startNode");
+                   return true;
+                }
+             }
+
+             // we found startNode, now count words and characters till we reach the offset
+             function count_word_and_char_till_offset ( startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths, tokenizer ) {
+                // tokenizer is passed here as a parameter because I need to use the same tokenizer that gave me the token array when highlighting previously
+                if (startNode.nodeType !== startNode.TEXT_NODE) {
+                   throw 'count_word_and_char_till_node: this is implemented only for text node! Passed ' +
+                         startNode.nodeName + " " + startNode.nodeType;
+                }
+
+                var current_offset = 0,
+                    aWords = tokenizer(startNode.textContent);
+                aWords.some(function ( word, index, array ) {
+                   logWrite(DBG.TAG.DEBUG, "processing", word);
+                   aCharLengths.push(word.length);
+                   // we put 1 because there is another word which has been parsed.
+                   // Reminder : this array contains the number of words to be counted till reaching the final word
+                   aWordLengths.push(word.trim() ? 1 : 0);
+                   logWrite(DBG.TAG.DEBUG, "current_offset, startOffset", current_offset, startOffset);
+                   current_offset +=
+                   word.length + (word.length == 0 ? 1 : (array[index + 1] ? 1 : 0) );
+                   return !(current_offset <= startOffset);
+                });
+             }
+
           };
 
           RC.ReaderToolController = can.Control.extend(
@@ -215,17 +317,197 @@ define(['jquery',
                    //defaults is loaded first in options
                    this.rtView = this.options.view;
                    this.model = this.options.model;
+                   this.options.element = this.element;
 
                    // variable which will gather all the stateful properties
                    // setter, getter functions
                    this.stateMap =
                    {isUrlLoaded : false, user_id : this.options.user_id, viewAdapter : this.options.getViewAdapter()};
                    $el.html(this.rtView(this.stateMap.viewAdapter));
+
+                   // initialize tooltip controller too
+                   this.TC_init();
                 },
 
-                '#url_param change' : RC.combo_load_url,
+                TC_init : function () {
+                   return new TC.TranslateRTController("#airlang-rdt-tt-container",
+                                                       {dismiss_on          : 'escape-key', target : this.element,
+                                                          reader_controller : this});
+                },
 
-                'click' : RC.show_note,
+                last_mouse_stop : {x : 0, y : 0},
+                timer25         : null,
+
+                '#url_param change' : function combo_load_url ( $el, ev ) {
+                   var RM = this.model;
+                   var viewAdapter = this.stateMap.viewAdapter,
+                       my_url = $el.val(),
+                       self = this;
+                   viewAdapter.attr("url_to_load", my_url);
+                   viewAdapter.setErrorMessage(null);
+                   viewAdapter.set_HTML_body(null);
+
+                   RM.get_stored_notes(
+                      { module   : 'reader tool',
+                         user_id : 1, //TODO : temporary, the user_id should be obtained from some login
+                         url     : my_url})
+                      .then(
+                      function get_stored_notes_success ( aNotes ) {
+                         RM.make_article_readable(my_url)
+                            .fail(function make_article_readable_error ( Error ) {
+                                     logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error);
+                                     viewAdapter.setErrorMessage(Error.toString());
+                                     viewAdapter.set_HTML_body(null);
+                                  })
+                            .done(function make_article_readable_success ( html_text ) {
+                                     logWrite(DBG.TAG.INFO, "URL read successfully");
+                                     viewAdapter.set_HTML_body(html_text);
+                                     viewAdapter.setErrorMessage("");
+                                     self.stateSetIsUrlLoaded(true);
+                                  });
+                      },
+                      function get_stored_notes_failure () {
+                         logWrite(DBG.TAG.ERROR, 'RM.get_stored_notes', err);
+                      }
+                   );
+                },
+
+                '{window} show_and_add_note' : function ( $el, evAdd_note_tooltip ) {
+                   console.log("show and add note event received");
+                   this.show_and_add_note(this.element, evAdd_note_tooltip.range, evAdd_note_tooltip.note);
+                },
+
+                'click' : function click ( $el, ev ) {
+                   // if the click is on the dropdown select then ignore
+                   if (ev.target.nodeName === 'SELECT') {return true}
+                   // else process according to configuration passed in options
+                   ev.stopPropagation();
+                   if (this.options.translate_by != 'click') {
+                      this.show_and_add_note($el, range, note);
+                      return false;
+                   }
+                   else {
+                      //Get all data necessary for adding the note if need be
+                      // necessary to do it now, because it is based on the click selection which will change
+                      // when displaying the tooltip
+                      console.log('emitting show tooltip event');
+                      var evShow_tooltip = new $.Event('show_tooltip');
+                      evShow_tooltip.clientX = ev.clientX;
+                      evShow_tooltip.clientY = ev.clientY;
+                      evShow_tooltip.$rdt_el = $el;
+                      evShow_tooltip.range = window.getSelection().getRangeAt(0);
+                      evShow_tooltip.note = RC.getNoteFromWordClickedOn($el, evShow_tooltip.range);
+                      this.element.trigger(evShow_tooltip);
+                      return false; // don't bubble the click, we dealt with it here
+                   }
+                },
+
+                add_note : function ( note ) {
+                   context = this;
+                   return RSVP.all([
+                                      RM.add_notes({module             : 'reader tool', url : context.stateMap.viewAdapter.url_to_load,
+                                                      user_id          : context.stateMap.user_id, word : note.word,
+                                                      context_sentence : note.context_sentence, index : note.index}),
+                                      RM.add_TSR_weight({user_id : context.stateMap.user_id, word : note.word})
+                                   ])
+                      .then(function success_add_note ( param1, param2 ) {
+                               // TODO: check success of addition through return values of promises
+                               logWrite(DBG.TAG.DEBUG, "added note remotely!")
+                            },
+                            function failure_add_note ( err ) {
+                               logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
+                            });
+                },
+
+                '{document} mousestop' : function ( $el, ev ) {
+                   if (this.options.translate_by != 'point') {
+                      return true;
+                   }
+                   this.element.trigger('show_tooltip');
+                   //this.process(ev, this.$tooltip, this.options);
+                },
+
+                'mousemove' : function ( $el, ev ) {
+                   var self = this;
+                   if (this.hasMouseReallyMoved(ev)) {
+                      var mousemove_without_noise = new $.Event('mousemove_without_noise');
+                      mousemove_without_noise.clientX = ev.clientX;
+                      mousemove_without_noise.clientY = ev.clientY;
+
+                      // trigger that event on the whole div container. The $el here is not used
+                      // but necessary to get access to the ev parameter
+                      self.element.trigger(mousemove_without_noise);
+                   }
+                },
+
+                '{document} mousemove_without_noise' : function ( $el, ev ) {
+                   var self = this;
+                   clearTimeout(this.timer25);
+                   var delay = 300;
+                   this.timer25 = setTimeout(function () {
+                      var mousestop = new $.Event("mousestop");
+                      self.last_mouse_stop.x = mousestop.clientX = ev.clientX;
+                      self.last_mouse_stop.y = mousestop.clientY = ev.clientY;
+
+                      self.element.trigger(mousestop);
+                   }, delay);
+                },
+
+                hasMouseReallyMoved : function ( e ) { //or is it a tremor?
+                   var left_boundry = parseInt(this.last_mouse_stop.x) - 5,
+                       right_boundry = parseInt(this.last_mouse_stop.x) + 5,
+                       top_boundry = parseInt(this.last_mouse_stop.y) - 5,
+                       bottom_boundry = parseInt(this.last_mouse_stop.y) + 5;
+                   return e.clientX > right_boundry || e.clientX < left_boundry || e.clientY > bottom_boundry ||
+                          e.clientY < top_boundry;
+                },
+
+                show_and_add_note : function show_and_add_note ( $el, range, note ) {
+                   if (!this.stateGetIsUrlLoaded()) {
+                      //that flag is set after a successful load of an url
+                      return;
+                   }
+                   //this is a stub for testing
+                   range = range || window.getSelection().getRangeAt(0);
+                   // this is to eliminate possible side effects when calling from another window like tooltip for instance
+                   note = note || RC.getNoteFromWordClickedOn($el, range);
+
+                   var RM = this.model;
+                   var self = this;
+                   note.word = UT.remove_punct(note.word);
+                   // modify the filter selected words to include the closure on the note
+                   var modified_filter_selected_words = function ( aHTMLtoken ) {
+                      return RM.filter_selected_words(aHTMLtoken, [note])
+                   };
+                   modified_filter_selected_words.input_type = RM.filter_selected_words.input_type;
+                   modified_filter_selected_words.output_type = RM.filter_selected_words.output_type;
+
+                   return RSVP.all(
+                      [
+                         RM.apply_highlighting_filters_to_text(
+                            $(note.rootNode), RM.fn_parser_and_transform([], [], true),
+                            [modified_filter_selected_words]
+                         ),
+                         self.add_note(note)
+                      ]).then(function update_html_text ( aPromiseResults ) {
+                                 // update the html in reader controller
+                                 var highlighted_text = aPromiseResults[0];
+                                 self.stateMap.viewAdapter.setErrorMessage(null);
+                                 self.stateMap.viewAdapter.set_HTML_body(highlighted_text);
+                                 return highlighted_text;
+                              });
+                   /*
+                    .then(function update_state (highlighted_text) {
+                    return $.when(RM.add_notes({module    : 'reader tool', url : self.stateMap.viewAdapter.url_to_load,
+                    user_id : self.stateMap.user_id, word : note.word, index : note.index}),
+                    RM.add_TSR_weight({user_id : self.stateMap.user_id, word : note.word}));
+                    })
+                    .then(function success_add_note ( param1, param2 ) {logWrite(DBG.TAG.DEBUG, "added note remotely!")},
+                    function failure_add_note ( err ) {
+                    logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
+                    });
+                    */
+                },
 
                 stateSetIsUrlLoaded : function stateSetIsUrlLoaded ( is_loaded ) {
                    this.stateMap.isUrlLoaded = is_loaded;

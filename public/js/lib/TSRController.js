@@ -176,12 +176,11 @@ define(['jquery', 'state-machine', 'TSRModel', 'socket', 'utils'], function ( $,
                logWrite(DBG.TAG.INFO, "Entered EXO state");
                //TODO : get next word remotely asking
                var appState = controller.appState;
-               var socket = controller.appState.socket;
                // !!!!! Cannot emit object with too many properties
                // as socket.io does a recursive search for binary prop which
                // exceeds stack size (and take time)
                // So for example no jQuery element
-               socket.RSVP_emit('get_word_to_memorize', filter_prop_EXO(appState))
+               SOCK.RSVP_emit('get_word_to_memorize', filter_prop_EXO(appState))
                   .then(
                   function get_word_to_memorize_success ( result ) {
                      /* Result (cf. server TSRModel.get_word_to_memorize.get_word_info
@@ -193,7 +192,7 @@ define(['jquery', 'state-machine', 'TSRModel', 'socket', 'utils'], function ( $,
                      var rowWordWeight = result.rowWordWeight;
 
                      //NOTE : there might be several rows in rowsNoteInfo but they should all have the same word by construction
-                     var word_to_memorize = rowsNoteInfo[0].word;
+                     var word_to_memorize = rowWordWeight.word;
                      // TODO: move to EXO_HINT, no use elsewhere a priori
                      var aExampleSentences = rowsNoteInfo.map(UT.get_prop('context_sentence'));
                      logWrite(DBG.TAG.DEBUG, 'exemple sentences', UT.inspect(aExampleSentences));
@@ -232,9 +231,8 @@ define(['jquery', 'state-machine', 'TSRModel', 'socket', 'utils'], function ( $,
                // Ask for next word TODO: impossible, necessary link from EXO to EXIT, and NEXT to EXO
                // If no more then go to exit
                var appState = controller.appState;
-               var socket = controller.appState.socket;
 
-               socket.RSVP_emit('update_word_weight_post_tsr_exo',
+               SOCK.RSVP_emit('update_word_weight_post_tsr_exo',
                                 UT.copy_prop_from_obj(appState.analyzed_answer, {user_id : appState.user_id}))
                   .then(
                   function update_word_weight_post_tsr_exo_success ( result ) {

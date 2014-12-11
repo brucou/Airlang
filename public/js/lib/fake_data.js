@@ -119,9 +119,9 @@ FAKE.fn.get_stored_notes = function ( obj ) {
 }
 
 /* TO MOCK
-stateMap.rpc_socket.emit('get_translation_info', word, callback);
-stateMap.rpc_socket.emit('highlight_important_words', word, callback);
-stateMap.rpc_socket.emit('set_TSR_word_weights', obj,UT.default_node_callback (resolve, reject));
+SOCK.emit('get_translation_info', word, callback);
+SOCK.emit('highlight_important_words', word, callback);
+SOCK.emit('set_TSR_word_weights', obj,UT.default_node_callback (resolve, reject));
 {channel : RPC_NAMESPACE, topic : 'highlight_important_words', handler : sio_onHighlight_important_words},
 {channel : RPC_NAMESPACE, topic : 'get_translation_info', handler : sio_onGet_translation_info},
 {channel : RPC_NAMESPACE, topic : 'set_TSR_word_weights', handler : TSR.set_word_weights},

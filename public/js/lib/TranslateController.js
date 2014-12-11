@@ -39,8 +39,9 @@ define(['jquery',
         'data_struct',
         'ReaderModel',
         'ReaderViews',
+        'socket',
         'utils'],
-       function ( $, MUSTACHE, DS, RM, RV, UT ) {
+       function ( $, MUSTACHE, DS, RM, RV, SOCK, UT ) {
 
           var TC = {};
 
@@ -60,6 +61,15 @@ define(['jquery',
                         },
                         set_display          : function ( attribute_value ) {
                            this.attr("display", attribute_value);
+                        },
+                        set_input_text       : function ( text ) {
+                           $('#airlang-rdt-trans-input').val(text);
+                        },
+                        empty_input_text     : function ( text ) {
+                           this.set_input_text("");
+                        },
+                        get_input_text       : function () {
+                           return $('#airlang-rdt-trans-input').val();
                         }
                      });
 
@@ -72,73 +82,84 @@ define(['jquery',
              { defaults : {dismiss_on : 'mousemove'} },
              {
                 init : function ( $el, options ) {
-                   logWrite(DBG.TAG.INFO, "initializing tooltip with options", UT.inspect(options));
                    var self = this;
-                   $("body").append(TC.rtTranslateView(TC.viewTranslateAdapter));
+                   this.element.append(TC.rtTranslateView(TC.viewTranslateAdapter));
                    this.$tooltip = $("#airlang-rdt-tt");
+                   this.stateMap = {
+                      range   : null,
+                      note    : null,
+                      $rdt_el : null
+                   };
                 },
 
-                $tooltip        : null,
-                last_mouse_stop : {x : 0, y : 0},
-                timer25         : null,
-
-                '{document} mousestop' : function ( $el, ev ) {
-                   if (this.options.translate_by != 'point') {
-                      return true;
-                   }
+                '{target} show_tooltip' : function ( $el, ev ) {
+                   console.log("show tooltip event received");
+                   this.stateMap.$rdt_el = ev.$rdt_el;
+                   this.stateMap.range = ev.range;
+                   this.stateMap.note = ev.note;
                    this.process(ev, this.$tooltip, this.options);
+                   return false;
                 },
-                'click'                : function click ( $el, ev ) {
-                   if (this.options.translate_by != 'click') {
-                      return true; // bubble to another element who might process it
+
+                '{window} keydown' : function ( $el, ev ) {
+                   var self = this;
+                   logWrite(DBG.TAG.DEBUG, "keydown event", ev.keyCode);
+                   console.log("target event", ev.target);
+
+                   switch (ev.target.tagName) {
+                      case 'INPUT':
+                         if (ev.keyCode == 13) {
+                            self.submit();
+                         }
+                         break;
+
+                      default:
+                         break;
+                   }
+
+                   if (ev.keyCode == 27 && this.options.dismiss_on == 'escape-key') {
+                      self.empty_and_hide();
+                   }
+
+                   return true;
+                },
+
+                'click' : function ( $el, ev ) {
+                   var self = this;
+                   function get_word_translation_clicked_on ( ev ) {
+                      var $tr = $(ev.target).closest('tr');
+                      return ($tr.hasClass('airlang-rdt-tt-row-translation') ? $tr : $tr.prev())
+                         .find('.airlang-rdt-tt-col-lemma')
+                         .html()
+                   }
+
+                   var word = get_word_translation_clicked_on(ev);
+                   if (word) {
+                      TC.viewTranslateAdapter.set_input_text(word.trim());
+                   }
+                },
+
+                '#airlang-rdt-trans-input submit' : function ($el, ev) {
+                   console.log("submit translate controller");
+                },
+
+                submit : function ( $el, ev ) {
+                   var self = this;
+                   var translation_word = TC.viewTranslateAdapter.get_input_text();
+                   if (!translation_word) {
+                      return false
                    }
                    else {
-                      logEntry('Translate : click');
-                      this.process(ev, this.$tooltip, this.options);
-                      return false; // don't bubble the click, we dealt with it here
-                      logExit('Translate : click');
+                      // TODO
+                      console.log("Translation : ", translation_word);
+                      // When finished successfully adding the word on server, add the note
+                      console.log("triggered show and add note event");
+                      var evAdd_note_tooltip = new $.Event('show_and_add_note');
+                      evAdd_note_tooltip.$rdt_el = this.stateMap.$rdt_el;
+                      evAdd_note_tooltip.range = this.stateMap.range;
+                      evAdd_note_tooltip.note = this.stateMap.note;
+                      this.stateMap.$rdt_el.trigger(evAdd_note_tooltip);
                    }
-                },
-                'mousemove'            : function ( $el, ev ) {
-                   var self = this;
-                   if (this.hasMouseReallyMoved(ev)) {
-                      var mousemove_without_noise = new $.Event('mousemove_without_noise');
-                      mousemove_without_noise.clientX = ev.clientX;
-                      mousemove_without_noise.clientY = ev.clientY;
-
-                      // trigger that event on the whole div container. The $el here is not used
-                      // but necessary to get access to the ev parameter
-                      self.element.trigger(mousemove_without_noise);
-                   }
-                },
-
-                '{document} mousemove_without_noise' : function ( $el, ev ) {
-                   var self = this;
-                   clearTimeout(this.timer25);
-                   var delay = 300;
-                   this.timer25 = setTimeout(function () {
-                      var mousestop = new $.Event("mousestop");
-                      self.last_mouse_stop.x = mousestop.clientX = ev.clientX;
-                      self.last_mouse_stop.y = mousestop.clientY = ev.clientY;
-
-                      self.element.trigger(mousestop);
-                   }, delay);
-                },
-
-                '{window} keydown'  : function ( $el, ev ) {
-                   logWrite(DBG.TAG.DEBUG, "keydown event", ev.keyCode);
-                   if (ev.keyCode == 27 && this.options.dismiss_on == 'escape-key') {
-                      this.empty_and_hide();
-                   }
-                },
-
-                hasMouseReallyMoved : function ( e ) { //or is it a tremor?
-                   var left_boundry = parseInt(this.last_mouse_stop.x) - 5,
-                      right_boundry = parseInt(this.last_mouse_stop.x) + 5,
-                      top_boundry = parseInt(this.last_mouse_stop.y) - 5,
-                      bottom_boundry = parseInt(this.last_mouse_stop.y) + 5;
-                   return e.clientX > right_boundry || e.clientX < left_boundry || e.clientY > bottom_boundry ||
-                          e.clientY < top_boundry;
                 },
 
                 resize : function ( tt ) {
@@ -326,12 +347,6 @@ define(['jquery',
                    if (word != '') {
                       // display the tooltip with the translation
                       self.show_translation(word, e);
-
-                      // set the mousemove event handler for dismissing tooltip (window scroll and mousemove)
-                      if (self.options.dismiss_on == 'mousemove') {
-                         self.element.on('mousemove_without_noise', self.empty_and_hide);
-                         $(window).scroll(self.empty_and_hide);
-                      }
                    }
                 },
 
@@ -448,215 +463,6 @@ define(['jquery',
                 }
 
              });
-
-          /**
-           * Purpose    : return a note object containing the word and positional information about the word being clicked on
-           * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
-           *              i.e. with numbered html tag except for text nodes
-           * @param {jQuery} $el : jQuery element clicked on (target element)
-           * @param {event} ev  : event object
-           * @param {range} selectedRange range containing the click selection made by the user
-           */
-          TC.getNoteFromWordClickedOn = function getNoteFromWordClickedOn ( $el, ev, selectedRange ) {
-             // count the number of words to the first element with ID
-
-             // Two cases, the anchor object has an id property or it does not. Most of the time it won't
-             var startNode = selectedRange.startContainer,
-                firstIDNode = TC.findParentWithId(startNode),
-             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
-
-                parent_node_with_id = TC.findParentWithId(startNode),
-                id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
-
-                rootNode = document.getElementById("0");
-             if (!rootNode) {
-                throw 'getNoteFromWordClickedOn: no element with id="0" - this function can only be called on a DOM parsed with parseDOMTree '
-             }
-
-             // NOTE TODO :: Solve the dependence introduced with the parseDOMTree function
-             // if at some point the id changes in parseDomTree, it has to be updated here too
-             var aDomNodes = UT.traverse_DOM_depth_first("===", rootNode, firstIDNode);
-
-             // remove the startNode as we do not wish to count the words in it
-             if (!aDomNodes.pop()) {
-                // if for some reason there is no nodes returned by the traversal, throw an error
-                // there should always one node by construction, the rootNode
-                // TODO: test the edge case if rootnode = startnode in which case there is no words (0) to count
-                // in that case the array is empty, the map leaves it empty and the reduce gives 0
-                // BECAUSE I set 0 as initial value, otherwise error
-                throw 'getNoteFromWordClickedOn: internal error? traverse_DOM_depth_first returns an empty array!'
-             }
-
-             var word_index_to_selected_node = aDomNodes
-                // first for each node get the number of words in the node
-                .map(function ( node ) {
-                        return (node.nodeType === node.TEXT_NODE)
-                           //returns number of words in the text node. "" does not count for a word
-                           ? RM.simple_tokenizer(node.textContent).map(UT.count_word).reduce(UT.sum, 0)
-                           // not a text node so no words to count here
-                           : 0;
-                     })
-                // the sum all those numbers
-                .reduce(UT.sum, 0);
-
-             // now calculate the number of words from selected node to selected word
-             var word_index_to_selected_word = TC.getWordIndexFromIDParent($el, ev, selectedRange);
-
-             // get selected word from the index
-             var full_text = rootNode.textContent;
-             if (!full_text) {
-                // that should never happen right?
-                // we let it slip and let the caller decide what to do
-                return {word : null, index : null, context_sentence : null, rootNode : null}
-             }
-             var final_index = word_index_to_selected_node + word_index_to_selected_word;
-
-             return RM.get_note_from_param(full_text, final_index, rootNode);
-          };
-
-          /**
-           *
-           * @param startNode {Node}
-           * @returns {Node}
-           * @throws {Exception} throws 'findParentWithId: could not find a node with an ID...'
-           */
-          TC.findParentWithId = function findParentWithId ( startNode ) {
-             // Find an ancestor node to startNode with an attribute id
-             var currentNode = startNode;
-             var ancestor_level = 0;
-             while (currentNode &&
-                    (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") )) {
-                logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
-                currentNode = currentNode.parentNode;
-                ancestor_level++;
-             }
-             if (currentNode === null) {
-                // we reached the top of the tree and we found no node with an attribute ID...
-                throw 'findParentWithId: could not find a node with an ID...'
-             }
-
-             logWrite(DBG.TAG.DEBUG,
-                      "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
-             return currentNode;
-          };
-
-          /**
-           * Purpose    : return the word index from the first parent element with an existing attribute ID
-           * ASSUMPTION : function called from within a container such as returned by the parseDomTree function
-           *              i.e. with numbered html tag except for text nodes
-           * @param {jQuery} $el : jQuery element clicked on (target element)
-           * @param {event} ev  : event object
-           * @param {range} selectedRange range containing the click selection made by the user
-           * @returns {number} index of word (starting with 1) from parent with an existing attribute ID
-           * TODO : treat the case where startNode is not a text node : as this is a click, it should always be the case
-           *          unless we click on a tag (is that possible? on an image for instance? what if there is a selection before the click?
-           */
-          TC.getWordIndexFromIDParent = function getWordIndexFromIDParent ( $el, ev, selectedRange ) {
-
-             //var selectedRange = window.getSelection().getRangeAt(0);
-             // if it is just a click, then anchor and focus point to the same location
-             // but that means there is no selection having been done previously
-             // For the moment we just deal with anchor
-
-             // Two cases, the anchor object has an id property or it does not. Most of the time it won't
-             var startNode = selectedRange.startContainer;
-             var startOffset = selectedRange.startOffset;
-             var textContent = startNode.textContent;
-             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
-
-             logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
-
-             // Init array variables tracing the counting
-             var aCharLengths = [],
-                aWordLengths = [];
-
-             // get the first parent with id
-             var currentNode = TC.findParentWithId(startNode);
-
-             // traverse tree till startNode and count words and characters while doing so
-             count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
-
-             logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
-
-             count_word_and_char_till_offset(startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
-
-             //finished! Now count the number of words we have skipped to reach the final one and the chars
-             selectedRange.detach();
-
-             return aWordLengths.reduce(UT.sum, 0);
-
-             ////// Helper functions
-             function count_word_and_char_till_node ( currentNode, startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths,
-                                                      tokenizer ) {
-                // tokenizer is passed here as a parameter because I need to use the same tokenizer that gave me the token array when highlighting previously
-                if (!currentNode.isEqualNode(startNode)) {
-                   // by construction, currentNode cannot be a TEXT_NODE the first time, as ancestor node have an ID
-                   // and text node cannot have id
-                   if (currentNode.nodeType === currentNode.TEXT_NODE) {
-                      logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
-                      var text_content = currentNode.textContent;
-                      var text_content_trim = text_content.trim();
-                      var aWords = tokenizer(text_content_trim);
-                      aCharLengths.push(text_content.length);
-
-                      if (text_content_trim) {
-                         logWrite(DBG.TAG.DEBUG, "non empty string: adding to word array");
-                         // if text_content is only spaces, there is no words to count!!
-                         aWordLengths.push(aWords.length);
-                      }
-                      return false;
-                   }
-                   else {
-                      // otherwise we have an element node, which do not have a text, just proceed to the next child
-                      if (!currentNode.hasChildNodes()) {
-                         throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
-                      }
-                      logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
-                               currentNode.childNodes.length);
-                      var nodeChildren = currentNode.childNodes;
-                      return UT.some(nodeChildren, function some ( nodeChild, index, array ) {
-                         logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
-                                  currentNode.nodeName);
-
-                         var result = count_word_and_char_till_node(nodeChild, startNode, aCharLengths, aWordLengths,
-                                                                    tokenizer);
-                         logWrite(DBG.TAG.DEBUG, "some returns ", result);
-                         return result;
-                      });
-                   }
-                }
-                else {
-                   // found startNode!!
-                   logWrite(DBG.TAG.DEBUG, "found startNode");
-                   return true;
-                }
-             }
-
-             // we found startNode, now count words and characters till we reach the offset
-             function count_word_and_char_till_offset ( startNode, /*OUT*/aCharLengths, /*OUT*/aWordLengths,
-                                                        tokenizer ) {
-                // tokenizer is passed here as a parameter because I need to use the same tokenizer that gave me the token array when highlighting previously
-                if (startNode.nodeType !== startNode.TEXT_NODE) {
-                   throw 'count_word_and_char_till_node: this is implemented only for text node! Passed ' +
-                         startNode.nodeName + " " + startNode.nodeType;
-                }
-
-                var current_offset = 0,
-                   aWords = tokenizer(startNode.textContent);
-                aWords.some(function ( word, index, array ) {
-                   logWrite(DBG.TAG.DEBUG, "processing", word);
-                   aCharLengths.push(word.length);
-                   // we put 1 because there is another word which has been parsed.
-                   // Reminder : this array contains the number of words to be counted till reaching the final word
-                   aWordLengths.push(word.trim() ? 1 : 0);
-                   logWrite(DBG.TAG.DEBUG, "current_offset, startOffset", current_offset, startOffset);
-                   current_offset +=
-                   word.length + (word.length == 0 ? 1 : (array[index + 1] ? 1 : 0) );
-                   return !(current_offset <= startOffset);
-                });
-             }
-
-          };
 
           return TC;
        })
