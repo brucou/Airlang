@@ -126,6 +126,7 @@ define(['jquery',
 
                 'click' : function ( $el, ev ) {
                    var self = this;
+
                    function get_word_translation_clicked_on ( ev ) {
                       var $tr = $(ev.target).closest('tr');
                       return ($tr.hasClass('airlang-rdt-tt-row-translation') ? $tr : $tr.prev())
@@ -139,7 +140,7 @@ define(['jquery',
                    }
                 },
 
-                '#airlang-rdt-trans-input submit' : function ($el, ev) {
+                '#airlang-rdt-trans-input submit' : function ( $el, ev ) {
                    console.log("submit translate controller");
                 },
 
@@ -150,15 +151,16 @@ define(['jquery',
                       return false
                    }
                    else {
-                      // TODO
-                      console.log("Translation : ", translation_word);
                       // When finished successfully adding the word on server, add the note
-                      console.log("triggered show and add note event");
-                      var evAdd_note_tooltip = new $.Event('show_and_add_note');
-                      evAdd_note_tooltip.$rdt_el = this.stateMap.$rdt_el;
-                      evAdd_note_tooltip.range = this.stateMap.range;
-                      evAdd_note_tooltip.note = this.stateMap.note;
-                      this.stateMap.$rdt_el.trigger(evAdd_note_tooltip);
+                      logWrite(DBG.TAG.INFO, "triggered show and add note event with word", translation_word);
+
+                      this.stateMap.$rdt_el.trigger(UT.create_jquery_event(
+                         'show_and_add_note',
+                         {$rdt_el : this.stateMap.$rdt_el, range : this.stateMap.range, note : this.stateMap.note
+                         }));
+                      // Dismiss the tooltip
+                      this.empty_and_hide();
+                      // TODO : fill the translation table and use lemma word instead of current word form
                    }
                 },
 
@@ -358,13 +360,11 @@ define(['jquery',
 
                    var self = this;
                    RM.cached_translation(word, function ( err, aValues ) {
-                      var aQuery_result = aValues[0];
                       if (err) {
                          logWrite(DBG.TAG.ERROR, "An error ocurred", err);
                          return null;
                       }
-                      if (aValues.length === 0 || // means nothing was returned from server and put in store
-                          aQuery_result.length === 0) { // means server returned empty
+                      if (aValues.length === 0 ) { // means server returned empty
                          logWrite(DBG.TAG.WARNING, "Query did not return any values");
                          return null;
                       }
@@ -372,7 +372,7 @@ define(['jquery',
                       logWrite(DBG.TAG.INFO, "Translation fetched");
 
                       // Get table html text which contains the translation of the word
-                      var html_text = self.formatTranslationResults(aQuery_result);
+                      var html_text = self.formatTranslationResults(aValues);
 
                       // get the height and width of the rendered table
                       // we have to render the table first to get the dimensions

@@ -128,7 +128,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              //logExit("srv_qry_important_words");
           };
 
-          RM.highlight_words = UT.async_cached(RM.srv_qry_important_words, null); // no caching
+          RM.highlight_words = RM.srv_qry_important_words; // no caching
           RM.cached_translation = UT.async_cached(RM.srv_qry_word_translation, qry_translation_cache);
 
           ////////// Text processing main functions
@@ -382,7 +382,6 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              if (!aNotes || !UT.isArray(aNotes)) {
                 aNotes = RM.get_notes();
              }
-             logWrite(DBG.TAG.DEBUG, "aNotes", UT.inspect(aNotes));
              // main case : sort note word index by ascending order so we can retrieve them in that order
              aNotes.sort(function sort_notes ( a, b ) {
                 return a.index - b.index;

@@ -141,7 +141,7 @@ function set_word_weight_hist ( word_weight_row, time_updated ) {
       return DB.get_db_adapter('TSR').exec_query(
          {action     : 'insert',
             entity   : 'TSR_word_weight_hist',
-            criteria : U.copy_prop_from_obj(word_weight_row, {created_time : time_updated})
+            criteria : U._extend(word_weight_row, {created_time : time_updated})
          }
       )
    }

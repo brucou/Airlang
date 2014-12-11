@@ -122,7 +122,7 @@ requirejs(
          DBG.setConfig(DBG.TAG.DEBUG, true, {by_default : true})
          (DBG.TAG.TRACE, true, {by_default : true})
          (DBG.TAG.INFO, true, {by_default : true});
-         DBG.disableLog(DBG.TAG.DEBUG, "CachedValues.init")
+         DBG.disableLog
          (DBG.TAG.DEBUG, "putValueInCache")
          (DBG.TAG.DEBUG, "disaggregate_input")
          (DBG.TAG.DEBUG, "async_cached_f")
@@ -136,7 +136,7 @@ requirejs(
          (DBG.TAG.TRACE, "generateTagAnalysisData")
          (DBG.TAG.TRACE, "get_DOM_select_format_from_class")
          (DBG.TAG.TRACE, "getHitWord")
-         //(DBG.TAG.DEBUG, "getHitWord")
+            //(DBG.TAG.DEBUG, "getHitWord")
          (DBG.TAG.TRACE, "is_comment_start_token")
          (DBG.TAG.TRACE, "is_comment_end_token")
             //(DBG.TAG.TRACE, "dataAdapterOStore2TokenActionMap")
@@ -144,7 +144,8 @@ requirejs(
          (DBG.TAG.TRACE, "default_identity_filter")
          (DBG.TAG.TRACE, "fn_html_highlight")
          (DBG.TAG.TRACE, "parseDOMtree")
-         (DBG.TAG.DEBUG, "apply_highlighting_filters_to_text");
+         (DBG.TAG.DEBUG, "apply_highlighting_filters_to_text")
+         (DBG.TAG.TRACE, "simple_tokenizer");
       }
 
       function init_fake () {
@@ -169,6 +170,7 @@ requirejs(
             RM.init()
          ).then(
             function () {
+               localStorage.clear();
                // Start Qunit if called from test index.html starting page
                if ('undefined' !== typeof QUnit) {
                   console.log("Starting QUnit tests");

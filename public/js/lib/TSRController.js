@@ -233,7 +233,7 @@ define(['jquery', 'state-machine', 'TSRModel', 'socket', 'utils'], function ( $,
                var appState = controller.appState;
 
                SOCK.RSVP_emit('update_word_weight_post_tsr_exo',
-                                UT.copy_prop_from_obj(appState.analyzed_answer, {user_id : appState.user_id}))
+                                UT._extend(appState.analyzed_answer, {user_id : appState.user_id}))
                   .then(
                   function update_word_weight_post_tsr_exo_success ( result ) {
                      // result comes from just an update so nothing much interesting should be there

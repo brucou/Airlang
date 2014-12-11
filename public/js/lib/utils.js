@@ -48,112 +48,52 @@ function utilsFactory () {
        - removeWhere
        - size
        - stats
-       The OutputStore functionality equals to that of a stream. Each character arrival (value) provokes
-       a read action (function call), when the end is reached (countDown) the gathered charactered are passed to a function
-       (propagateResult)
        @param f: the function to be applied. f takes an object and output another one
        @param initial_cache : a specific cache implemention OR if none, an array of valueMap object which are simply couples (x,y) where y=f(x), OR []
        */
-      // nice to have : redesign the outputstore function to detect end of stream instead of having a fixed countdown
-
-      // Default implementation of CachedValues is an array, it needs to be able to have property through CachedValues[prop] = value
       var cvCachedValues;
       var self = this;
 
-      if (initialCache && isArray(initialCache)) {
-         // give the possibility to initialize the cachedvalues cache object with an array, it is easier
-         cvCachedValues = new CachedValues(initialCache);
-      }
-      else if (!initialCache) {//no cache passed as parameter
+      if (!initialCache) {//no cache passed as parameter
          logWrite(DBG.TAG.INFO, "async function will not be cached");
       }
       else {
          cvCachedValues = initialCache; // if a cache is passed in parameter then use that one
       }
 
-      var async_cached_f = function cached_fn ( value, osStore ) {
-         // could be refactored to separate functionality of OutputStore which is that of a stream buffer
-         // it piles on values till a trigger (similar to "end" of stream) is detected, then a callback ensues
-         // if OutputStore is a function, then it is considered to be the callback function with default values for OutputStore structure
-
+      var async_cached_f = function cached_fn ( value, f_node_callback ) {
          logEntry("async_cached_f");
 
-         //var dfr = $.Deferred(); // promise passed to OS structure for resolving the data at relevant time
-
-         if (isFunction(osStore)) {
-            var f_callback = osStore;
-            osStore = new OutputStore({countdown : 1, callback : f_callback});
-         }
-         //osStore.setDeferred(dfr);
-         var index = osStore.push(["Input value", value].join(": ")); // this is in order to "book" a place in the output array to minimize chances that a concurrent exec does not take it
-         // index points at the temporary value;
-
-         var fvalue = null;
-         // TODO : !! also applies to "", check that
-         //logWrite(DBG.TAG.DEBUG, "cvCachedValues", inspect(cvCachedValues));
+         var fValue = null;
          if (cvCachedValues) { // if function is cached
-            var fValue = cvCachedValues.getItem(value);
+            fValue = cvCachedValues.getItem(value);
             if (fValue) {
                // value already cached, no callback, no execution, just assigning the value to the output array
                logWrite(DBG.TAG.DEBUG, "Computation for value already in cache!", inspect(value),
                         inspect(fValue));
-               updateOutputStore(osStore, index, fValue);
-               //fvalue = aValue;
-            }
-            else { // not in cache so cache it, except if it is a number
-               exec_f();
-               cvCachedValues.setItem(value, fvalue);
+               logExit("async_cached_f");
+               return f_node_callback(null, fValue); //TODO check if callback is node type or not
             }
          }
-         else {// if function is not cached
-            //logWrite(DBG.TAG.INFO, "function is not cached so just executing it");
-            exec_f();
-         }
+         fValue = f(value, callback);
 
          logExit("async_cached_f");
-         return fvalue;
-
-         function exec_f () {
-            fvalue = f(value, callback);
-            osStore.setValueAt(index, osStore.getValueAt[index] + " | async call to f returns : " + fvalue);
-            logWrite(DBG.TAG.INFO, "New async computation, logging value immediately returned by func", value,
-                     fvalue);
-         }
-
-         function updateOutputStore ( osOutputStore, iIndex, aaValue ) {
-            osOutputStore.setValueAt(iIndex, aaValue);
-            osOutputStore.invalidateAt(iIndex); // This is to propagate the change elsewhere who registered for an action to be taken
-         }
+         return fValue;
 
          function callback ( err, result ) {
             logEntry("async cached callback");
             if (cvCachedValues) {
-               if (!(err)) {
-                  cvCachedValues.setItem(value, result);
-               }
-               else {
-                  cvCachedValues.setItem(value, null);
-               }
+               // TODO: do I really want to cache also errors??
+               cvCachedValues.setItem(value, err ? null : result);
             }
-            if (err) {
-               logWrite(DBG.TAG.ERROR, "error while executing async query on server", err);
-               console.log(err);
-               dfr.reject(err);
-               osStore.setErr(err);
-               osStore.invalidateAt(index);
-            }
-            else {
-               updateOutputStore(osStore, index, result);
-            }
+            f_node_callback(err, result);
             logExit("async cached callback");
          }
       };
       //!! this is not a standard function, only used for tracing purposes on Chrome
       async_cached_f.displayName = f.name;
-
       async_cached_f.cache = cvCachedValues;
       async_cached_f.f = f; // giving a way to return to the original uncached version of f)
-      //f.async_cached_f = async_cached_f;
 
       return async_cached_f;
    }
@@ -552,7 +492,7 @@ function utilsFactory () {
          origin[keys[i]] = add[keys[i]];
       }
       return origin;
-   };
+   }
 
    // definition of helper function format, similar to sprintf of C
    // usage : String.format('{0} is dead, but {1} is alive! {0} {2}', 'ASP', 'ASP.NET');
@@ -604,161 +544,6 @@ function utilsFactory () {
    function isNumberString ( text ) {
       // issue: isNaN recognizes english formatting of numbers only
       return !isNaN(text);
-   }
-
-   function CachedValues ( arrayInit ) {
-      // constructor
-      /* We are taking advantage here of the native hashmap implementation of javascript (search in O(1))
-       On the down side, we might loose some efficiency in terms of storage, as each hash is a full-fledged new object.
-       NOTE: keys can be any valid javascript string: cf. https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
-       NOTE: it is preferable to have keys trimmed and removed extra spaces to avoid unexpected or confusing results
-       However indexedDB currently has an asynchronous API, which makes it difficult to use in connection with
-       synchronous functions
-       */
-      self = this;
-      this.internalStore = {};
-      this.secondaryStore = [];
-      this.jsObjectInternals =
-      ["__proto__", "__noSuchMethod__", "__count__", "__parent__", "__defineGetter__", "__defineSetter__",
-       "__lookupGetter__", "__lookupSetter__", "hasOwnProperty", "constructor", "isPrototypeOf",
-       "propertyIsEnumerable",
-       "toLocaleString", "toString", "valueOf"
-         /* , "toSource", "eval", "watch", "unwatch" // not in js core anymore */
-      ]; // this is the list of the function that cannot be used as keys in an object as they are already reserved
-      this.jsOI_length = this.jsObjectInternals.length;
-
-      this.getItem = function ( key ) {
-         // return the fvalue if there, otherwise return false
-         // be careful that fvalue not be a boolean otherwise it could conflict
-         var isVinC = this.isValueInCache(key);
-         if (isVinC.bool) {
-            // that should be the normal case if that function is called
-            var isRes = this.isReservedKey(key);
-            if (isRes.bool) {
-               // in secondary store
-               return this.secondaryStore[isRes.index];
-            }
-            else {
-               // in primary store
-               return this.internalStore[key];
-            }
-         }
-         else {
-            // the function was called but nothing was found in cache!!
-            return null;
-         }
-      };
-      this.setItem = function ( key, fvalue ) {
-         // check that the key is not already in the cache, if it is replace current by the new fvalue
-         // e.g. cache is a indexed set
-         // so we have a new row, or an update row operation here
-         // returns false if error, true if operation was successful
-         logEntry("putValueInCache");
-         logWrite(DBG.TAG.DEBUG, "isValueInCache", inspect(this.isValueInCache(key).bool));
-         if (this.isValueInCache(key).bool) {
-            logWrite(DBG.TAG.DEBUG, "calling updateValueInCache", key, fvalue);
-            logExit("putValueInCache");
-            return this.updateValueInCache(key, fvalue);
-         }
-         else {
-            // not in cache, add it
-            // but add it where?
-            var isRes = this.isReservedKey(key);
-            logWrite(DBG.TAG.DEBUG, "not in cache");
-            logWrite(DBG.TAG.DEBUG, "isReservedKey?", isRes.bool, isRes.index);
-            if (isRes.bool) {
-               logWrite(DBG.TAG.DEBUG, "adding to secondary Store");
-               this.secondaryStore[isRes.index] = fvalue;
-               logExit("putValueInCache");
-               return true;
-            }
-            else {
-               // add it to the internal store
-               logWrite(DBG.TAG.DEBUG, "adding to internal store");
-               this.internalStore[key] = fvalue;
-               logExit("putValueInCache");
-               return true;
-            }
-         }
-      };
-
-      this.isValueInCache = function ( key ) {
-         // returns true if the key passed in parameter is already in the cache
-         // first, test if the key is one of the reserved keys, because it will always match is applied to any object
-         var isRes = this.isReservedKey(key);
-         if (isRes.bool) {
-            // the key is one of the reserved properties, look up the secondary store
-            if (this.secondaryStore[isRes.index]) {
-               return {isInternalStore : false, bool : true};
-            }
-            else {
-               return {isInternalStore : false, bool : false};
-            }
-         }
-         if (!!this.internalStore[key]) {
-            // key is already cached
-            return {isInternalStore : true, bool : true};
-         }
-         return {isInternalStore : true, bool : false};
-      };
-
-      this.updateValueInCache = function ( key, fvalue ) {
-         // updates the value referenced by key in the cache
-         // returns false if error, true if operation was successful
-         // NOTE : this is an internal function, it can only be called by putValueInCache, it is supposed that the
-         // value is in the cache already
-         // we keep it that way in case of a change of implementation towards database which have a real update function
-
-         var isVinC = this.isValueInCache(key);
-         if (isVinC.bool) {// it should be in cache if we arrive, but double checking
-            // already in cache, we update the value
-            if (isVinC.isInternalStore) {
-               // update internalStore
-               this.internalStore[key] = fvalue;
-               return true;
-            }
-            else {
-               // it is in secondary store, update it there
-               var isRes = this.isReservedKey(key);
-               if (isRes.bool) {// should be, otherwise error
-                  // the key is one of the reserved properties, update in the secondary store
-                  this.secondaryStore[isRes.index] = fvalue;
-                  return true;
-               }
-            }
-         }
-         else {
-            // if we arrive here, it is because it is not in either primary and secondary store, so return false
-            return false;
-         }
-      };
-
-      this.isReservedKey = function ( key ) {
-         // returns true if the key is one of the reserved ones in jsObjectInternals
-         for (var i = 0; i < this.jsOI_length; i++) {
-            if (this.jsObjectInternals[i] === key) {
-               return {index : i, bool : true};
-            }
-         }
-         return {index : -1, bool : false};
-      };
-
-      this.init = function ( arrayInit ) {
-         logEntry("CachedValues.init");
-         logWrite(DBG.TAG.DEBUG, "input", inspect(arrayInit));
-         if (arrayInit && isArray(arrayInit)) {
-            arrayInit.forEach(function ( element, index, array ) {
-               logWrite(DBG.TAG.DEBUG, "element", inspect(element), element["key"], element["value"]);
-               self.putValueInCache(element["key"], element["value"]);
-            })
-         }
-         else {
-            logWrite(DBG.TAG.ERROR, "function init called with a parameter that is not an array");
-         }
-         logExit("CachedValues.init");
-      };
-
-      this.init(arrayInit);
    }
 
    function OutputStore ( init ) {
@@ -928,21 +713,6 @@ function utilsFactory () {
    }
 
    /**
-    * return an array which contains the own properties name of the object passed as parameter
-    * @param {Object} obj : object from which own properties are retrieved
-    * @return {Array}
-    */
-   function get_own_properties ( obj ) {
-      var aProperties = [];
-      for (var prop in obj) {
-         if (obj.hasOwnProperty(prop)) {
-            aProperties.push(prop);
-         }
-      }
-      return aProperties;
-   }
-
-   /**
     * Returns two arrays containing the object properties on one hand, and the properties' value on the other hand
     * @param obj {Object}
     * @returns {{properties: Array, values: Array}}
@@ -952,28 +722,13 @@ function utilsFactory () {
           prop_array = [],
           temp_array = [], // temp_array holds the $1, $2, for the arguments. 1 is offset by $index_param
           index = 0,
-          aProp = get_own_properties(obj);
+          aProp = Object.keys(obj);
 
       aProp.forEach(function ( prop, index, array ) {
          prop_array.push(prop);
          aArgs.push(obj[prop]);
       });
       return {properties : prop_array, values : aArgs}
-   }
-
-   /**
-    * Copies the properties of the origin object into the destination object
-    * @param destination {Object}
-    * @param origin {Object}
-    * Returns the destination object in case chaining is needed (with a second origin object for instance)
-    */
-   function copy_prop_from_obj ( destination, origin ) {
-      for (var prop in origin) {
-         if (origin.hasOwnProperty(prop)) {
-            destination[prop] = origin[prop];
-         }
-      }
-      return destination;
    }
 
    function hasOwnProperty ( obj, prop ) {
@@ -1093,7 +848,7 @@ function utilsFactory () {
             html_begin_tag = arr.join(" ") + ">";
          }
          else {// read the attributes to map from mapAttrTagClass -> array
-            var aAttributes = get_own_properties(mapAttrClass);
+            var aAttributes = Object.keys(mapAttrClass);
             // for each attribute in the array, read the corresponding value from $el
             // and perform the mapping if there is one to perform
             var html_class_attr = aAttributes.reduce(function ( accu, attribute ) {
@@ -1231,6 +986,16 @@ function utilsFactory () {
 
       return false;
 
+   }
+
+   /**
+    * Return an event of name <i>event_name</i> with the properties set in objProp (shallow copy used)
+    * @param event_name {String}
+    * @param objProp {Object}
+    * @returns {jQuery.Event}
+    */
+   function create_jquery_event ( event_name, objProp ) {
+      return _extend(new $.Event(event_name), objProp);
    }
 
    /**
@@ -1442,7 +1207,7 @@ function utilsFactory () {
       aParamTypeSpecs.forEach(function ( paramTypeSpec ) {
          // paramTypeSpec is similar to {param1: type_spec}
          // aArgs[param_index] will be the argument number index passed as parameter
-         var aProps = get_own_properties(paramTypeSpec);
+         var aProps = Object.keys(paramTypeSpec);
          if (aProps.length === 0) {
             throw 'assert_type: expected non-empty spec object!';
          }
@@ -1527,7 +1292,7 @@ function utilsFactory () {
          {obj : 'Object', specMap : 'Object'}
       ], {bool_no_exception : true});
       if (argCheck.ok) {
-         var aProps = get_own_properties(specMap);
+         var aProps = Object.keys(specMap);
          if (aProps.length === 0) {
             throw 'assert_properties: expected non-empty spec object!';
          }
@@ -1657,12 +1422,6 @@ function utilsFactory () {
       return word;
    }
 
-   function compose_fn ( context, f, g ) {
-      return function ( /*arguments*/ ) {
-         return f(g.apply(context, arguments));
-      }
-   }
-
    /**
     * Source : http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#JavaScript
     * The Levenshtein distance is a string metric for measuring the difference between two sequences. Informally, the Levenshtein distance between two words is the minimum number of single-character edits (i.e. insertions, deletions or substitutions) required to change one word into the other
@@ -1753,7 +1512,6 @@ function utilsFactory () {
           isNumberString                  : isNumberString,
           async_cached                    : async_cached,
           OutputStore                     : OutputStore,
-          CachedValues                    : CachedValues,
           getIndexInArray                 : getIndexInArray,
           escape_html                     : escape_html,
           remove_extra_spaces             : remove_extra_spaces,
@@ -1765,11 +1523,10 @@ function utilsFactory () {
           injectArray                     : injectArray,
           get_calling_function_name       : get_calling_function_name,
           parseDOMtree                    : parseDOMtree,
-          get_own_properties              : get_own_properties,
           separate_obj_prop               : separate_obj_prop,
-          copy_prop_from_obj              : copy_prop_from_obj,
           some                            : some,
           traverse_DOM_depth_first        : traverse_DOM_depth_first,
+          create_jquery_event             : create_jquery_event,
           fn_get_prop                     : fn_get_prop,
           parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
           getClass                        : getClass,
@@ -1787,7 +1544,6 @@ function utilsFactory () {
           f_none                          : f_none,
           count_word                      : count_word,
           is_word                         : is_word,
-          compose_fn                      : compose_fn,
           getEditDistance                 : getEditDistance,
           delegate_promise_error          : delegate_promise_error,
           error_handler                   : error_handler,

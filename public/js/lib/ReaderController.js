@@ -317,7 +317,6 @@ define(['jquery',
                    //defaults is loaded first in options
                    this.rtView = this.options.view;
                    this.model = this.options.model;
-                   this.options.element = this.element;
 
                    // variable which will gather all the stateful properties
                    // setter, getter functions
@@ -387,17 +386,17 @@ define(['jquery',
                       return false;
                    }
                    else {
-                      //Get all data necessary for adding the note if need be
+                      // Get all data necessary for adding the note if need be
                       // necessary to do it now, because it is based on the click selection which will change
                       // when displaying the tooltip
                       console.log('emitting show tooltip event');
-                      var evShow_tooltip = new $.Event('show_tooltip');
-                      evShow_tooltip.clientX = ev.clientX;
-                      evShow_tooltip.clientY = ev.clientY;
-                      evShow_tooltip.$rdt_el = $el;
-                      evShow_tooltip.range = window.getSelection().getRangeAt(0);
-                      evShow_tooltip.note = RC.getNoteFromWordClickedOn($el, evShow_tooltip.range);
-                      this.element.trigger(evShow_tooltip);
+                      var range = window.getSelection().getRangeAt(0);
+                      this.element.trigger(UT.create_jquery_event(
+                         'show_tooltip',
+                         {clientX : ev.clientX, clientY :ev.clientY,
+                            $rdt_el : $el, range: range,
+                            note: RC.getNoteFromWordClickedOn($el, range)
+                         }));
                       return false; // don't bubble the click, we dealt with it here
                    }
                 },
