@@ -49,27 +49,67 @@ define(['jquery',
 
           TC.viewTranslateAdapter = new
              can.Map({
-                        tooltip_html_content : null,
-                        display              : 'none',
-                        top                  : '10px',
-                        left                 : '10px',
-                        width                : '10%',
-                        height               : '10%',
-                        text_align           : 'center',
-                        set_HTML_tooltip     : function ( html_text ) {
+                        tooltip_html_content       : null,
+                        display                    : 'none',
+                        top                        : '10px',
+                        left                       : '10px',
+                        width                      : '10%',
+                        height                     : '10%',
+                        text_align                 : 'center',
+                        get_$tooltip               : function () {return $("#airlang-rdt-tt")},
+                        get_$translation_table     : function () {return $("#table_tooltip");},
+                        // or could be $('[data-content="translation_table"]'); but it is slower so not used here
+                        set_HTML_tooltip           : function ( html_text ) {
                            this.attr("tooltip_html_content", html_text)
                         },
-                        set_display          : function ( attribute_value ) {
+                        empty_HTML_tooltip         : function () {this.set_HTML_tooltip("")},
+                        set_display                : function ( attribute_value ) {
                            this.attr("display", attribute_value);
                         },
-                        set_input_text       : function ( text ) {
+                        show                       : function () {this.set_display("block")},
+                        hide                       : function () {this.set_display("none")},
+                        set_input_text             : function ( text ) {
                            $('#airlang-rdt-trans-input').val(text);
                         },
-                        empty_input_text     : function ( text ) {
+                        empty_input_text           : function ( text ) {
                            this.set_input_text("");
                         },
-                        get_input_text       : function () {
-                           return $('#airlang-rdt-trans-input').val();
+                        get_input_text             : function () {
+                           return $('#airlang-rdt-trans-input').val().trim();
+                        },
+                        get_translation_clicked_on : function ( ev ) {
+                           var $tr = $(ev.target).closest('tr');
+                           var $tr_next_1st_child, $tr_1st_child = null;
+                           var translation_word, sample_sentence_first_lg, sample_sentence_target_lg = null;
+                           /* this row could be one of four possibilities:
+                            1. nothing
+                            2. the header row which contains the transation_lemma word
+                            3. the row with the translation
+                            4. the row with the sample sentences
+                            */
+                           switch ($tr.data('content')) {
+                              case 'translation': // Case 3
+                                 translation_word = $tr.data('lemma').trim();
+                                 $tr_next_1st_child = $tr.next().children(0);
+                                 sample_sentence_first_lg = $tr_next_1st_child.data('content-sentence-first-lg').trim();
+                                 sample_sentence_target_lg =
+                                 $tr_next_1st_child.data('content-sentence-target-lg').trim();
+                                 break;
+                              case 'sample_sentences': // Case 4
+                                 translation_word = $tr.prev().data('lemma').trim();
+                                 $tr_1st_child = $tr.children(0);
+                                 sample_sentence_first_lg = $tr_1st_child.data('content-sentence-first-lg').trim();
+                                 sample_sentence_target_lg = $tr_1st_child.data('content-sentence-target-lg').trim();
+                                 break;
+                              default: // Case 1 and 2 and whatever
+                                 return null;
+                                 break;
+                           }
+                           return {
+                              translation_word          : translation_word,
+                              sample_sentence_first_lg  : sample_sentence_first_lg,
+                              sample_sentence_target_lg : sample_sentence_target_lg
+                           }
                         }
                      });
 
@@ -84,19 +124,13 @@ define(['jquery',
                 init : function ( $el, options ) {
                    var self = this;
                    this.element.append(TC.rtTranslateView(TC.viewTranslateAdapter));
-                   this.$tooltip = $("#airlang-rdt-tt");
+                   this.$tooltip = TC.viewTranslateAdapter.get_$tooltip();
                    this.stateMap = {
-                      range   : null,
-                      note    : null,
-                      $rdt_el : null
-                   };
+                      $rdt_el : this.options.target};
                 },
 
-                '{target} show_tooltip' : function ( $el, ev ) {
-                   console.log("show tooltip event received");
-                   this.stateMap.$rdt_el = ev.$rdt_el;
-                   this.stateMap.range = ev.range;
-                   this.stateMap.note = ev.note;
+                '{target} al-ev-show_tooltip' : function ( $el, ev ) {
+                   logWrite(DBG.TAG.EVENT, "al-ev-show_tooltip", "received");
                    this.process(ev, this.$tooltip, this.options);
                    return false;
                 },
@@ -118,7 +152,7 @@ define(['jquery',
                    }
 
                    if (ev.keyCode == 27 && this.options.dismiss_on == 'escape-key') {
-                      self.empty_and_hide();
+                      this.dismiss_and_return({translation_word : null});
                    }
 
                    return true;
@@ -127,40 +161,23 @@ define(['jquery',
                 'click' : function ( $el, ev ) {
                    var self = this;
 
-                   function get_word_translation_clicked_on ( ev ) {
-                      var $tr = $(ev.target).closest('tr');
-                      return ($tr.hasClass('airlang-rdt-tt-row-translation') ? $tr : $tr.prev())
-                         .find('.airlang-rdt-tt-col-lemma')
-                         .html()
-                   }
-
-                   var word = get_word_translation_clicked_on(ev);
-                   if (word) {
-                      TC.viewTranslateAdapter.set_input_text(word.trim());
-                   }
-                },
-
-                '#airlang-rdt-trans-input submit' : function ( $el, ev ) {
-                   console.log("submit translate controller");
+                   var objTrans = TC.viewTranslateAdapter.get_translation_clicked_on(ev);
+                   if (!objTrans) return false; // click out of the translation table
+                   TC.viewTranslateAdapter.set_input_text(objTrans.translation_word);
+                   this.stateMap.objTrans = objTrans;
                 },
 
                 submit : function ( $el, ev ) {
                    var self = this;
-                   var translation_word = TC.viewTranslateAdapter.get_input_text();
+                   var translation_word = this.stateMap.objTrans.translation_word;
                    if (!translation_word) {
                       return false
                    }
                    else {
                       // When finished successfully adding the word on server, add the note
-                      logWrite(DBG.TAG.INFO, "triggered show and add note event with word", translation_word);
-
-                      this.stateMap.$rdt_el.trigger(UT.create_jquery_event(
-                         'show_and_add_note',
-                         {$rdt_el : this.stateMap.$rdt_el, range : this.stateMap.range, note : this.stateMap.note
-                         }));
-                      // Dismiss the tooltip
-                      this.empty_and_hide();
-                      // TODO : fill the translation table and use lemma word instead of current word form
+                      logWrite(DBG.TAG.EVENT, "al-ev-show_and_add_note", "emitting", translation_word);
+                      // Dismiss the tooltip and return the translation of the word
+                      this.dismiss_and_return(this.stateMap.objTrans);
                    }
                 },
 
@@ -169,9 +186,15 @@ define(['jquery',
                    tt.width(tt.contents().width() + 10);
                 },
 
+                dismiss_and_return : function ( return_object ) {
+                   this.empty_and_hide();
+                   this.stateMap.$rdt_el.trigger(UT.create_jquery_event("al-ev-tooltip_dismiss",
+                                                                        return_object));
+                },
+
                 empty_and_hide : function () {
-                   TC.viewTranslateAdapter.set_HTML_tooltip("");
-                   TC.viewTranslateAdapter.set_display("none");
+                   TC.viewTranslateAdapter.empty_HTML_tooltip();
+                   TC.viewTranslateAdapter.hide();
                 },
 
                 getHitWord : function ( e ) {
@@ -364,7 +387,7 @@ define(['jquery',
                          logWrite(DBG.TAG.ERROR, "An error ocurred", err);
                          return null;
                       }
-                      if (aValues.length === 0 ) { // means server returned empty
+                      if (aValues.length === 0) { // means server returned empty
                          logWrite(DBG.TAG.WARNING, "Query did not return any values");
                          return null;
                       }
@@ -381,7 +404,7 @@ define(['jquery',
                       self.$tooltip.append(frag);
                       TC.viewTranslateAdapter.set_HTML_tooltip("");
                       TC.viewTranslateAdapter.set_display("block");
-                      var $$tbl = $("#table_tooltip");
+                      var $$tbl = TC.viewTranslateAdapter.get_$translation_table();
                       var width = $$tbl.width();
                       var height = $$tbl.height();
                       var pos = self.compute_position(ev.clientX, ev.clientY, $$tbl);
@@ -390,7 +413,7 @@ define(['jquery',
                       //logWrite(DBG.TAG.DEBUG, "HTML formatting :", html_text);
 
                       TC.viewTranslateAdapter.set_HTML_tooltip(html_text);
-                      TC.viewTranslateAdapter.set_display("block");
+                      TC.viewTranslateAdapter.show();
                       TC.viewTranslateAdapter.attr("left", [pos.x, 'px'].join(""));
                       TC.viewTranslateAdapter.attr("top", [pos.y, 'px'].join(""));
                       TC.viewTranslateAdapter.attr("width", [width, 'px'].join(""));

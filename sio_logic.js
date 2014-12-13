@@ -8,7 +8,8 @@ var SIO = {},
    U = require('./public/js/lib/utils'), // load the client side utils
    RSVP = require('rsvp'),
    io,
-   TSR = require('./TSRModel');
+   TSR = require('./TSRModel'),
+   READER = require('./Reader');
 const RPC_NAMESPACE = '/rpc';
 const STATE_NAMESPACE = '/state';
 
@@ -20,6 +21,7 @@ var mapListeners = {
       {channel : RPC_NAMESPACE, topic : 'set_TSR_word_weights', handler : TSR.set_word_weights},
       {channel : RPC_NAMESPACE, topic : 'get_word_to_memorize', handler : TSR.get_word_to_memorize},
       {channel : RPC_NAMESPACE, topic : 'update_word_weight_post_tsr_exo', handler : TSR.update_word_weight_post_exo},
+      {channel : RPC_NAMESPACE, topic : 'set_word_user_translation', handler : READER.set_word_user_translation},
       {channel : STATE_NAMESPACE, topic : 'REST_operation', handler : sio_on_REST}
    ]};
 

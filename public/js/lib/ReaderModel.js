@@ -62,6 +62,8 @@
  * - if properties in CAN.map are set to undefined, a warning "cannot find key ..." is generated
  *   It can either be ignored or the value must be initialized to remove the warning
  * - Incredible but TRUE, you cannot put any CAPS letter in the name of the view template...
+ * - some issues with submit event handler which do not work (the first one does, the second one NO?)
+ *   + so use keydown event handler and catch the ENTER key (keycode 13)
  * ON.THE.FLY coding
  * - wrong scope - function thought to be defined module scope but hidden into another function
  * - wrong arguments passed o function, or in wrong order, or missing arguments
@@ -72,6 +74,15 @@
  * SOCKET
  * - functions are not serialized, so any attempt to pass a function over socket will fail SILENTLY
  * - OR the function will be removed of the object - in any case there will be no error!!!
+ * ARCHITECTURE
+ * - + use VIEWS with template and variable bindings
+ *   + use view adapters to get/set values in the DOM
+ *   + use CONTROLLERS to receive and emit events to handle the BEHAVIOUR
+ *   + Controllers should not use class information (only should be used for styling!)
+ *   + Use data-attributes for semantic/other purposes
+ *   + As much as possible the MODEL should not have internal state, but consist of PURE functions
+ *     + notwithstanding DATABASE communications or ENVIRONMENT variables
+ *   + use OWN EVENTS to handle communication between controllers
  */
 
 define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],

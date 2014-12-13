@@ -96,16 +96,20 @@ requirejs(
       function start () {
          // TODO : add a login mechanism to have different user ids
          appState = {
-            type      : 'appState',
-            error_div : '#application_error',
-            user_id   : 1
+            type            : 'appState',
+            error_div       : '#application_error',
+            user_id         : 1,
+            // NOTE : ISO 639-2 codes are used for encoding language information
+            first_language  : 'eng',
+            target_language : 'cze'
          };
 
          //TODO Change user_id in new RC... to appState, or pass a clone of the object
          new RC.ReaderToolController("#reader_tool",
-                                     {view           : RC.rtView, getViewAdapter : RC.getViewAdapter,
-                                        model        : RM, user_id : 1,
-                                        translate_by : 'click'});
+                                     {view             : RC.rtView, getViewAdapter : RC.getViewAdapter, model : RM,
+                                        user_id        : 1,
+                                        first_language : appState.first_language, target_language : appState.target_language,
+                                        translate_by   : 'click'});
          // TSR button handler
          // no controller, just a click handler
          $("#TSR").click(function ( event ) {

@@ -11,7 +11,7 @@
 var DBG = {
    TAG : {
       TRACE   : "Trace", INFO : "Info", ERROR : "Error",
-      WARNING : "Warning", DEBUG : "DEBUG"
+      WARNING : "Warning", DEBUG : "DEBUG", EVENT : "Event"
    },
 
    SEP : {
@@ -261,11 +261,10 @@ function debugFactory () {
    };
 
    DBG.default_config = function default_config () {
-      DBG.setConfig(DBG.TAG.TRACE, false, {by_default : true}); // always trace
-      DBG.setConfig(DBG.TAG.INFO, false, {by_default : true});
-      DBG.setConfig(DBG.TAG.ERROR, false, {by_default : true});
-      DBG.setConfig(DBG.TAG.WARNING, true, {by_default : true}); //
-      DBG.setConfig(DBG.TAG.DEBUG, false, {by_default : true}); //
+      // set config for all tags
+      Object.keys(DBG.TAG).forEach(function (key) {
+         DBG.setConfig(DBG.TAG[key], false, {by_default : true}); // always trace by default
+      });
    };
 
    DBG.enableLog = function enableLog ( TAG, context ) {

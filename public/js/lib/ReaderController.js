@@ -3,12 +3,13 @@
  */
 define(['jquery',
         'rsvp',
+        'socket',
         'ReaderModel',
         'TranslateController',
         'Stateful',
         'data_struct',
         'utils'],
-       function ( $, RSVP, RM, TC, STATE, DS, UT ) {
+       function ( $, RSVP, SOCK, RM, TC, STATE, DS, UT ) {
           //TEST CODE
           trace(RM, 'RM');
           //trace(TC, 'TC');
@@ -320,8 +321,14 @@ define(['jquery',
 
                    // variable which will gather all the stateful properties
                    // setter, getter functions
-                   this.stateMap =
-                   {isUrlLoaded : false, user_id : this.options.user_id, viewAdapter : this.options.getViewAdapter()};
+                   this.stateMap = {
+                      viewAdapter       : this.options.getViewAdapter(),
+                      user_id           : this.options.user_id,
+                      first_language    : this.options.first_language,
+                      target_language   : this.options.target_language,
+                      isUrlLoaded       : false,
+                      tooltip_displayed : false
+                   };
                    $el.html(this.rtView(this.stateMap.viewAdapter));
 
                    // initialize tooltip controller too
@@ -371,34 +378,43 @@ define(['jquery',
                    );
                 },
 
-                '{window} show_and_add_note' : function ( $el, evAdd_note_tooltip ) {
-                   console.log("show and add note event received");
-                   this.show_and_add_note(this.element, evAdd_note_tooltip.range, evAdd_note_tooltip.note);
+                '{window} al-ev-tooltip_dismiss' : function ( $el, ev ) {
+                   logWrite(DBG.TAG.EVENT, "al-ev-tooltip_dismiss", "received");
+                   this.stateMap.tooltip_displayed = false;
+                   // Add the note in the note table and visually display the annotated word
+                   if (!ev.translation_word) { return false}
+                   this.show_and_add_note(this.element, this.stateMap.range, this.stateMap.note);
+                   // TODO : fill the translation table and use lemma word instead of current word form
+                   SOCK.RSVP_emit('set_word_user_translation', {
+                      translation_word          : ev.translation_word,
+                      sample_sentence_first_lg  : ev.sample_sentence_first_lg,
+                      sample_sentence_target_lg : ev.sample_sentence_target_lg,
+                      first_language            : this.stateMap.first_language,
+                      target_language           : this.stateMap.target_language
+                   });
+                   return false;
                 },
 
                 'click' : function click ( $el, ev ) {
                    // if the click is on the dropdown select then ignore
                    if (ev.target.nodeName === 'SELECT') {return true}
+                   // if already displaying the tooltip, ignore clicks out of the tooltip or bubbled up
+                   if (this.stateMap.tooltip_displayed) {return false}
                    // else process according to configuration passed in options
                    ev.stopPropagation();
-                   if (this.options.translate_by != 'click') {
-                      this.show_and_add_note($el, range, note);
-                      return false;
-                   }
-                   else {
-                      // Get all data necessary for adding the note if need be
-                      // necessary to do it now, because it is based on the click selection which will change
-                      // when displaying the tooltip
-                      console.log('emitting show tooltip event');
-                      var range = window.getSelection().getRangeAt(0);
-                      this.element.trigger(UT.create_jquery_event(
-                         'show_tooltip',
-                         {clientX : ev.clientX, clientY :ev.clientY,
-                            $rdt_el : $el, range: range,
-                            note: RC.getNoteFromWordClickedOn($el, range)
-                         }));
-                      return false; // don't bubble the click, we dealt with it here
-                   }
+                   // Get all data necessary for adding the note if need be
+                   // necessary to do it now, because it is based on the click selection which will change
+                   // when displaying the tooltip
+                   logWrite(DBG.TAG.EVENT, "al-ev-show_tooltip", "emitting");
+                   var range = window.getSelection().getRangeAt(0);
+                   UT._extend(this.stateMap, {
+                      $rdt_el : $el, range : range,
+                      note    : RC.getNoteFromWordClickedOn($el, range)});
+                   this.element.trigger(UT.create_jquery_event(
+                      'al-ev-show_tooltip',
+                      {clientX : ev.clientX, clientY : ev.clientY}));
+                   this.stateMap.tooltip_displayed = true;
+                   return false; // don't bubble the click, we dealt with it here
                 },
 
                 add_note : function ( note ) {

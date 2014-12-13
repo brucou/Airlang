@@ -138,8 +138,32 @@ CREATE INDEX pg_tsr_word_weight_hist_word_idx
   USING btree
   (user_id, word);
 
-  CREATE INDEX pg_tsr_word_weight_hist_id_idx
+CREATE INDEX pg_tsr_word_weight_hist_id_idx
   ON pg_tsr_word_weight_hist
   USING btree
   (id);
 ----------
+---------- tables for storing translation entered by the user
+CREATE TABLE pg_word_user_translation
+(
+  id SERIAL,
+  user_id INTEGER,
+  first_language CHAR(3),
+  target_language CHAR(3),
+  word CHARACTER VARYING,
+  lemma CHARACTER VARYING,
+  morph_info CHARACTER VARYING,
+  lemma_translation CHARACTER VARYING,
+  sample_sentence_first_lg CHARACTER VARYING,
+  sample_sentence_target_lg CHARACTER VARYING
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE pg_word_user_translation
+  OWNER TO postgres;
+
+CREATE INDEX pg_word_user_translation_idx
+  ON pg_word_user_translation
+  USING btree
+  (user_id, word, lemma);
