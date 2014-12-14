@@ -2,14 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3e347fb8-ef22-4b99-8a9c-2990b9f7b2c6" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/js/lib/Stateful.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Reader.js" afterPath="$PROJECT_DIR$/Reader.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/ReaderController.js" afterPath="$PROJECT_DIR$/public/js/lib/ReaderController.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/TSRModel.js" afterPath="$PROJECT_DIR$/TSRModel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/TranslateController.js" afterPath="$PROJECT_DIR$/public/js/lib/TranslateController.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/debug.js" afterPath="$PROJECT_DIR$/public/js/lib/debug.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/main.js" afterPath="$PROJECT_DIR$/public/js/lib/main.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/assets/database/qry_test_data.sql" afterPath="$PROJECT_DIR$/public/assets/database/qry_test_data.sql" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="Airlang.iws" />
@@ -224,7 +216,7 @@
           <file leaf-file-name="ReaderModel.js" pinned="false" current="true" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderModel.js">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.63461536" vertical-offset="3986" max-vertical-offset="5032">
+                <state vertical-scroll-proportion="0.41379312" vertical-offset="3986" max-vertical-offset="5032">
                   <caret line="905" column="37" selection-start-line="905" selection-start-column="37" selection-end-line="905" selection-end-column="37" />
                   <folding>
                     <element signature="e#48568#49720#0" expanded="true" />
@@ -240,7 +232,7 @@
           <file leaf-file-name="db_logic.js" pinned="false" current="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/db_logic.js">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="3.8413463" vertical-offset="0" max-vertical-offset="2261">
+                <state vertical-scroll-proportion="2.504702" vertical-offset="0" max-vertical-offset="2261">
                   <caret line="439" column="21" selection-start-line="439" selection-start-column="18" selection-end-line="439" selection-end-column="21" />
                   <folding />
                 </state>
@@ -730,7 +722,11 @@
       <created>1418451220446</created>
       <updated>1418451220446</updated>
     </task>
-    <option name="localTasksCounter" value="38" />
+    <task id="LOCAL-00038" summary="corrected some bugs, improved communication between controllers, now using exercise_type of 1 instead of undefined&#10;still have to fill in the word_translation_user table">
+      <created>1418536867101</created>
+      <updated>1418536867101</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -757,7 +753,7 @@
     <frame x="132" y="0" width="1148" height="800" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Messages" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32791728" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32791728" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32776934" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.40353462" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.26067746" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -1325,7 +1321,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/db_logic.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="3.8413463" vertical-offset="0" max-vertical-offset="2261">
+        <state vertical-scroll-proportion="2.504702" vertical-offset="0" max-vertical-offset="2261">
           <caret line="439" column="21" selection-start-line="439" selection-start-column="18" selection-end-line="439" selection-end-column="21" />
           <folding />
         </state>
@@ -1479,7 +1475,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/ReaderModel.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.63461536" vertical-offset="3986" max-vertical-offset="5032">
+        <state vertical-scroll-proportion="0.41379312" vertical-offset="3986" max-vertical-offset="5032">
           <caret line="905" column="37" selection-start-line="905" selection-start-column="37" selection-end-line="905" selection-end-column="37" />
           <folding>
             <element signature="e#48568#49720#0" expanded="true" />
