@@ -154,8 +154,8 @@ requirejs(
 
       function init_fake () {
          FAKE.replace(UL, 'UL.url_load', FAKE.fn.url_load);
-         FAKE.replace(RM, 'RM.get_stored_notes', FAKE.fn.get_stored_notes);
-         RM.set_notes([]);
+         //FAKE.replace(RM, 'RM.get_stored_notes', FAKE.fn.get_stored_notes);
+         //RM.set_notes([]);
       }
 
       $(function () {

@@ -106,6 +106,7 @@ define(['jquery',
            *              i.e. with numbered html tag except for text nodes
            * @param {jQuery} $el : jQuery element clicked on (target element)
            * @param {range} selectedRange range containing the click selection made by the user
+           * @return {word: {String}, index: {Number}, rootNode: {Node}, context_sentence: {String}}
            */
           RC.getNoteFromWordClickedOn = function getNoteFromWordClickedOn ( $el, selectedRange ) {
              // count the number of words to the first element with ID
@@ -176,7 +177,7 @@ define(['jquery',
              var ancestor_level = 0;
              while (currentNode &&
                     (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") )) {
-                logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
+                //logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
                 currentNode = currentNode.parentNode;
                 ancestor_level++;
              }
@@ -185,8 +186,7 @@ define(['jquery',
                 throw 'findParentWithId: could not find a node with an ID...'
              }
 
-             logWrite(DBG.TAG.DEBUG,
-                      "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
+             //logWrite(DBG.TAG.DEBUG,                      "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
              return currentNode;
           };
 
@@ -213,7 +213,7 @@ define(['jquery',
              var textContent = startNode.textContent;
              // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-             logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
+             //logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
 
              // Init array variables tracing the counting
              var aCharLengths = [],
@@ -225,7 +225,7 @@ define(['jquery',
              // traverse tree till startNode and count words and characters while doing so
              count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
-             logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
+             //logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
 
              count_word_and_char_till_offset(startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
@@ -241,14 +241,14 @@ define(['jquery',
                    // by construction, currentNode cannot be a TEXT_NODE the first time, as ancestor node have an ID
                    // and text node cannot have id
                    if (currentNode.nodeType === currentNode.TEXT_NODE) {
-                      logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
+                      //logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
                       var text_content = currentNode.textContent;
                       var text_content_trim = text_content.trim();
                       var aWords = tokenizer(text_content_trim);
                       aCharLengths.push(text_content.length);
 
                       if (text_content_trim) {
-                         logWrite(DBG.TAG.DEBUG, "non empty string: adding to word array");
+                         //logWrite(DBG.TAG.DEBUG, "non empty string: adding to word array");
                          // if text_content is only spaces, there is no words to count!!
                          aWordLengths.push(aWords.length);
                       }
@@ -259,23 +259,22 @@ define(['jquery',
                       if (!currentNode.hasChildNodes()) {
                          throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
                       }
-                      logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
-                               currentNode.childNodes.length);
+                      //logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
+                        //       currentNode.childNodes.length);
                       var nodeChildren = currentNode.childNodes;
                       return UT.some(nodeChildren, function some ( nodeChild, index, array ) {
-                         logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
-                                  currentNode.nodeName);
+                         //logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
+                           //       currentNode.nodeName);
 
                          var result = count_word_and_char_till_node(nodeChild, startNode, aCharLengths, aWordLengths,
                                                                     tokenizer);
-                         logWrite(DBG.TAG.DEBUG, "some returns ", result);
                          return result;
                       });
                    }
                 }
                 else {
                    // found startNode!!
-                   logWrite(DBG.TAG.DEBUG, "found startNode");
+                   //logWrite(DBG.TAG.DEBUG, "found startNode");
                    return true;
                 }
              }
@@ -291,12 +290,12 @@ define(['jquery',
                 var current_offset = 0,
                     aWords = tokenizer(startNode.textContent);
                 aWords.some(function ( word, index, array ) {
-                   logWrite(DBG.TAG.DEBUG, "processing", word);
+                   logWrite(DBG.TAG.DEBUG, "processing word", word);
                    aCharLengths.push(word.length);
                    // we put 1 because there is another word which has been parsed.
                    // Reminder : this array contains the number of words to be counted till reaching the final word
                    aWordLengths.push(word.trim() ? 1 : 0);
-                   logWrite(DBG.TAG.DEBUG, "current_offset, startOffset", current_offset, startOffset);
+                   //logWrite(DBG.TAG.DEBUG, "current_offset, startOffset", current_offset, startOffset);
                    current_offset +=
                    word.length + (word.length == 0 ? 1 : (array[index + 1] ? 1 : 0) );
                    return !(current_offset <= startOffset);
@@ -383,10 +382,14 @@ define(['jquery',
                    this.stateMap.tooltip_displayed = false;
                    // Add the note in the note table and visually display the annotated word
                    if (!ev.translation_word) { return false}
+                   this.stateMap.note.word = ev.lemma_target_lg;
                    this.show_and_add_note(this.element, this.stateMap.range, this.stateMap.note);
                    // TODO : fill the translation table and use lemma word instead of current word form
                    SOCK.RSVP_emit('set_word_user_translation', {
+                      user_id                   : this.stateMap.user_id,
+                      word                      : this.stateMap.note.word, // word selected by click
                       translation_word          : ev.translation_word,
+                      lemma_target_lg           : ev.lemma_target_lg,
                       sample_sentence_first_lg  : ev.sample_sentence_first_lg,
                       sample_sentence_target_lg : ev.sample_sentence_target_lg,
                       first_language            : this.stateMap.first_language,
@@ -395,7 +398,15 @@ define(['jquery',
                    return false;
                 },
 
+                '{window} al-ev-shown_tooltip' : function ( $el, ev ) {
+                   logWrite(DBG.TAG.EVENT, "al-ev-shown_tooltip", "received");
+                   this.stateMap.tooltip_displayed = true;
+                },
+
                 'click' : function click ( $el, ev ) {
+                   logWrite(DBG.TAG.EVENT, "RC click", "received", "target", ev.target.tagName);
+                   logWrite(DBG.TAG.DEBUG, "tooltip displayed", this.stateMap.tooltip_displayed);
+
                    // if the click is on the dropdown select then ignore
                    if (ev.target.nodeName === 'SELECT') {return true}
                    // if already displaying the tooltip, ignore clicks out of the tooltip or bubbled up
@@ -413,7 +424,10 @@ define(['jquery',
                    this.element.trigger(UT.create_jquery_event(
                       'al-ev-show_tooltip',
                       {clientX : ev.clientX, clientY : ev.clientY}));
-                   this.stateMap.tooltip_displayed = true;
+                   //TODO : don't assume success of operation
+                   // get an event tooltip_shownto update the flag
+                   // that event will be emitted only when all parameters of tooltip are valid
+                   //this.stateMap.tooltip_displayed = true;
                    return false; // don't bubble the click, we dealt with it here
                 },
 
@@ -511,17 +525,6 @@ define(['jquery',
                                  self.stateMap.viewAdapter.set_HTML_body(highlighted_text);
                                  return highlighted_text;
                               });
-                   /*
-                    .then(function update_state (highlighted_text) {
-                    return $.when(RM.add_notes({module    : 'reader tool', url : self.stateMap.viewAdapter.url_to_load,
-                    user_id : self.stateMap.user_id, word : note.word, index : note.index}),
-                    RM.add_TSR_weight({user_id : self.stateMap.user_id, word : note.word}));
-                    })
-                    .then(function success_add_note ( param1, param2 ) {logWrite(DBG.TAG.DEBUG, "added note remotely!")},
-                    function failure_add_note ( err ) {
-                    logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
-                    });
-                    */
                 },
 
                 stateSetIsUrlLoaded : function stateSetIsUrlLoaded ( is_loaded ) {

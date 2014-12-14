@@ -80,7 +80,8 @@ define(['jquery',
                         get_translation_clicked_on : function ( ev ) {
                            var $tr = $(ev.target).closest('tr');
                            var $tr_next_1st_child, $tr_1st_child = null;
-                           var translation_word, sample_sentence_first_lg, sample_sentence_target_lg = null;
+                           var translation_word, sample_sentence_first_lg,
+                               sample_sentence_target_lg, lemma_target_lg = null;
                            /* this row could be one of four possibilities:
                             1. nothing
                             2. the header row which contains the transation_lemma word
@@ -94,21 +95,25 @@ define(['jquery',
                                  sample_sentence_first_lg = $tr_next_1st_child.data('content-sentence-first-lg').trim();
                                  sample_sentence_target_lg =
                                  $tr_next_1st_child.data('content-sentence-target-lg').trim();
+                                 lemma_target_lg = $tr.closest('table').find('th').html().trim()
                                  break;
                               case 'sample_sentences': // Case 4
                                  translation_word = $tr.prev().data('lemma').trim();
                                  $tr_1st_child = $tr.children(0);
                                  sample_sentence_first_lg = $tr_1st_child.data('content-sentence-first-lg').trim();
                                  sample_sentence_target_lg = $tr_1st_child.data('content-sentence-target-lg').trim();
+                                 lemma_target_lg = $tr.closest('table').find('th').html().trim();
                                  break;
                               default: // Case 1 and 2 and whatever
-                                 return null;
+                                 translation_word = this.get_input_text();
+                                 lemma_target_lg = this.get_$translation_table().find('th').html().trim();
                                  break;
                            }
                            return {
                               translation_word          : translation_word,
                               sample_sentence_first_lg  : sample_sentence_first_lg,
-                              sample_sentence_target_lg : sample_sentence_target_lg
+                              sample_sentence_target_lg : sample_sentence_target_lg,
+                              lemma_target_lg           : lemma_target_lg
                            }
                         }
                      });
@@ -126,7 +131,13 @@ define(['jquery',
                    this.element.append(TC.rtTranslateView(TC.viewTranslateAdapter));
                    this.$tooltip = TC.viewTranslateAdapter.get_$tooltip();
                    this.stateMap = {
-                      $rdt_el : this.options.target};
+                      $rdt_el  : this.options.target,
+                      objTrans : {
+                         translation_word          : null,
+                         sample_sentence_first_lg  : null,
+                         sample_sentence_target_lg : null,
+                         lemma_target_lg           : null}
+                   };
                 },
 
                 '{target} al-ev-show_tooltip' : function ( $el, ev ) {
@@ -140,15 +151,8 @@ define(['jquery',
                    logWrite(DBG.TAG.DEBUG, "keydown event", ev.keyCode);
                    console.log("target event", ev.target);
 
-                   switch (ev.target.tagName) {
-                      case 'INPUT':
-                         if (ev.keyCode == 13) {
-                            self.submit();
-                         }
-                         break;
-
-                      default:
-                         break;
+                   if (ev.keyCode == 13) {
+                      self.submit($el, ev);
                    }
 
                    if (ev.keyCode == 27 && this.options.dismiss_on == 'escape-key') {
@@ -162,16 +166,19 @@ define(['jquery',
                    var self = this;
 
                    var objTrans = TC.viewTranslateAdapter.get_translation_clicked_on(ev);
-                   if (!objTrans) return false; // click out of the translation table
+                   if (!objTrans) {
+                      return false;
+                   } // click out of the translation table
                    TC.viewTranslateAdapter.set_input_text(objTrans.translation_word);
                    this.stateMap.objTrans = objTrans;
                 },
 
                 submit : function ( $el, ev ) {
                    var self = this;
+                   logWrite(DBG.TAG.DEBUG, "entering submit handler");
                    var translation_word = this.stateMap.objTrans.translation_word;
                    if (!translation_word) {
-                      return false
+                      this.stateMap.objTrans = TC.viewTranslateAdapter.get_translation_clicked_on(ev);
                    }
                    else {
                       // When finished successfully adding the word on server, add the note
@@ -389,6 +396,7 @@ define(['jquery',
                       }
                       if (aValues.length === 0) { // means server returned empty
                          logWrite(DBG.TAG.WARNING, "Query did not return any values");
+                         // dismiss the tooltip (invisible but still capting events away from other controllers
                          return null;
                       }
 
@@ -403,6 +411,7 @@ define(['jquery',
                       var frag = UT.fragmentFromString(html_text);
                       self.$tooltip.append(frag);
                       TC.viewTranslateAdapter.set_HTML_tooltip("");
+                      TC.viewTranslateAdapter.set_input_text("");
                       TC.viewTranslateAdapter.set_display("block");
                       var $$tbl = TC.viewTranslateAdapter.get_$translation_table();
                       var width = $$tbl.width();
@@ -419,6 +428,8 @@ define(['jquery',
                       TC.viewTranslateAdapter.attr("width", [width, 'px'].join(""));
                       TC.viewTranslateAdapter.attr("height", [height, 'px'].join(""));
 
+                      // send the shown_tooltip event to alert all controllers of the state
+                      self.element.trigger(UT.create_jquery_event('al-ev-shown_tooltip'));
                       logWrite(DBG.TAG.DEBUG, "displaying tooltip");
                    });
                 },

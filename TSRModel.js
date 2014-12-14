@@ -75,7 +75,7 @@ function insert_word_weight ( user_id, word ) {
                BOX_weight                  : box_weight,
                last_revision_time          : new Date(),
                last_revision_easyness      : 1,
-               last_revision_exercise_type : undefined,
+               last_revision_exercise_type : 1,
                last_revision_grade         : 0
             }
          });
