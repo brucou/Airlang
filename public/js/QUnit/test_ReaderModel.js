@@ -418,6 +418,9 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                 }
              };
 
+             // TODO Create a new TC.redaertool controller to access the show_and_add_note function
+             // TODO Actually before : create the RC controller
+             // TODO Then write a battery of test for the logic flow: events and key functions of the controller
              RC.show_and_add_note.call(context, context.stateMap)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
