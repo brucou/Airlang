@@ -88,9 +88,9 @@ requirejs(
     'socket',
     'Stateful',
     'TSRController',
-    'utils', 'url_load'
+    'utils', 'url_load', 'rsvp'
    ],
-   function ( $, RM, RC, SOCK, STATE, TSR, UT, UL ) {
+   function ( $, RM, RC, SOCK, STATE, TSR, UT, UL, RSVP ) {
       var appState = {};
 
       function start () {
@@ -167,6 +167,10 @@ requirejs(
          //trace(IO, 'IO');
          init_fake();
          ////////////
+         // configure error handler to avoid silent failure or RSVP promises
+         RSVP.on('error', function ( reason ) {
+            console.assert(false, reason);
+         });
          // Initialize socket connection and feature modules
          $.when(
             SOCK.init(),

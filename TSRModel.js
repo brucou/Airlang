@@ -29,7 +29,7 @@ function set_word_weights ( obj, callback ) {
             }
             else {
                // word already there
-               LOG.Write(LOG.TAG.WARNING, "Word is already being revised - ignoring");
+               LOG.write(LOG.TAG.WARNING, "Word is already being revised - ignoring");
                callback(null, null); // the null value of result may be observed  on the calling side and decided on
             }
          }, callback);
@@ -81,6 +81,7 @@ function insert_word_weight ( user_id, word ) {
          });
    }
 }
+
 function get_count_words ( user_id ) {
    return DB.get_db_adapter('TSR')
       .exec_query({action     : 'count', entity : 'TSR_word_weight',

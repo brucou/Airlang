@@ -181,8 +181,6 @@ define(['jquery',
                       this.stateMap.objTrans = TC.viewTranslateAdapter.get_translation_clicked_on(ev);
                    }
                    else {
-                      // When finished successfully adding the word on server, add the note
-                      logWrite(DBG.TAG.EVENT, "al-ev-show_and_add_note", "emitting", translation_word);
                       // Dismiss the tooltip and return the translation of the word
                       this.dismiss_and_return(this.stateMap.objTrans);
                    }
@@ -195,6 +193,7 @@ define(['jquery',
 
                 dismiss_and_return : function ( return_object ) {
                    this.empty_and_hide();
+                   logWrite(DBG.TAG.EVENT, "al-ev-tooltip_dismiss", "emitting");
                    this.stateMap.$rdt_el.trigger(UT.create_jquery_event("al-ev-tooltip_dismiss",
                                                                         return_object));
                 },

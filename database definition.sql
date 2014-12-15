@@ -37,15 +37,17 @@ CREATE INDEX word_idx
 ----------
 
 -- Table: pg_notepad
+DROP TABLE IF EXISTS pg_notepad;
 CREATE TABLE pg_notepad
 (
   note_id serial,
-  module character varying (50),
-  user_id integer,
-  url character varying,
-  word character varying,
-  context_sentence character varying,
-  index integer,
+  module CHARACTER VARYING (50),
+  user_id INTEGER,
+  url CHARACTER VARYING,
+  word CHARACTER VARYING,
+  lemma CHARACTER VARYING,
+  context_sentence CHARACTER VARYING,
+  index INTEGER,
   CONSTRAINT pg_notepad_pkey PRIMARY KEY (note_id)
 )
 WITH (
@@ -65,6 +67,7 @@ CREATE INDEX pg_notepad_url_idx
   (module, user_id, url);
 
 ---------- tables for time-spaced-repetition module
+DROP TABLE IF EXISTS pg_tsr_word_weight;
 CREATE TABLE pg_tsr_word_weight
 (
   id SERIAL,

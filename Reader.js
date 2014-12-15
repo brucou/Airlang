@@ -9,6 +9,7 @@ RSVP = require('rsvp');
 
 function set_word_user_translation ( obj, callback ) {
    var word = obj.word,
+       lemma_target_lg = obj.lemma_target_lg,
        lemma_translation = obj.translation_word,
        first_language = obj.first_language,
        target_language = obj.target_language,

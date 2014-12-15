@@ -260,11 +260,11 @@ define(['jquery',
                          throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
                       }
                       //logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
-                        //       currentNode.childNodes.length);
+                      //       currentNode.childNodes.length);
                       var nodeChildren = currentNode.childNodes;
                       return UT.some(nodeChildren, function some ( nodeChild, index, array ) {
                          //logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
-                           //       currentNode.nodeName);
+                         //       currentNode.nodeName);
 
                          var result = count_word_and_char_till_node(nodeChild, startNode, aCharLengths, aWordLengths,
                                                                     tokenizer);
@@ -326,7 +326,10 @@ define(['jquery',
                       first_language    : this.options.first_language,
                       target_language   : this.options.target_language,
                       isUrlLoaded       : false,
-                      tooltip_displayed : false
+                      tooltip_displayed : false,
+                      note              : null,
+                      range             : null,
+                      lemma_target_lg   : null
                    };
                    $el.html(this.rtView(this.stateMap.viewAdapter));
 
@@ -377,13 +380,21 @@ define(['jquery',
                    );
                 },
 
-                '{window} al-ev-tooltip_dismiss' : function ( $el, ev ) {
+                '{window} al-ev-tooltip_dismiss' : function tooltip_dismiss_handler ( $el, ev ) {
                    logWrite(DBG.TAG.EVENT, "al-ev-tooltip_dismiss", "received");
+                   // Update state
                    this.stateMap.tooltip_displayed = false;
+                   // Check parameters : we need min. a word, lemma and translation
+                   if (!ev.translation_word || !this.stateMap.note.word || !ev.lemma_target_lg) {
+                      logWrite(DBG.TAG.WARNING, "tooltip_dismiss_handler", "word or lemma or translation are falsy");
+                      return false
+                   }
                    // Add the note in the note table and visually display the annotated word
-                   if (!ev.translation_word) { return false}
-                   this.stateMap.note.word = ev.lemma_target_lg;
-                   this.show_and_add_note(this.element, this.stateMap.range, this.stateMap.note);
+                   // TODO this.stateMap.note.word = ev.lemma_target_lg; keep word in note pad, lemma in noteweight
+                   // add column lemma is both table, that's the simplest
+                   this.stateMap.lemma_target_lg = ev.lemma_target_lg;
+                   console.log("stateMap show and add note", this.stateMap);
+                   this.show_and_add_note(this.element, this.stateMap);
                    // TODO : fill the translation table and use lemma word instead of current word form
                    SOCK.RSVP_emit('set_word_user_translation', {
                       user_id                   : this.stateMap.user_id,
@@ -431,16 +442,26 @@ define(['jquery',
                    return false; // don't bubble the click, we dealt with it here
                 },
 
-                add_note : function ( note ) {
-                   context = this;
+                add_note : function ( stateMap, note ) {
                    return RSVP.all([
-                                      RM.add_notes({module             : 'reader tool', url : context.stateMap.viewAdapter.url_to_load,
-                                                      user_id          : context.stateMap.user_id, word : note.word,
-                                                      context_sentence : note.context_sentence, index : note.index}),
-                                      RM.add_TSR_weight({user_id : context.stateMap.user_id, word : note.word})
+                                      RM.add_notes({module             : 'reader tool',
+                                                      url              : stateMap.viewAdapter.url_to_load,
+                                                      user_id          : stateMap.user_id,
+                                                      word             : note.word,
+                                                      lemma            : stateMap.lemma_target_lg,
+                                                      context_sentence : note.context_sentence,
+                                                      index            : note.index}),
+                                      RM.add_TSR_weight({user_id : stateMap.user_id,
+                                                           // put the lemma in the list of words to TSR revise, not the declensed word
+                                                           word  : stateMap.lemma_target_lg})
                                    ])
                       .then(function success_add_note ( param1, param2 ) {
                                // TODO: check success of addition through return values of promises
+                               // here we return null if the (user_id, word) was already in TSR_weight
+                               //generally speaking we need a system to give feedback,
+                               // could be just a code whose semantics is defined at server level
+                               // this will be used for cases where no ERROR is to be raised but it is relevant to give
+                               // more info as per what went wrong
                                logWrite(DBG.TAG.DEBUG, "added note remotely!")
                             },
                             function failure_add_note ( err ) {
@@ -491,15 +512,20 @@ define(['jquery',
                           e.clientY < top_boundry;
                 },
 
-                show_and_add_note : function show_and_add_note ( $el, range, note ) {
-                   if (!this.stateGetIsUrlLoaded()) {
+                show_and_add_note : function show_and_add_note ( $el, stateMap ) {
+                   //TODO : pass a stateMap object in show_Add_note and add_note
+                   // adjust the testing related to add note and show_adn_add_note
+                   // THEN add the lemma_target_lg field in the pg_notepad table
+                   // THEN recheck the logic or notepad vs. weight : do I need also to add the word/lemma field there -> should not
+                   if (!stateMap.isUrlLoaded) {
                       //that flag is set after a successful load of an url
                       return;
                    }
                    //this is a stub for testing
-                   range = range || window.getSelection().getRangeAt(0);
+                   var range = stateMap.range || window.getSelection().getRangeAt(0);
                    // this is to eliminate possible side effects when calling from another window like tooltip for instance
-                   note = note || RC.getNoteFromWordClickedOn($el, range);
+                   var note = stateMap.note || RC.getNoteFromWordClickedOn($el, range);
+                   stateMap.note = note; // necessary to initialize it if not yet
 
                    var RM = this.model;
                    var self = this;
@@ -517,7 +543,7 @@ define(['jquery',
                             $(note.rootNode), RM.fn_parser_and_transform([], [], true),
                             [modified_filter_selected_words]
                          ),
-                         self.add_note(note)
+                         self.add_note(stateMap, note)
                       ]).then(function update_html_text ( aPromiseResults ) {
                                  // update the html in reader controller
                                  var highlighted_text = aPromiseResults[0];

@@ -27,6 +27,12 @@ var LOG = require('./public/js/lib/debug');
 var U = require('./public/js/lib/utils');
 var SIO = require('./sio_logic');
 var DB = require('./db_logic');
+var RSVP = require('rsvp');
+
+// configure error handler to avoid silent failure or RSVP promises
+RSVP.on('error', function(reason) {
+   console.assert(false, reason);
+});
 
 LOG.trace(SIO, 'SIO');
 LOG.trace(DB, 'DB');
