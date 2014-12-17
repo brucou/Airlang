@@ -316,12 +316,11 @@ define(['jquery',
                    //TODO : user_id should not be in state here but got through a getter function from the shell
                    //defaults is loaded first in options
                    this.rtView = this.options.view;
-                   this.model = this.options.model;
+                   this.viewAdapter = this.options.getViewAdapter();
 
                    // variable which will gather all the stateful properties
                    // setter, getter functions
                    this.stateMap = {
-                      viewAdapter       : this.options.getViewAdapter(),
                       user_id           : this.options.user_id,
                       first_language    : this.options.first_language,
                       target_language   : this.options.target_language,
@@ -331,7 +330,7 @@ define(['jquery',
                       range             : null,
                       lemma_target_lg   : null
                    };
-                   $el.html(this.rtView(this.stateMap.viewAdapter));
+                   $el.html(this.rtView(this.viewAdapter));
 
                    // initialize tooltip controller too
                    this.TC_init();
@@ -347,8 +346,7 @@ define(['jquery',
                 timer25         : null,
 
                 '#url_param change' : function combo_load_url ( $el, ev ) {
-                   var RM = this.model;
-                   var viewAdapter = this.stateMap.viewAdapter,
+                   var viewAdapter = this.viewAdapter,
                        my_url = $el.val(),
                        self = this;
                    viewAdapter.attr("url_to_load", my_url);
@@ -442,10 +440,10 @@ define(['jquery',
                    return false; // don't bubble the click, we dealt with it here
                 },
 
-                add_note : function ( stateMap, note ) {
+                add_note : function ( stateMap, viewAdapter, note ) {
                    return RSVP.all([
                                       RM.add_notes({module             : 'reader tool',
-                                                      url              : stateMap.viewAdapter.url_to_load,
+                                                      url              : viewAdapter.url_to_load,
                                                       user_id          : stateMap.user_id,
                                                       word             : note.word,
                                                       lemma            : stateMap.lemma_target_lg,
@@ -465,7 +463,7 @@ define(['jquery',
                                logWrite(DBG.TAG.DEBUG, "added note remotely!")
                             },
                             function failure_add_note ( err ) {
-                               logWrite(DBG.TAG.ERROR, "failure remotely adding note", err);
+                               logWrite(DBG.TAG.ERROR, "failure remotely adding note", UT.inspect(err));
                             });
                 },
 
@@ -527,7 +525,6 @@ define(['jquery',
                    var note = stateMap.note || RC.getNoteFromWordClickedOn($el, range);
                    stateMap.note = note; // necessary to initialize it if not yet
 
-                   var RM = this.model;
                    var self = this;
                    note.word = UT.remove_punct(note.word);
                    // modify the filter selected words to include the closure on the note
@@ -543,12 +540,12 @@ define(['jquery',
                             $(note.rootNode), RM.fn_parser_and_transform([], [], true),
                             [modified_filter_selected_words]
                          ),
-                         self.add_note(stateMap, note)
+                         self.add_note(stateMap, self.viewAdapter, note)
                       ]).then(function update_html_text ( aPromiseResults ) {
                                  // update the html in reader controller
                                  var highlighted_text = aPromiseResults[0];
-                                 self.stateMap.viewAdapter.setErrorMessage(null);
-                                 self.stateMap.viewAdapter.set_HTML_body(highlighted_text);
+                                 self.viewAdapter.setErrorMessage(null);
+                                 self.viewAdapter.set_HTML_body(highlighted_text);
                                  return highlighted_text;
                               });
                 },

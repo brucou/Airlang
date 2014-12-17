@@ -69,7 +69,7 @@ function insert_word_weight ( user_id, word ) {
    return function ( box_weight ) {
       return  DB.get_db_adapter('TSR').exec_query(
          {action     : 'insert', entity : 'TSR_word_weight',
-            criteria : {
+            values : {
                user_id                     : user_id,
                word                        : word,
                BOX_weight                  : box_weight,
@@ -142,7 +142,7 @@ function set_word_weight_hist ( word_weight_row, time_updated ) {
       return DB.get_db_adapter('TSR').exec_query(
          {action     : 'insert',
             entity   : 'TSR_word_weight_hist',
-            criteria : U._extend(word_weight_row, {created_time : time_updated})
+            values : U._extend(word_weight_row, {created_time : time_updated})
          }
       )
    }

@@ -1044,6 +1044,25 @@ function utilsFactory () {
       }
    }
 
+   /**
+    * Return from a query string the number of parameters (defined as the highest x such as $x is in the query string)
+    * @param qry_string
+    * @returns {number}
+    */
+   function qry_count_num_param ( qry_string ) {
+      //qry_count_num_param in utils through regexp $number, keep all of them and the highest
+      // - important as count can be higher than the number of param
+      var regExNumber = /(\$[0-9]+)/g;
+      return +qry_string
+         .split(regExNumber)
+         .filter(function ( str ) {return str.split(regExNumber).length == 3 })
+         .reduce(function max_reduce ( p, v ) {
+                    return ( p > v ? p : v );
+                 })
+         .slice(1);
+      // TODO : finish testing
+   }
+
    function sum ( a, b ) {return a + b}
 
    /**
@@ -1538,6 +1557,7 @@ function utilsFactory () {
           get_prop                        : get_prop,
           slice                           : slice,
           log_error                       : log_error,
+          qry_count_num_param             : qry_count_num_param,
           sum                             : sum,
           or                              : or,
           identity                        : identity,

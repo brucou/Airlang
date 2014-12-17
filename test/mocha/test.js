@@ -69,9 +69,9 @@ describe('database queries', function () {
             TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
             TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
          };
-         var result = DB.qry_make_sql_query({action     : 'insert',
-                                               entity   : 'TSR_word_weight',
-                                               criteria : {
+         var result = DB.qry_make_sql_query({action   : 'insert',
+                                               entity : 'TSR_word_weight',
+                                               values : {
                                                   user_id : 1,
                                                   word    : "mot"
                                                }
@@ -123,6 +123,78 @@ describe('database queries', function () {
          var expected = 'UPDATE  TSR_word_weight SET ( field1, field2 ) = ( $1, $2 ) WHERE user_id = $3 AND word = $4';
          assert.equal(result.qry_string, expected);
          assert.deepEqual(result.aArgs, [256, "nn", 1, "mot"]);
+      });
+
+      it('insert if not exists', function () {
+         mapTable = {
+            TSR_word_weight      : 'pg_tsr_word_weight',
+            TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
+            TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
+         };
+         var result = DB.qry_make_sql_query({action     : 'insert if not exists',
+                                               entity   : 'TSR_word_weight',
+                                               criteria : {
+                                                  user_id : 1,
+                                                  word    : "mot"
+                                               },
+                                               values   : {
+                                                  user_id : 1,
+                                                  word    : "mo",
+                                                  lemma   : "m"
+                                               }
+                                            }, 1, mapTable);
+         var expected = 'select * from TSR_word_weight WHERE user_id = $1 AND word = $2;\n' +
+                        'INSERT INTO TSR_word_weight ( user_id, word, lemma ) VALUES ( $3, $4, $5 )';
+         assert.equal(result.qry_string, expected);
+         assert.deepEqual(result.aArgs, [1, "mot", 1, "mo", "m"]);
+      });
+
+   });
+
+   describe('Query exec', function () {
+      it('select - empty result', function ( done ) {
+         var mapTable = {
+            TSR_word_weight      : 'pg_tsr_word_weight',
+            TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
+            TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
+         };
+         var config = {mapTable : mapTable};
+         var pgClient = DB.get_db_client();
+         var result = DB.qry_make_sql_query({action     : 'select',
+                                               entity   : 'TSR_word_weight',
+                                               criteria : {
+                                                  user_id : 1,
+                                                  word    : "mot"
+                                               }
+                                            }, 1, config);
+
+         DB.pg_single_qry_exec_fn(pgClient, {
+            qry_string : result.qry_string,
+            aArgs      : result.aArgs})
+            .then(function success ( result_rows ) {
+                     var expected = 'select * from TSR_word_weight WHERE user_id = $1 AND word = $2';
+                     assert.equal(result_rows.length, 0);
+                     done();
+                  }, done);
+      });
+
+      it.only('insert if not exists', function ( done ) {
+         DB.get_db_adapter('TSR')
+            .exec_query({action     : 'insert if not exists', entity : 'TSR_word_weight',
+                           criteria : {
+                              user_id : +1,
+                              word    : "mot"
+                           },
+                           values   : {
+                              user_id : +1,
+                              word    : "mo",
+                              box_weight   : 999
+                           }})
+            .then(function success ( result_rows ) {
+                     // TODO get back a code which indicates whether it inserted or not
+                     assert.equal(result_rows.length, 0);
+                              done();
+                  }, done);
       });
 
    });

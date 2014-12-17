@@ -19,71 +19,6 @@
  * issue : analyse why some paragraphs are not parsed : http://prazsky.denik.cz/zpravy_region/lenka-mrazova-dokonalost-je-moje-hodnota-20140627.html
  * issue : better support for language-dependant punctuation signs and idiosyncrasy (... vs . etc.)
  */
-/**
- * Lessons learnt:
- * Promises :
- * - Differentiate the promise and the differed. The promise is returned from the function and is extracted from the differed
- * - Be careful when reusing code whether promise or value, in simple cases OK ($.when...), in other cases, plan for
- * - - sync: RETURN value
- * - - async : dfr.resolve(xxx) sufficient
- * - Generally speaking, use promise anywhere there is asynchronous function calls. That should help unify the thinking
- * - could be interesting to look at a library which allows switching from callback to promises
- * - DEBUGGING : state() function of deferred give the state ("pending", "resolved"). So pass the promise in global to look
- * - Also can fail silently, e.g. in case of JS error directly jump to reject without any message visible
- * - RSVP : !!! if failing (throw error) in a sequence of then : do not display the full stack...
- * - Be careful not to mix RSVP promises and jQuery promises
- * - RSVP.all requires an ARRAY of promises, and passed back an ARRAY of results.. not like jQuery
- * JQuery :
- * - Two types of node comparison, strict comparison can be done with ===, the 'same contents' comparison with isEqualNode
- * - there is advantage in knowing how to navigate the DOM with jQuery and with the DOM API directly, lots of time wasted
- *   trying to figure out which is which
- * Javascript:
- * - ? is evaluated right to left and in last order so x + y?1:0 means x+y evaluated first
- * DOM :
- * - there is advantage in knowing how to navigate the DOM with jQuery and with the DOM API directly, lots of time wasted
- *   trying to figure out which is which
- * - lots of time wasted trying to programatically set a selection, found no answer so passed the range directly
- * QUnit
- * - setup possible when declaring module and actually should be used not to repeat too much test
- * - split test in different files
- * Mocha
- * - (server side) returning promises instead of using done parameter
- * - cf. http://mochajs.org/#asynchronous-code
- * Node
- * - Lost 3 hours because RSVP was not loaded with require and no error appeared...
- * TYPE
- * - lots of type errors, functions called with wrong parameters, or expecting wrong output type
- *   because the signature of the function was forgotten, or forgetting to return the output value
- *   in closure for example
- * - in function of function, passed the wrong parameter so the real function parameter was never called
- *   PS: I would have found this mistake with type control as the parameter passed was not a function
- * - if something worked before, it is still working, find the cause elsewhere
- * CAN.js
- * - if properties in CAN.map are set to undefined, a warning "cannot find key ..." is generated
- *   It can either be ignored or the value must be initialized to remove the warning
- * - Incredible but TRUE, you cannot put any CAPS letter in the name of the view template...
- * - some issues with submit event handler which do not work (the first one does, the second one NO?)
- *   + so use keydown event handler and catch the ENTER key (keycode 13)
- * ON.THE.FLY coding
- * - wrong scope - function thought to be defined module scope but hidden into another function
- * - wrong arguments passed o function, or in wrong order, or missing arguments
- *   because one forgot the EXACT signature and behaviour of the function
- * MOCHA
- * - be careful which assert function is used, they don't have the same number of parameters
- *   chai assert has only two parameters
- * SOCKET
- * - functions are not serialized, so any attempt to pass a function over socket will fail SILENTLY
- * - OR the function will be removed of the object - in any case there will be no error!!!
- * ARCHITECTURE
- * - + use VIEWS with template and variable bindings
- *   + use view adapters to get/set values in the DOM
- *   + use CONTROLLERS to receive and emit events to handle the BEHAVIOUR
- *   + Controllers should not use class information (only should be used for styling!)
- *   + Use data-attributes for semantic/other purposes
- *   + As much as possible the MODEL should not have internal state, but consist of PURE functions
- *     + notwithstanding DATABASE communications or ENVIRONMENT variables
- *   + use OWN EVENTS to handle communication between controllers
- */
 
 define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
        function ( $, RSVP, DS, UL, UT, SOCK, CACHE, STATE ) {
@@ -897,7 +832,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           ///////////// Notes handling function
           RM.add_notes = function add_notes ( field_value_map ) {
              // send order through state sockets
-             return STATE.insert_stored_stateful_object('Notes', field_value_map);
+             return STATE.insert_stored_stateful_object('Notes', {values: field_value_map});
           };
 
           RM.add_TSR_weight = function add_TSR_weight ( obj ) {

@@ -53,6 +53,9 @@ function register_db_adapters () {
       TSR_word_weight_cfg  : 'pg_tsr_word_weight_cfg',
       TSR_word_weight_hist : 'pg_tsr_word_weight_hist'
    }});
+   register_db_adapter('User_Translation', {database : PG, mapTable : {
+      word_user_translation : 'pg_word_user_translation'
+   }});
 }
 
 function register_queries () {
@@ -120,6 +123,7 @@ function get_db_client () {
  * @param query_obj {object} Object has the form {entity : entity, criteria : criteria}
  *                            where criteria represent the search criteria for the object to find
  *                            in the database
+ * @param index_$param {Number} offset to number parameters passed in the query body (1 in simple queries)
  * @param config {object} when defined the properties config.table || config.mapTable allow to identify the tables on
  *                        which to execute the query. Otherwise, query_obj.entity is used as the table
  * @return {string} returns partial query - to be completed with actual value of params
@@ -132,7 +136,7 @@ function qry_make_sql_query ( query_obj, index_$param, config ) {
    // Helper functions: [arg1, arg2,...].map(subs...)) -> [$1, $2, ...] with offset index_$param
    function substitute_val_by_$x ( index_$param ) {
       return function ( value, index ) {
-         return '$' + (index_$param + index);
+         return '$' + (+index_$param + index); //(the plus is to force convert to number to avoid concat of strings)
       }
    }
 
@@ -175,7 +179,7 @@ function qry_make_sql_query ( query_obj, index_$param, config ) {
          var insert_into_clause_a = ['INSERT INTO', table],
              insert_into_clause;
 
-         wh_criteria = query_obj.criteria;
+         wh_criteria = query_obj.criteria || {};
          if (wh_criteria.action && wh_criteria.action === 'select') {
             // case INSERT INTO table (SELECT ...)
             var sub_query = qry_make_sql_query(wh_criteria, 1, config);
@@ -188,7 +192,7 @@ function qry_make_sql_query ( query_obj, index_$param, config ) {
             // case INSERT INTO table (f1, f2...) VALUES (v1, v2...)
             // Ex: INSERT INTO products (code, title, did, date_prod, kind)
             // VALUES ('T_601', 'Yojimbo', 106, DEFAULT, 'Drama');
-            var split_obj = U.separate_obj_prop(wh_criteria);
+            var split_obj = U.separate_obj_prop(query_obj.values);
             // Produce the (f1, f2...) part
             insert_into_clause_a.push('(', split_obj.properties.join(", "), ')');
             insert_into_clause = insert_into_clause_a.join(" ");
@@ -221,10 +225,38 @@ function qry_make_sql_query ( query_obj, index_$param, config ) {
          }
          return {qry_string : [update_clause, set_clause, where_clause].join(" "), aArgs : aArgs};
 
+      case 'insert if not exists':
+         /*
+          values = [{field: value}], criteria : where clause for the first select
+          if that select returns no rows, then the insert takes place
+          otherwise nothing happens, logs a warning, return value include that warning encoded
+          BUT that means two queries to return in fact.
+          We will end first query by ; and add a \n so it can be parsed on the receiving end;
+          so we return only ONE string, nothing changes
+          so that function must be called from a sio.insert_xxxx : which get both queries and execute them according
+          to the logic it knows about
+          here : 1st -> ok -> length : 0 -> 2nd -> return result or whatever
+          This could be generalized but don't, do it when it will be necessary
+          */
+         // select * from entity where criteria;
+         var first_query_obj = query_obj;
+         first_query_obj.action = 'select';
+         var first_query_res = qry_make_sql_query(first_query_obj, +index_$param, config);
+         // don't forget to add the ';\n' after the first query
+         // insert into entity (fields) values ([{field:value}])
+         var second_query_obj = query_obj;
+         second_query_obj.action = 'insert';
+         delete second_query_obj.criteria;
+         var second_query_res = qry_make_sql_query(second_query_obj, +index_$param, config);
+         return {
+            qry_string : [first_query_res.qry_string, second_query_res.qry_string].join(";\n"),
+            aArgs      : first_query_res.aArgs.concat(second_query_res.aArgs)};
+         break;
+
       default:
+         throw 'qry_make_sql_query : action field not in list of allowed possibilities: ' + action;
          break;
    }
-
 }
 
 ///////
@@ -435,33 +467,70 @@ function get_db_adapter ( identifier ) {
    }
 }
 
-function make_pg_qry_exec_fn ( config ) {
+/**
+ * Execute a single query on a pgClient and return the corresponding promise
+ * NOTE : Theoretically that query could be several queries. However they will be executed as one statement
+ * @param pgClient
+ * @param query_str_args_obj {qry_string : String, aArgs : Array}
+ * @returns {RSVP.Promise}
+ */
+function pg_single_qry_exec_fn ( pgClient, query_str_args_obj ) {
+   return new RSVP.Promise(function ( resolve, reject ) {
+      pgClient.query(query_str_args_obj.qry_string, query_str_args_obj.aArgs,
+                     function adapter_exec_query_cb ( err, result ) {
+                        if (err) {
+                           LOG.write(LOG.TAG.ERROR, 'while running query ', query_str_args_obj.qry_string,
+                                     'with args', query_str_args_obj.aArgs,
+                                     'error ocurred', err);
+                           reject(Error(err));
+                           return;
+                        }
+                        if (result) {
+                           LOG.write(LOG.TAG.DEBUG, 'executed query', query_str_args_obj.qry_string,
+                                     'with args', query_str_args_obj.aArgs);
+                           LOG.write(LOG.TAG.DEBUG, 'db_adapter query returns', Util.inspect(result.rows));
+                           resolve(result.rows);
+                        }
+                     })
+   });
+}
+
+function make_pg_qry_exec_fn ( table_config ) {
    // NOTE : the database client must have been initialized prior in the init function of the module
    var pgClient = get_db_client();
    return function ( query_obj ) {
-      return new RSVP.Promise(function ( resolve, reject ) {
-         var qry = qry_make_sql_query(query_obj, 1, config);
-         var qry_string = qry.qry_string;
-         var aArgs = qry.aArgs;
+      var qry = qry_make_sql_query(query_obj, 1, table_config);
+      var qry_string = qry.qry_string;
+      var aArgs = qry.aArgs;
 
-         // execute the query and resolve the promise
-         // NOTE : no exception throw, we use the promise mechanism instead
-         pgClient.query(qry_string, aArgs,
-                        function adapter_exec_query_cb ( err, result ) {
-                           if (err) {
-                              LOG.write(LOG.TAG.ERROR, 'while running query ', qry_string, qry_criteria,
-                                        'error ocurred', err);
-                              reject(Error(err));
-                              return;
-                           }
-                           if (result) {
-                              LOG.write(LOG.TAG.DEBUG, 'executed query', qry_string, 'with args', aArgs);
-                              LOG.write(LOG.TAG.DEBUG, 'db_adapter query returns', Util.inspect(result.rows));
-                              resolve(result.rows);
-                           }
-                        });
-      });
-   };
+      //TODO : modify to be able to deal with 'insert if not exists'
+      // which gives a qry_string with two queries separated by \n
+      // 1. make a function which execute a single query and returns a promise
+      var queries = qry_string.split("\n");
+      if (query_obj.action = 'insert if not exists' && queries.length > 1) { //
+         var query_1 = queries[0];
+         var query_2 = queries[1]; //TODO : solve the aArgs problem!!
+
+         return pg_single_qry_exec_fn(pgClient, {qry_string : query_1, aArgs : aArgs.slice(0, U.qry_count_num_param(query_1))}) //NOTE : query_1 is {string: x, aArgs: x} and returns RSVP.Promise
+            .then(function success_1st_query ( result_rows ) {
+                     // check that there are no existing rows
+                     return (result_rows.length === 0)
+                        // no pre-existing rows, so proceed with 2nd query
+                        ? pg_single_qry_exec_fn(pgClient,
+                                                {qry_string : query_2, aArgs : aArgs.slice(U.qry_count_num_param(query_1))})
+                        : null;
+                  }, function error ( err ) {
+                     LOG.write(LOG.TAG.ERROR, "make_pg_qry_exec_fn : insert if not exists : Error occured in while executing first query", err)
+                     // rethrow the error
+                     return U.delegate_promise_error("make_pg_qry_exec_fn : insert if not exists : " +
+                                                      "Error occured in while executing first query: " + err);
+                  })
+      }
+      else {
+         // Case normal : one single query to execute
+         return pg_single_qry_exec_fn(pgClient, qry);
+      }
+   }
 }
 
 /**
@@ -502,6 +571,7 @@ module.exports = {
    get_db_client         : get_db_client,
    pg_register_query     : pg_register_query,
    qry_make_sql_query    : qry_make_sql_query,
+   pg_single_qry_exec_fn : pg_single_qry_exec_fn,
    pg_exec_query         : pg_exec_query,
    pg_exec_query_success : pg_exec_query_success,
    pg_exec_query_failure : pg_exec_query_failure,

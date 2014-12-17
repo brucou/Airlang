@@ -407,12 +407,12 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
              var context = {
                 stateGetIsUrlLoaded : function () {return true},
+                add_note : RC.add_note,
+                viewAdapter         : {
+                   setErrorMessage : function () {},
+                   set_HTML_body   : function ( html_text ) {window.html_text = html_text}
+                },
                 stateMap            : {
-                   model       : RM,
-                   viewAdapter : {
-                      setErrorMessage : function () {},
-                      set_HTML_body   : function ( html_text ) {window.html_text = html_text}
-                   },
                    range       : range,
                    isUrlLoaded : true
                 }
@@ -421,7 +421,7 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              // TODO Create a new TC.redaertool controller to access the show_and_add_note function
              // TODO Actually before : create the RC controller
              // TODO Then write a battery of test for the logic flow: events and key functions of the controller
-             RC.show_and_add_note.call(context, context.stateMap)
+             RC.show_and_add_note.call(context, $el, context.stateMap)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
                          assert.equal(highlighted_text, html_expected_text_1,
@@ -432,7 +432,7 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              var html_expected_text_2 =
                     "<DIV id='0'> <P id='3'> <SPAN class='highlight'> Když </SPAN>  <span class='airlang-rdt-note-highlight'>končil</span>  <SPAN class='highlight'> projekt </SPAN>  Presseurop,  <A id='4'>  psali jsme  </A>  , že  <SPAN class='highlight'> neříkáme </SPAN>  sbohem, nýbrž „na shledanou“.  </P> </DIV>";
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.nextSibling, 2);
-             RC.show_and_add_note.call(context, context.stateMap)
+             RC.show_and_add_note.call(context, $el, context.stateMap)
                 .then(function ( highlighted_text ) {
                          QUnit.start();
                          assert.equal(highlighted_text, html_expected_text_2,
@@ -440,7 +440,6 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                          );
                          QUnit.stop();
                       })
-
           });
 
           return {};
