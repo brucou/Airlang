@@ -523,7 +523,7 @@ function make_pg_qry_exec_fn ( table_config ) {
                      LOG.write(LOG.TAG.ERROR, "make_pg_qry_exec_fn : insert if not exists : Error occured in while executing first query", err)
                      // rethrow the error
                      return U.delegate_promise_error("make_pg_qry_exec_fn : insert if not exists : " +
-                                                      "Error occured in while executing first query: " + err);
+                                                     "Error occured in while executing first query: " + err);
                   })
       }
       else {
@@ -566,6 +566,8 @@ function register_db_adapter ( qry, config ) {
 
 module.exports = {
    initialize_database   : init,
+   register_db_adapter   : register_db_adapter,
+   PG                    : PG,
    close_connection      : close_connection,
    get_important_words   : get_important_words,
    get_db_client         : get_db_client,

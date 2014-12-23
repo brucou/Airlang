@@ -1,7 +1,20 @@
+-- TEST tables
+CREATE TABLE pg_test_table
+(
+  id SERIAL,
+  user_id INTEGER,
+  first_name CHARACTER VARYING,
+  last_name CHARACTER VARYING,
+  address CHARACTER VARYING
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE pg_test_table
+  OWNER TO postgres;
+
 -- Table: pgwordfrequency
-
 -- DROP TABLE pgwordfrequency;
-
 CREATE TABLE pgwordfrequency
 (
   word character varying NOT NULL,
@@ -19,7 +32,6 @@ ALTER TABLE pgwordfrequency
 -- Index: freq_idx
 
 -- DROP INDEX freq_idx;
-
 CREATE INDEX freq_idx
   ON pgwordfrequency
   USING btree

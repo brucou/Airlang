@@ -112,10 +112,10 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               */
              //logEntry("extract_relevant_text_from_html");
              var dfr = $.Deferred(),
-                MIN_SENTENCE_NUMBER = 7,
-                MIN_AVG_AVG_SENTENCE_LENGTH = 10,
-                SOURCE = "source", //for temporarily keep the loaded webpage
-                DEST = "destination";
+                 MIN_SENTENCE_NUMBER = 7,
+                 MIN_AVG_AVG_SENTENCE_LENGTH = 10,
+                 SOURCE = "source", //for temporarily keep the loaded webpage
+                 DEST = "destination";
 
              if (!html_text) {
                 logWrite(DBG.TAG.WARNING, "empty page!! nothing to display");
@@ -335,9 +335,9 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
              var aIndexes = aNotes.map(function ( note ) {return note.index});
              var currentNoteIndex = aIndexes.shift(),
-                curr_word_count = 0,
-                next_word_count = 0,
-                aTokenActionMap = [];
+                 curr_word_count = 0,
+                 next_word_count = 0,
+                 aTokenActionMap = [];
              // 2. Scan through aHTMLTokens and for each text, count the words in it
              //    If it fits the next index then split it further and perform the transformation on the word at index
              //    Put an action (identity) in from of that word as tokenActionMap, so it is performed with priority
@@ -420,8 +420,8 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               - same goes for span tags, who tend not to have complete sentences
               */
              var tagHTML = "p",
-             // array which will contain the analysis of text paragraphs
-                aData = [];
+                 // array which will contain the analysis of text paragraphs
+                 aData = [];
 
              /*
               For each paragraph, calculate a series of indicators
@@ -446,7 +446,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                 // this is just to ensure that the javascript native map do not interact badly with reserved names
                 const PREFIX = "z_";
                 var paragraghData = new DS.ParagraphData(),
-                   $el = $(this); // In principle, same as $(element)
+                    $el = $(this); // In principle, same as $(element)
 
                 switch (element.nodeType) {
                    // we only are dealing with paragraphs here, so that will always be the case
@@ -799,9 +799,9 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                    logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens", i_adapter(aTokens));
 
                    var deferred_or_value =
-                      DS.promise_value_adapter(
-                         filter.call(null, i_adapter(aTokens), result_callback),
-                         result_callback);
+                          DS.promise_value_adapter(
+                             filter.call(null, i_adapter(aTokens), result_callback),
+                             result_callback);
 
                    function result_callback ( err, result ) {
                       // if the filter is not asynchronous, it must not expect nor use a second argument
@@ -830,16 +830,22 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           };
 
           ///////////// Notes handling function
-          RM.add_notes = function add_notes ( field_value_map ) {
-             // send order through state sockets
-             return STATE.insert_stored_stateful_object('Notes', {values: field_value_map});
+          RM.add_notes = function add_notes ( key_exists, fields_remainder ) {
+             /*return SOCK.RSVP_emit('add_note', {
+              action   : 'insert if not exists',
+              entity   : 'Notes',
+              criteria : key_exists,
+              values   : UT._extend(key_exists, fields_remainder)});*/
+             return STATE.insert_if_ne_stored_stateful_object('Notes',
+                                                              {  criteria : key_exists,
+                                                                 values   : UT._extend(key_exists, fields_remainder)});
           };
 
           RM.add_TSR_weight = function add_TSR_weight ( obj ) {
              // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
              return new RSVP.Promise(function ( resolve, reject ) {
                 SOCK.emit('set_TSR_word_weights', obj,
-                                         UT.default_node_callback (resolve, reject));
+                          UT.default_node_callback(resolve, reject));
              });
           };
 

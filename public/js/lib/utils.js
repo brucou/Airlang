@@ -12,7 +12,7 @@
  * - - isNaN recognizes english formatting of numbers only
  */
 
-function utilsFactory () {
+function utilsFactory (RSVP) {
    Array.prototype.isItArray = true;
 
    var slice = Array.prototype.slice;
@@ -1585,12 +1585,9 @@ function utilsFactory () {
 
 (function ( name, definition, context, dependencies ) {
    if (typeof module !== 'undefined' && module.exports) {
-      if (dependencies && context['require']) {
-         for (var i = 0; i < dependencies.length; i++) {
-            context[dependencies[i]] = context['require'](dependencies[i]);
-         }
-      }
-      module.exports = definition.apply(context);
+      var req_dep = dependencies ? dependencies.map(require) : [];
+      //RSVP = require('rsvp');
+      module.exports = definition.apply(context, req_dep);
    }
    else if (typeof define === 'function' && define.amd) {
       define(name, (dependencies || []), definition);
@@ -1598,7 +1595,7 @@ function utilsFactory () {
    else {
       context[name] = definition.apply(context);
    }
-})('utils', utilsFactory, this, []);
+})('utils', utilsFactory, this, ['rsvp']);
 
 /**
  * global define:true module:true window: true

@@ -2,14 +2,14 @@
  * Created by bcouriol on 15/09/14.
  */
 var SIO = {},
-   LOG = require('./public/js/lib/debug'),
-   DB = require('./db_logic'),
-   Util = require('util'),
-   U = require('./public/js/lib/utils'), // load the client side utils
-   RSVP = require('rsvp'),
-   io,
-   TSR = require('./TSRModel'),
-   READER = require('./Reader');
+LOG = require('./public/js/lib/debug'),
+DB = require('./db_logic'),
+Util = require('util'),
+U = require('./public/js/lib/utils'), // load the client side utils
+RSVP = require('rsvp'),
+io,
+TSR = require('./TSRModel'),
+READER = require('./Reader');
 const RPC_NAMESPACE = '/rpc';
 const STATE_NAMESPACE = '/state';
 
@@ -22,6 +22,7 @@ var mapListeners = {
       {channel : RPC_NAMESPACE, topic : 'get_word_to_memorize', handler : TSR.get_word_to_memorize},
       {channel : RPC_NAMESPACE, topic : 'update_word_weight_post_tsr_exo', handler : TSR.update_word_weight_post_exo},
       {channel : RPC_NAMESPACE, topic : 'set_word_user_translation', handler : READER.set_word_user_translation},
+      {channel : RPC_NAMESPACE, topic : 'add_note', handler : READER.add_note},
       {channel : STATE_NAMESPACE, topic : 'REST_operation', handler : sio_on_REST}
    ]};
 
@@ -62,26 +63,16 @@ function sio_onGet_translation_info ( msg, callback ) {
 
 // State query
 function sio_on_REST ( qry_param, callback ) {
-   // qry_param  is an object of the form :{action: action, entity : entity, criteria : criteria}
-   // where action in [select|update|delete|create] i.e the typical CRUD actions
+   // qry_param  is an object of the form :{action: *, entity : *, criteria : *, values: *, update: *}
+   // where action in [select|update|delete|create|insert if not exists] i.e the typical CRUD actions
    //       entity represents information to subselecting information from returned query objects
-   //       criteria represents the criteria
+   LOG.write(LOG.TAG.EVENT, "received REST object", Util.inspect(qry_param));
 
    // This should identify in particular:
    // - which database system to use (postgres, MongoDB)
    // - how to query that database for objects
-   var dbAdapter = DB.get_db_adapter(qry_param.entity);
-   // change of name just to make it clear what is in msg
-
-   // a second argument is possible to transform the output of the query before emitting on the socket
-   // cf. sio_onGet_translation_info
-   dbAdapter.exec_query(qry_param)
-      .then(function success ( result ) {callback(null, result);},
-            U.error_handler(callback));
-
-   // Ex: MongoDB code
-   //db.collection.find(criteria)
-
+   DB.get_db_adapter(qry_param.entity).exec_query(qry_param)
+      .then(callback.bind(this, null), callback);
 }
 
 // Initialization functions

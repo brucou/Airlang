@@ -442,13 +442,13 @@ define(['jquery',
 
                 add_note : function ( stateMap, viewAdapter, note ) {
                    return RSVP.all([
-                                      RM.add_notes({module             : 'reader tool',
-                                                      url              : viewAdapter.url_to_load,
-                                                      user_id          : stateMap.user_id,
-                                                      word             : note.word,
-                                                      lemma            : stateMap.lemma_target_lg,
-                                                      context_sentence : note.context_sentence,
-                                                      index            : note.index}),
+                                      RM.add_notes({module    : 'reader tool',
+                                                      url     : viewAdapter.url_to_load,
+                                                      user_id : stateMap.user_id,
+                                                      word    : note.word,
+                                                      lemma   : stateMap.lemma_target_lg},
+                                                   {context_sentence : note.context_sentence,
+                                                      index          : note.index}),
                                       RM.add_TSR_weight({user_id : stateMap.user_id,
                                                            // put the lemma in the list of words to TSR revise, not the declensed word
                                                            word  : stateMap.lemma_target_lg})

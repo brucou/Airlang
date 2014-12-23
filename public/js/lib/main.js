@@ -165,7 +165,7 @@ requirejs(
          //trace(RM, 'RM');
          //trace(RC, 'RC');
          //trace(IO, 'IO');
-         //init_fake();
+         init_fake();
          ////////////
          // configure error handler to avoid silent failure or RSVP promises
          RSVP.on('error', function ( reason ) {

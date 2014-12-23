@@ -312,6 +312,7 @@ function get_word_info ( user_id, module ) {
       // Get : 1. notepad info, 2. current weight_info (used to compute the future weight)
       return RSVP.all([get_word_notepad_info(user_id, selected_word, module),
                        get_specific_word_weight(user_id, selected_word)])
+         //TODO add a query to get the sample sentence and user translation in User_Translation
          .then(function get_word_info_merge ( aPromiseResults ) {
                   return {
                      rowsNoteInfo  : aPromiseResults[0],

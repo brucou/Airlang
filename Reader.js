@@ -7,8 +7,23 @@ Util = require('util'),
 U = require('./public/js/lib/utils'), // load the client side utils
 RSVP = require('rsvp');
 
+function add_note ( note_qry_obj, callback ) {
+   LOG.write(LOG.TAG.EVENT, "received object", Util.inspect(note_qry_obj));
+   /* note_obj ::
+    {
+    action   : 'insert if not exists',
+    entity   : 'Notes',
+    criteria : key_exists,
+    values   : UT._extend(key_exists, fields_remainder)}
+    */
+   return DB.get_db_adapter(note_qry_obj.entity)
+      .exec_query(note_qry_obj)
+      // the bind hack allow to use callback while keeping context and adding a null argument before the result argument
+      .then(callback.bind(this, null), callback);
+}
+
 function set_word_user_translation ( obj, callback ) {
-   LOG.write(LOG.TAG.INFO, "received object", Util.inspect(obj));
+   LOG.write(LOG.TAG.EVENT, "received object", Util.inspect(obj));
    // 1. look if a row already exists with the same parameters but removing the sample sentences (not part of the key)
    // To do that create the objects that will be used in the query
    // criteria contains the fields of the key to be checked against
@@ -20,7 +35,7 @@ function set_word_user_translation ( obj, callback ) {
           first_language    : obj.first_language,
           target_language   : obj.target_language,
           user_id           : obj.user_id,
-          morph_info        : null
+          morph_info        : '-'
        },
        values_obj = {
           sample_sentence_first_lg  : obj.sample_sentence_first_lg,
@@ -44,5 +59,6 @@ function set_word_user_translation ( obj, callback ) {
 }
 
 module.exports = {
+   add_note                  : add_note,
    set_word_user_translation : set_word_user_translation
 };

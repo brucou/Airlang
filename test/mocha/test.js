@@ -12,6 +12,7 @@ var Util = require('util');
 var LOG = require(prefix_src_dir + './public/js/lib/debug');
 var SIO = require(prefix_src_dir + './sio_logic');
 var DB = require(prefix_src_dir + './db_logic');
+var RSVP = require('rsvp');
 
 describe('database queries', function () {
    before(function () {
@@ -23,6 +24,11 @@ describe('database queries', function () {
       LOG.setConfig(LOG.TAG.DEBUG, false, {by_default : false}); //
 
       var promise = DB.initialize_database();
+
+      DB.register_db_adapter('TEST', {database : DB.PG, mapTable : {
+         Test_table : 'pg_test_table'
+      }});
+
       return promise;
    });
 
@@ -139,14 +145,14 @@ describe('database queries', function () {
                                                },
                                                values   : {
                                                   user_id : 1,
-                                                  word    : "mo",
+                                                  word    : "mot",
                                                   lemma   : "m"
                                                }
                                             }, 1, mapTable);
          var expected = 'select * from TSR_word_weight WHERE user_id = $1 AND word = $2;\n' +
-                        'INSERT INTO TSR_word_weight ( user_id, word, lemma ) VALUES ( $3, $4, $5 )';
+                        'INSERT INTO TSR_word_weight ( user_id, word, lemma ) VALUES ( $1, $2, $3 )';
          assert.equal(result.qry_string, expected);
-         assert.deepEqual(result.aArgs, [1, "mot", 1, "mo", "m"]);
+         assert.deepEqual(result.aArgs, [1, "mot", 1, "mot", "m"]);
       });
 
    });
@@ -164,7 +170,7 @@ describe('database queries', function () {
                                                entity   : 'TSR_word_weight',
                                                criteria : {
                                                   user_id : 1,
-                                                  word    : "mot"
+                                                  word    : "7tiufvg56ruiulvk"
                                                }
                                             }, 1, config);
 
@@ -178,22 +184,37 @@ describe('database queries', function () {
                   }, done);
       });
 
-      it.only('insert if not exists', function ( done ) {
-         DB.get_db_adapter('TSR')
-            .exec_query({action     : 'insert if not exists', entity : 'TSR_word_weight',
-                           criteria : {
-                              user_id : +1,
-                              word    : "mot"
-                           },
-                           values   : {
-                              user_id : +1,
-                              word    : "mo",
-                              box_weight   : 999
-                           }})
+      it('insert if not exists', function ( done ) {
+         var test_db_adapter = DB.get_db_adapter('TEST');
+         test_db_adapter.exec_query({action     : 'insert if not exists', entity : 'Test_table',
+                                       criteria : {
+                                          first_name : 'bruno',
+                                          last_name  : 'couriol'
+                                       },
+                                       values   : {
+                                          user_id    : +1,
+                                          first_name : 'bruno',
+                                          last_name  : 'couriol',
+                                          address    : 'Italska 18'
+                                       }})
             .then(function success ( result_rows ) {
-                     // TODO get back a code which indicates whether it inserted or not
-                     assert.equal(result_rows.length, 0);
-                              done();
+                     test_db_adapter.exec_query({action     : 'insert if not exists', entity : 'Test_table',
+                                                   criteria : {
+                                                      first_name : 'bruno',
+                                                      last_name  : 'couriol'
+                                                   },
+                                                   values   : {
+                                                      user_id    : +1,
+                                                      first_name : 'bruno',
+                                                      last_name  : 'couriol',
+                                                      address    : 'Italska 18'
+                                                   }})
+                        .then(function success ( result_rows ) {
+                                 // TODO get back a code which indicates whether it inserted or not
+                                 // done has to be called before doing any mocha testing
+                                 done();
+                                 assert.equal(result_rows.length, 0);
+                              }, done);
                   }, done);
       });
 
