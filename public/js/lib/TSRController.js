@@ -188,6 +188,8 @@ define(['jquery', 'state-machine', 'TSRModel', 'socket', 'utils'], function ( $,
                       rowWordWeight : aPromiseResults[1][0]
                       */
                      logWrite(DBG.TAG.DEBUG, 'result', UT.inspect(result, null, 3));
+                     var rowsUserTrans = result.rowsUserTrans;
+                     console.log('rowsusertrans', rowsUserTrans);
                      var rowsNoteInfo = result.rowsNoteInfo;
                      var rowWordWeight = result.rowWordWeight;
 

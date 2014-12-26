@@ -479,10 +479,11 @@ function pg_single_qry_exec_fn ( pgClient, query_str_args_obj ) {
       pgClient.query(query_str_args_obj.qry_string, query_str_args_obj.aArgs,
                      function adapter_exec_query_cb ( err, result ) {
                         if (err) {
-                           LOG.write(LOG.TAG.ERROR, 'while running query ', query_str_args_obj.qry_string,
-                                     'with args', query_str_args_obj.aArgs,
-                                     'error ocurred', err);
-                           reject(Error(err));
+                           var err_message =
+                           ['pg_single_qry_exec_fn:', 'while running query ', query_str_args_obj.qry_string,
+                            'with args', query_str_args_obj.aArgs, 'error ocurred'].join(" ");
+                           LOG.write(LOG.TAG.ERROR, err_message, err);
+                           reject(Error(err_message + " " + err));
                            return;
                         }
                         if (result) {

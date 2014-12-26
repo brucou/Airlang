@@ -9,22 +9,27 @@ U = require('./public/js/lib/utils'), // load the client side utils
 RSVP = require('rsvp');
 
 // Memorization module handlers
+/**
+ * Inserts a word in the table which follows the TSR weight model iff there is no other line already there
+ * We thus ensure that the word is not inserted twice
+ * @param obj
+ * @param callback
+ */
 function set_word_weights ( obj, callback ) {
-   //TODO: refactor like get_next_word
    // TODO: Also test for more than 20 values that the weight inserted is adjusted
    // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
    //check inputs
-   if (obj.user_id && obj.word) {
+   if (obj.user_id && obj.word && obj.first_language && obj.target_language) {
       // check that the word is not already being revised
-      get_specific_word_weight(obj.user_id, obj.word)
+      get_specific_word_weight(obj.user_id, obj.word, obj.first_language, obj.target_language)
          .then(
          function success_qry_word_weight ( result ) {
             if (result.length === 0) {
                // the word is not already being revised
-               RSVP.all([get_count_words(obj.user_id),
+               RSVP.all([get_count_words(obj.user_id, obj.first_language, obj.target_language),
                          get_word_weights_cfg(obj.user_id)])
                   .then(compute_box_weight)
-                  .then(insert_word_weight(obj.user_id, obj.word))
+                  .then(insert_word_weight(obj.user_id, obj.word, obj.first_language, obj.target_language))
                   .then(U.callback_ok(callback), callback);
             }
             else {
@@ -65,13 +70,15 @@ function compute_box_weight ( aResolves ) {
    return row_tsr_config['bucket_weight' + modulo]; //box_weight
 }
 
-function insert_word_weight ( user_id, word ) {
+function insert_word_weight ( user_id, word, first_language, target_language ) {
    return function ( box_weight ) {
       return  DB.get_db_adapter('TSR').exec_query(
-         {action     : 'insert', entity : 'TSR_word_weight',
+         {action   : 'insert', entity : 'TSR_word_weight',
             values : {
                user_id                     : user_id,
                word                        : word,
+               first_language              : first_language,
+               target_language             : target_language,
                BOX_weight                  : box_weight,
                last_revision_time          : new Date(),
                last_revision_easyness      : 1,
@@ -82,29 +89,35 @@ function insert_word_weight ( user_id, word ) {
    }
 }
 
-function get_count_words ( user_id ) {
+function get_count_words ( user_id, fst_lg, tgt_lg ) {
    return DB.get_db_adapter('TSR')
       .exec_query({action     : 'count', entity : 'TSR_word_weight',
                      criteria : {
-                        user_id : user_id
+                        user_id         : user_id,
+                        first_language  : fst_lg,
+                        target_language : tgt_lg
                      }})
 }
 
-function get_specific_word_weight ( user_id, word ) {
+function get_specific_word_weight ( user_id, word, first_language, target_language ) {
    return DB.get_db_adapter('TSR')
       .exec_query({action     : 'select', entity : 'TSR_word_weight',
                      criteria : {
-                        user_id : user_id,
-                        word    : word
+                        user_id         : user_id,
+                        word            : word,
+                        first_language  : first_language,
+                        target_language : target_language
                      }})
 }
 
-function get_word_weights ( user_id ) {
+function get_word_weights ( user_id, fst_lg, tgt_lg ) {
    return DB.get_db_adapter('TSR')
       .exec_query({action     : 'select',
                      entity   : 'TSR_word_weight',
                      criteria : {
-                        user_id : user_id
+                        user_id         : user_id,
+                        first_language  : fst_lg,
+                        target_language : tgt_lg
                      }
                   })
 }
@@ -134,14 +147,14 @@ function update_word_weight_post_exo ( obj, callback ) {
                                                   analyzed_answer_merged.exercise_type, analyzed_answer_merged.grade)
                   .then(set_word_weight_hist(word_weight_row, time_updated));
             })
-      .then (U.callback_ok(callback), callback);
+      .then(U.callback_ok(callback), callback);
 }
 
 function set_word_weight_hist ( word_weight_row, time_updated ) {
    return function ( promise_result ) {
       return DB.get_db_adapter('TSR').exec_query(
-         {action     : 'insert',
-            entity   : 'TSR_word_weight_hist',
+         {action   : 'insert',
+            entity : 'TSR_word_weight_hist',
             values : U._extend(word_weight_row, {created_time : time_updated})
          }
       )
@@ -175,16 +188,18 @@ function get_word_weights_cfg ( user_id ) {
                   })
 }
 
-function get_word_notepad_info ( user_id, word, module ) {
+function get_word_notepad_info ( user_id, word, module, first_language, target_language ) {
    return DB.get_db_adapter('Notes')
       // NOTE: I don't need entity here as I registered the Notes adapter to be on a specific table already
       // Otherwise, I would need a mapping from Notes_Collection to the specific table
       // This will be useful when I will have several tables to organize the notes information
       .exec_query({action     : 'select',
                      criteria : {
-                        module  : module,
-                        word    : word,
-                        user_id : user_id
+                        module          : module,
+                        word            : word,
+                        user_id         : user_id,
+                        first_language  : first_language,
+                        target_language : target_language
                      }});
 }
 
@@ -197,7 +212,7 @@ function get_word_to_memorize ( appState, callback ) {
    // Get the list of word and weight parameters for that user_id
    // Get the adapter for executing query
    var user_id = appState.user_id;
-   RSVP.all([get_word_weights(user_id), get_word_weights_cfg(user_id)])
+   RSVP.all([get_word_weights(user_id, appState.first_language, appState.target_language), get_word_weights_cfg(user_id)])
       .then(function success_qry_weight_and_cfg ( aDb_rows ) {
                // TODO : remove duplicate words? Or assume there are none (removed at another stage)
                /* reminder specs for config rows are:
@@ -261,7 +276,7 @@ function get_word_to_memorize ( appState, callback ) {
                //TODO : don't forget to implement a mechanism under which there is no more words to review
                return selected_word;
             })
-      .then(get_word_info(user_id, 'reader tool'))
+      .then(get_word_info(user_id, 'reader tool', appState.first_language, appState.target_language))
       .then(U.callback_ok(callback), callback)
 }
 
@@ -301,7 +316,22 @@ function TSR_compute_weight ( weight_rows, weight_cfg_row ) {
    })
 }
 
-function get_word_info ( user_id, module ) {
+function get_word_user_translation ( user_id, selected_word, first_language, target_language ) {
+   return DB.get_db_adapter('User_Translation')
+      // NOTE: I don't need entity here as I registered the Notes adapter to be on a specific table already
+      // Otherwise, I would need a mapping from Notes_Collection to the specific table
+      // This will be useful when I will have several tables to organize the notes information
+      .exec_query({action     : 'select',
+                     entity   : 'word_user_translation',
+                     criteria : {
+                        word            : selected_word,
+                        user_id         : user_id,
+                        first_language  : first_language,
+                        target_language : target_language
+                     }});
+}
+
+function get_word_info ( user_id, module, first_language, target_language ) {
    return function ( selected_word ) {
       // Get some more info about the word to pass down for the exercise
       // I could query more tables to have all word form for same lemma and some lexical analysis info
@@ -310,15 +340,22 @@ function get_word_info ( user_id, module ) {
          return U.throw_promise_error('get_word_info: no/empty word passed as parameter!');
       }
       // Get : 1. notepad info, 2. current weight_info (used to compute the future weight)
-      return RSVP.all([get_word_notepad_info(user_id, selected_word, module),
-                       get_specific_word_weight(user_id, selected_word)])
+      return RSVP.all([get_word_user_translation(user_id, selected_word, first_language, target_language),
+                       get_word_notepad_info(user_id, selected_word, module, first_language, target_language),
+                       get_specific_word_weight(user_id, selected_word, first_language, target_language)
+                      ])
          //TODO add a query to get the sample sentence and user translation in User_Translation
          .then(function get_word_info_merge ( aPromiseResults ) {
                   return {
-                     rowsNoteInfo  : aPromiseResults[0],
-                     rowWordWeight : aPromiseResults[1][0] // should only be one
+                     rowsUserTrans : aPromiseResults[0],
+                     rowsNoteInfo  : aPromiseResults[1],
+                     rowWordWeight : aPromiseResults[2][0] // should only be one
                   }
-               });
+               },
+               function error ( err ) {
+                  console.log("error", err);
+                  return new RSVP.Promise(function(resolve,reject) {reject(err);});
+               })
    }
 }
 // compute age component as

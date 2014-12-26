@@ -1,4 +1,5 @@
 -- TEST tables
+DROP TABLE IF EXISTS pg_test_table;
 CREATE TABLE pg_test_table
 (
   id SERIAL,
@@ -15,6 +16,7 @@ ALTER TABLE pg_test_table
 
 -- Table: pgwordfrequency
 -- DROP TABLE pgwordfrequency;
+-- DROP TABLE IF EXISTS pgwordfrequency;
 CREATE TABLE pgwordfrequency
 (
   word character varying NOT NULL,
@@ -54,6 +56,8 @@ CREATE TABLE pg_notepad
 (
   note_id serial,
   module CHARACTER VARYING (50),
+  first_language CHAR(3),
+  target_language CHAR(3),
   user_id INTEGER,
   url CHARACTER VARYING,
   word CHARACTER VARYING,
@@ -83,8 +87,10 @@ DROP TABLE IF EXISTS pg_tsr_word_weight;
 CREATE TABLE pg_tsr_word_weight
 (
   id SERIAL,
+  first_language CHAR(3), -- not necessary but kept for redundancy reasons
+  target_language CHAR(3), -- necessary : user might learn two languages which might have same words
   user_id INTEGER,
-  word character varying,
+  word character varying, -- this is in fact a lemma, as we do not TSR words but lemmas
   box_weight INTEGER,
   last_revision_time character varying,
   last_revision_easyness SMALLINT,
@@ -100,10 +106,11 @@ ALTER TABLE pg_tsr_word_weight
 CREATE INDEX pg_tsr_word_weight_idx
   ON pg_tsr_word_weight
   USING btree
-  (user_id, word);
+  (user_id, word, target_language);
 ---
+DROP TABLE IF EXISTS pg_tsr_word_weight_cfg;
 CREATE TABLE pg_tsr_word_weight_cfg
-(
+( -- the config for the word TSR learning however should be independant of the first and target language
   user_id INTEGER,
   mem_bucket_size SMALLINT,
   age_param1 SMALLINT,
@@ -130,9 +137,12 @@ CREATE INDEX pg_tsr_word_weight_cfg_idx
   (user_id);
 --- Corresponding historical tables
 ---------- tables for time-spaced-repetition module
+DROP TABLE IF EXISTS pg_tsr_word_weight_hist;
 CREATE TABLE pg_tsr_word_weight_hist
-(
-  id INTEGER, -- not serial, as we copy the serial from the original table
+( -- !! We have a dependency here vs. pg_tsr_word_weight : spec. must coincide
+  id INTEGER, -- not serial, as we copy the serial from the original tabl
+  first_language CHAR(3), -- not necessary but kept for redundancy reasons
+  target_language CHAR(3), -- necessary : user might learn two languages which might have same words
   user_id INTEGER,
   word character varying,
   box_weight INTEGER,
@@ -159,6 +169,7 @@ CREATE INDEX pg_tsr_word_weight_hist_id_idx
   (id);
 ----------
 ---------- tables for storing translation entered by the user
+DROP TABLE IF EXISTS pg_word_user_translation;
 CREATE TABLE pg_word_user_translation
 (
   id SERIAL,

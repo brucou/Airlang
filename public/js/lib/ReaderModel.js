@@ -859,7 +859,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              var self = this;
              // Get state info
              // return a promise that will be resolved when all state data has been retrieved
-             return STATE.get_stored_stateful_object('Notes', criteria)
+             return STATE.get_stored_stateful_object('Notes', {criteria: criteria})
                 .then(function success ( aNotes ) {
                          //check type
                          if (!UT.isArray(aNotes)) {
