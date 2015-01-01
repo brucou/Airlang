@@ -133,9 +133,15 @@ function update_word_weight_post_exo ( obj, callback ) {
     easyness : compute_easyness(correct_word, answer, word_info, time_taken_sec)
     */
    // TODO add a check of properties here
-   return get_specific_word_weight(analyzed_answer_merged.user_id, analyzed_answer_merged.correct_word)
+   return get_specific_word_weight(analyzed_answer_merged.user_id, analyzed_answer_merged.lemma,
+                                   analyzed_answer_merged.first_language, analyzed_answer_merged.target_language)
       .then(function update_word_weight ( rows ) {
                word_weight_row = rows[0];
+               if (!word_weight_row) {
+                  return U.delegate_promise_error('update_word_weight_post_exo: get_specific_word_weight '
+                                                     + 'found no rows in weight table for lemma '
+                                                     + analyzed_answer_merged.lemma);
+               }
                time_updated = analyzed_answer_merged.time_analyzed;
 
                // TODO
@@ -196,7 +202,7 @@ function get_word_notepad_info ( user_id, word, module, first_language, target_l
       .exec_query({action     : 'select',
                      criteria : {
                         module          : module,
-                        word            : word,
+                        lemma           : word,
                         user_id         : user_id,
                         first_language  : first_language,
                         target_language : target_language
@@ -324,7 +330,7 @@ function get_word_user_translation ( user_id, selected_word, first_language, tar
       .exec_query({action     : 'select',
                      entity   : 'word_user_translation',
                      criteria : {
-                        word            : selected_word,
+                        lemma           : selected_word,
                         user_id         : user_id,
                         first_language  : first_language,
                         target_language : target_language
@@ -354,7 +360,7 @@ function get_word_info ( user_id, module, first_language, target_language ) {
                },
                function error ( err ) {
                   console.log("error", err);
-                  return new RSVP.Promise(function(resolve,reject) {reject(err);});
+                  return new RSVP.Promise(function ( resolve, reject ) {reject(err);});
                })
    }
 }

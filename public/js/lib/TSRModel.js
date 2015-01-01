@@ -5,31 +5,33 @@
    // NOTE : this is only client side
 define(['utils'], function ( UT ) {
           function analyze_answer ( answer, word_info ) {
-             // TODO: structure of specData to be precised
-             // specData comes from info returned by the server when getting the word to memorize
-             // and that should be put in appState to be passed down to sub controllers
              // for now, just returning ok if the word is the same
              /* word_info   : {
               current_word      : word_to_memorize,
               rowsNoteInfo : rowsNoteInfo,
+              rowsUserTrans : translation chosen by the user for the lemma/word and maybe some example sentences
               rowWordWeight : rowWordWeight
               + timeSubmitted
               + timeCreated
               } */
-             var correct_word = word_info.current_word;
-             var ok = (correct_word === answer);
+             var aCorrectWords = word_info.rowsUserTrans.map(function(rowUserTrans) {return rowUserTrans.lemma_translation});
+             logWrite(DBG.TAG.DEBUG, 'possible translations', aCorrectWords);
+             var ok = (aCorrectWords.indexOf(answer) > -1);
              var time_taken_sec = word_info.timeSubmitted - word_info.timeCreated;
 
              return {
-                ok             : ok, correct_word : correct_word, answer : answer,
+                ok             : ok, aCorrectWords : aCorrectWords, answer : answer,
+                lemma : word_info.current_word,
+                first_language: word_info.rowsUserTrans[0].first_language,
+                target_language: word_info.rowsUserTrans[0].target_language,
                 time_taken_sec : time_taken_sec, time_analyzed : word_info.timeSubmitted,
-                mistake        : compute_word_mistake(correct_word, answer, word_info),
-                grade          : compute_grade(correct_word, answer, word_info), // NOT USED FOR NOW
-                easyness       : compute_easyness(correct_word, answer, word_info, time_taken_sec)
+                mistake        : compute_word_mistake(aCorrectWords, answer, word_info),
+                grade          : compute_grade(aCorrectWords, answer, word_info), // NOT USED FOR NOW
+                easyness       : compute_easyness(aCorrectWords, answer, word_info, time_taken_sec)
              }
           }
 
-          function compute_word_mistake ( correct_word, answer, word_info ) {
+          function compute_word_mistake ( aCorrectWords, answer, word_info ) {
              // TODO : run a series of common mistake checks, for example
              // word is the same if we forget about accent
              // word is the same if we forget about CAPS
@@ -39,7 +41,7 @@ define(['utils'], function ( UT ) {
              return "TODO";
           }
 
-          function compute_grade ( correct_word, answer, word_info ) {
+          function compute_grade ( aCorrectWords, answer, word_info ) {
              // IMPORTANT : This is coupled to the final formula
              // for now it is progress component as Cn^-grade, where grade is increasing with performance
 
@@ -68,11 +70,12 @@ define(['utils'], function ( UT ) {
              }
 
              var current_grade = word_info.rowWordWeight.last_revision_grade;
-             var word_distance = UT.getEditDistance(correct_word, answer);
+             var word_distance = aCorrectWords.map(function(correct_word) {return UT.getEditDistance(correct_word, answer)}).reduce (function (prev,next) {return prev < next ? prev : next});
+             logWrite(DBG.TAG.DEBUG, 'word_distance', word_distance);
              return compute_new_grade(current_grade, word_distance);
           }
 
-          function compute_easyness ( correct_word, answer, word_info, time_taken ) {
+          function compute_easyness ( aCorrectWords, answer, word_info, time_taken ) {
              // returns a value between 0,5 and 1,5
              // could be calculated as a function of is_correct, time_taken
              // fast x wrong answer --> 1

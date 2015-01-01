@@ -42,7 +42,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              expirationSliding  : 60 * 1500,
              priority           : Cache.Priority.HIGH,
              callback           : function ( k, v ) {
-                console.log('key removed from cache :' + k);
+                //console.log('key removed from cache :' + k);
              }};
           var localCache = new CACHE.LocalStorageCacheStorage('qry_translation_cache');
           logWrite(DBG.TAG.DEBUG, "localcache", UT.inspect(localCache));
@@ -113,7 +113,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              //logEntry("extract_relevant_text_from_html");
              var dfr = $.Deferred(),
                  MIN_SENTENCE_NUMBER = 7,
-                 MIN_AVG_AVG_SENTENCE_LENGTH = 10,
+                 MIN_AVG_AVG_SENTENCE_LENGTH = 11,
                  SOURCE = "source", //for temporarily keep the loaded webpage
                  DEST = "destination";
 

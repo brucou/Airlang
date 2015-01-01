@@ -58,6 +58,7 @@ define(['jquery',
                         text_align                 : 'center',
                         get_$tooltip               : function () {return $("#airlang-rdt-tt")},
                         get_$translation_table     : function () {return $("#table_tooltip");},
+                        id_trans_input             : 'airlang-rdt-trans-input',
                         // or could be $('[data-content="translation_table"]'); but it is slower so not used here
                         set_HTML_tooltip           : function ( html_text ) {
                            this.attr("tooltip_html_content", html_text)
@@ -175,6 +176,11 @@ define(['jquery',
 
                 submit : function ( $el, ev ) {
                    var self = this;
+                   // check event target
+                   logWrite(DBG.TAG.EVENT, 'submit', 'on element', '#' + ev.target.getAttribute('id'));
+                   if (ev.target.getAttribute('id') !== TC.viewTranslateAdapter.id_trans_input) {
+                      return;
+                   }
                    logWrite(DBG.TAG.DEBUG, "entering submit handler");
                    var translation_word = this.stateMap.objTrans.translation_word;
                    if (!translation_word) {

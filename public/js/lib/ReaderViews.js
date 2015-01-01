@@ -11,6 +11,7 @@ define([], function () {
    tpl.push("</tr>");
    tpl.push("</thead>");
    tpl.push("<tbody>");
+
    tpl.push("{{#result_rows}}");
    tpl.push("<tr class='airlang-rdt-tt-row-translation' data-content='translation' data-lemma='{{lemma}}'>");
    tpl.push("<td class='airlang-rdt-tt-col-tsense'> {{translation_sense}} </td>");
@@ -25,10 +26,8 @@ define([], function () {
             "<strong>{{example_sentence_to}}</strong>");
    tpl.push("</td>");
    tpl.push("</tr>");
-   /**             tpl.push("<tr>");
-    tpl.push("<td colspan='3' class='sample_sentence_to'> {{example_sentence_to}}</td>");
-    tpl.push("</tr>");
-    */             tpl.push("{{/result_rows}}");
+   tpl.push("{{/result_rows}}");
+
    tpl.push("</tbody>");
    tpl.push("</table>");
    RV.translation_template = tpl.join("\n");

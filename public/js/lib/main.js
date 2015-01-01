@@ -169,7 +169,7 @@ requirejs(
          ////////////
          // configure error handler to avoid silent failure or RSVP promises
          RSVP.on('error', function ( reason ) {
-            console.assert(false, reason);
+            console.log(reason);
          });
          // Initialize socket connection and feature modules
          $.when(

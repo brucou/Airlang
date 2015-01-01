@@ -45,7 +45,7 @@
         //never includes a ".js" extension since
         //the paths config could be for a directory.
         paths   : {
-            jquery          : '../vendor/jquery-1.10.2.min',
+            jquery          : '../vendor/jquery-1.10.2',
             cache           : '../vendor/cache',
             mustache        : '../vendor/mustache',
             rsvp            : '../vendor/rsvp',
@@ -103,8 +103,7 @@
 <option value="http://www.kolik-to-stoji.cz/kolik-stoji-notebook/">notebook stoji</option>
 <option value="http://zena.centrum.cz/deti/zajimavosti/clanek.phtml?id=702818">děti stoji</option>
 <option value="http://www.learningjquery.com/2008/12/peeling-away-the-jquery-wrapper/">learningjQuery</option>
-    <option value="http://en.wikipedia.org/wiki/Perranzabuloe">wikipedia</option>
-    <option value="http://en.wikipedia.org/wiki/World_population">wikipedia pop</option>
+<option value="http://ales-kalina.cz/blog/vztahy-blog/nesnazte-se-opravovat-nekompatibilni-vztah/">psicho idnes</option>
 <option value="http://ekonomika.idnes.cz/v-rusku-vypukla-kvuli-propadu-rublu-panika-dosly-dolary-i-eura-pve-/eko-zahranicni.aspx?c=A141216_183624_eko-zahranicni_ozr">idnes ru</option>
     <option value="http://ona.idnes.cz/nejpevnejsi-jsou-vztahy-atraktivniho-muze-a-osklive-zeny-pnm-/vztahy-sex.aspx?c=A110303_194154_vztahy-sex_lf&fb_action_ids=542556529104740&fb_action_types=og.recommends">ona idnes</option>
         <option value="http://www.voxeurop.eu/cs/content/editorial/4765047-jsme-zpet">VoxEurop cs
@@ -200,7 +199,7 @@ class='airlang-rdt-tt-transover'
     </div>
     <!--  Icon, word and PoS END-->
     <div id='airlang-tsr-btn-next'>
-        <button><img src="./img/next.jpg"></button>
+        <button class='temp'><img src="./img/next.jpg"></button>
     </div>
     <div id='airlang-tsr-exercise-container'></div>
 </div>
@@ -221,6 +220,12 @@ class='airlang-rdt-tt-transover'
     </p>
   </fieldset>
 </form>
+<div id="airlang-tsr-exo-rep-container">
+{{{tsr_exo_rep}}}
+</div>
+<div id="airlang-tsr-exo-hint-container">
+{{{tsr_exo_hint}}}
+</div>
 
 </script>
 <!--  ----------- -->
