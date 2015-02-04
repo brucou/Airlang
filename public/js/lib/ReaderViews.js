@@ -13,17 +13,17 @@ define([], function () {
    tpl.push("<tbody>");
 
    tpl.push("{{#result_rows}}");
-   tpl.push("<tr class='airlang-rdt-tt-row-translation' data-content='translation' data-lemma='{{lemma}}'>");
-   tpl.push("<td class='airlang-rdt-tt-col-tsense'> {{translation_sense}} </td>");
-   tpl.push("<td class='airlang-rdt-tt-col-lemma'> {{lemma}} </td>");
-   tpl.push("<td class='airlang-rdt-tt-col-sense'> {{sense}} </td>");
+   tpl.push("<tr class='al-rdt-tt-row-translation' data-content='translation' data-lemma='{{lemma}}'>");
+   tpl.push("<td class='al-rdt-tt-col-tsense'> {{translation_sense}} </td>");
+   tpl.push("<td class='al-rdt-tt-col-lemma'> {{lemma}} </td>");
+   tpl.push("<td class='al-rdt-tt-col-sense'> {{{sense}}} </td>");
    tpl.push("</tr>");
-   tpl.push("<tr class='airlang-rdt-tt-row-example' data-content='sample_sentences'>");
-   tpl.push("<td colspan='3' class='airlang-rdt-tt-sample_sentence_from' " +
+   tpl.push("<tr class='al-rdt-tt-row-example' data-content='sample_sentences'>");
+   tpl.push("<td colspan='3' class='al-rdt-tt-sample_sentence_from' " +
             "data-content-sentence-first-lg='{{example_sentence_from}}' " +
             "data-content-sentence-target-lg='{{example_sentence_to}}'>");
-   tpl.push(" {{example_sentence_from}}<br>" +
-            "<strong>{{example_sentence_to}}</strong>");
+   tpl.push(" {{example_sentence_from}}{{{example_sentence_from_sep}}}" +
+            "<strong>{{{example_sentence_to}}}</strong>");
    tpl.push("</td>");
    tpl.push("</tr>");
    tpl.push("{{/result_rows}}");

@@ -5,15 +5,21 @@ table {
 }
 
 td {
-    padding: 0.5rem;
+    padding: 0.4rem;
     text-align: left;
-    white-space: nowrap;
-    width: 100%;
+    /*width: 100%;*/
+    line-height: 1.1;
+    height: 2px;
+}
+
+tr {
+    line-height: 4px;
 }
 
 th {
     font-weight: bold;
     vertical-align: middle;
+    line-height: 14px;
 }
 
 tbody {
@@ -28,9 +34,19 @@ tbody tr:hover {
     background: yellow;
 }
 
-tbody tr .airlang-rdt-tt-sample_sentence_from {
+tbody tr .al-rdt-tt-sample_sentence_from {
     font-size: 0.8em;
     background: #ee0;
+}
+
+.al-rdt-tt-col-tsense {
+    max-width: 10em;
+    white-space: normal;
+}
+
+.al-rdt-tt-col-sense {
+    min-width: 14em;
+    white-space: normal;
 }
 
 .airlang-rdt-tt-transover {

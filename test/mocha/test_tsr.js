@@ -9,12 +9,12 @@ var assert = chai.assert;
 const prefix_src_dir = '../../';
 //var assert = require("assert");
 var Util = require('util'),
-   LOG = require(prefix_src_dir + './public/js/lib/debug'),
-   SIO = require(prefix_src_dir + './sio_logic'),
-   DB = require(prefix_src_dir + './db_logic'),
-   RSVP = require('rsvp'),
-   U = require(prefix_src_dir + './public/js/lib/utils'), // load the client side utils
-   TSR = require(prefix_src_dir + './TSRModel');
+    LOG = require(prefix_src_dir + './public/js/lib/debug'),
+    SIO = require(prefix_src_dir + './sio_logic'),
+    DB = require(prefix_src_dir + './db_logic'),
+    RSVP = require('rsvp'),
+    U = require(prefix_src_dir + './public/js/lib/utils'), // load the client side utils
+    TSR = require(prefix_src_dir + './TSRModel');
 
 describe('TSR', function () {
    var appState = {user_id : 1};
@@ -24,7 +24,7 @@ describe('TSR', function () {
       return promise;
    });
 
-      it('set weights new word', function test_set_weight( done ) {
+   it('set weights new word', function test_set_weight ( done ) {
       // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
       //DB.initialize_database();
       //U.assert_properties({user: 1}, {user: 'Numbe'});

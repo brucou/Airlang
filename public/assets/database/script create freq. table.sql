@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS pgWordFrequency;
 CREATE TABLE IF NOT EXISTS pgWordFrequency
 (word varchar, affix_rules char(7), frequency integer, freq_cat char(1), PRIMARY KEY(word));
 
-copy pgWordFrequency from 'C:\Documents and Settings\bcouriol\coding\Webstorm\JS_ME\assets\database\freq_table.csv'
+copy pgWordFrequency from 'C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\assets\database\pgWordFrequency.csv'
 DELIMITERS ',' NULL AS ' ' CSV HEADER;
 
 CREATE INDEX word_idx ON pgWordFrequency USING gin(to_tsvector('cs', word));
@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS pgwordfrequency_short
   freq_cat character(2)
 )
 
-COPY pgwordfrequency_short FROM 'C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\assets\pgwordfrequency_short.csv' DELIMITER ',' NULL AS ' ' CSV HEADER;
+COPY pgwordfrequency_short FROM 'C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\assets\database\pgwordfrequency_short.csv'
+DELIMITER ',' NULL AS ' ' CSV HEADER;
 
 -- maybe an index on lemma?
 CREATE INDEX lemma_btree_idx ON pgwordfrequency_short(lemma);

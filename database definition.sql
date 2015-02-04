@@ -16,7 +16,7 @@ ALTER TABLE pg_test_table
 
 -- Table: pgwordfrequency
 -- DROP TABLE pgwordfrequency;
--- DROP TABLE IF EXISTS pgwordfrequency;
+DROP TABLE IF EXISTS pgwordfrequency;
 CREATE TABLE pgwordfrequency
 (
   word character varying NOT NULL,
@@ -95,7 +95,9 @@ CREATE TABLE pg_tsr_word_weight
   last_revision_time character varying,
   last_revision_easyness SMALLINT,
   last_revision_exercise_type SMALLINT,
-  last_revision_grade SMALLINT
+  last_revision_grade SMALLINT --,
+--  last_mistake SMALLINT,
+--  last_word_distance SMALLINT
 )
 WITH (
   OIDS=FALSE
@@ -150,6 +152,8 @@ CREATE TABLE pg_tsr_word_weight_hist
   last_revision_easyness SMALLINT,
   last_revision_exercise_type SMALLINT,
   last_revision_grade SMALLINT,
+--  last_mistake SMALLINT,
+--  last_word_distance SMALLINT,
   created_time character varying -- new historical field
 )
 WITH (

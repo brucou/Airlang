@@ -66,6 +66,7 @@ Acknowledgements & Inspirations
 
 html {
     overflow-y: scroll;
+    overflow-x: scroll;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -233,10 +234,11 @@ a:link:hover, a:visited:hover {
     float: left;
 }
 
+/*
 .right {
     float: right;
 }
-
+*/
 .top {
     margin-bottom: 0.3em;
     display: block;
@@ -417,6 +419,10 @@ tfoot {
     font-size: 8px;
 }
 
+.al-hide {
+    display: none;
+}
+
 .highlight {
     color: #0066FF;
     font-family: 'Titillium Web', sans-serif;
@@ -429,16 +435,40 @@ tfoot {
 }
 
 #airlang-tsr-module-container {
-    white-space: nowrap
+    white-space: nowrap;
+    width: 40em;
 }
 
 #airlang-tsr-module-container > div {
-    display: inline-block
+    display: inline-block;
 }
 
+#airlang-tsr-word-info-container {
+    float: left;
+}
 
-/* Temporary, waiting for me to know more about CSS */
-button {
-    max-height: 150px;
-    max-width: 150px;
+#airlang-tsr-word-info-container img {
+    height: auto;
+    width: 5em;
+}
+
+#airlang-tsr-btn-next button img {
+    height: auto;
+    width: 5em;
+}
+
+#al-tsr-container {
+    width: 30em;
+}
+
+input.right {
+    background-color: white;
+}
+
+input.wrong {
+    background-color: red;
+}
+
+input.close {
+    background-color: lightyellow;
 }

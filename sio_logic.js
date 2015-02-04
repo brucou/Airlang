@@ -35,7 +35,7 @@ function sio_onHighlight_important_words ( msg, callback ) {
    LOG.write(LOG.TAG.INFO, 'highlight_important_words message received', msg);
 
    var freq_word_list = DB.get_important_words();
-   if (freq_word_list.length === 0) {
+   if (!freq_word_list || freq_word_list.length === 0) {
       LOG.write(LOG.TAG.ERROR, 'list of important word not set');
       callback('list of important word not set', null);
       return;

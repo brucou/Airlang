@@ -25,25 +25,36 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
       }, {
          // for now very simple viewAdapter, e.g. no reactive component
          viewAdapter : new can.Map(
-            { tsr_exo_hint   : "z", // no hint displayed by default at init
-               id_tsr_answer : 'airlang-tsr-answer',
-               empty_hint    : function () {
+            { tsr_exo_hint        : "z", // no hint displayed by default at init
+               tsr_exo_rep        : "",
+               answer_status      : "white",
+               id_tsr_answer      : 'airlang-tsr-answer',
+               $id_tsr_answer     : $('#airlang-tsr-answer'),
+               get_input_text     : function () {
+                  return document.getElementById(this.id_tsr_answer).value;
+               },
+               set_answer_status  : function ( status ) {
+                  this.attr('answer_status', status);
+               },
+               empty_hint         : function () {
                   this.attr("tsr_exo_hint", "");
                },
-               empty_answer_input : function () {$('#' +this.id_tsr_answer).val("");},
-               set_hint      : function ( html_s ) {this.attr('tsr_exo_hint', html_s)}
+               empty_answer_input : function () {document.getElementById(this.id_tsr_answer).value = "";},
+               set_hint           : function ( html_s ) {this.attr('tsr_exo_hint', html_s)}
             }),
 
          init : function ( $el, options ) {
             logWrite(DBG.TAG.INFO, "initializing TSR EXO Controller with options", options);
             var sub_controller = this;
             // !! BUG don't know why I have to do that but the triggering do not work if I use the jQuery corresponding el
-            $el_exo_controller = this.element;
             this.stateMap = this.options.stateMap;
             this.word_info = this.options.word_info;
-
-            // TODO : bind the event handler myself... awaiting to understand how the fuck this canJS shit works
-            // or move to react?
+            this.fsm = this.options.fsm; // statemachine object which will be queried to know state of main controller
+            this.exo_extra_info = {
+               trial_number       : 0,
+               last_mistake       : null,
+               last_word_distance : 0
+            }; // initialized to empty object, will be filled with additional info for grading
 
             // Show the view
             $el.html(TSR.EXO_view(this.viewAdapter));
@@ -59,16 +70,22 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
             logWrite(DBG.TAG.DEBUG, 'value entered', answer);
             exo_controller.word_info.timeSubmitted = new Date();
 
-            // validate result
             // validate answer return ok: bool, mistake: some idea of the mistake
-            // specData is information about the word that allows to find the mistake
-            // or to evaluate correctness
-            // minimally this is only the word in the same form it was stored
-            // it could also the word in lemma form, the word without punct. signs,
-            // a list of common spelling mistakes etc.
-            //{answer, time_taken_sec, mistake, grade, easyness}
-            var analyzed_answer = TSRM.analyze_answer(answer, exo_controller.word_info);
-            logWrite(DBG.TAG.DEBUG, 'analyzed answer', UT.inspect(analyzed_answer));
+            // TODO: mistake analysis
+            // minimally this is the wrong word entered and description of mistake
+            // - only accents, otherwise perfect,
+            // - part of list of common spelling mistakes for that word (first_language dependent)
+
+            // Update the trial number, it is used for grading the recall
+            // Other fields are not relevant on first trial but are later initialized at the first answer analysis
+            exo_controller.exo_extra_info.trial_number =
+            exo_controller.fsm.get_trial_number_from_fsm_state(exo_controller.fsm.current);
+            // pass all relevant data for the grading
+            var analyzed = TSRM.analyze_answer(answer, exo_controller.word_info, exo_controller.exo_extra_info);
+            var analyzed_answer = analyzed.analyzed_answer;
+            // and update the
+            exo_controller.exo_extra_info = analyzed.exo_extra_info;
+            logWrite(DBG.TAG.DEBUG, 'analyzed result', UT.inspect(analyzed));
 
             // send event corresponding to validation
             logWrite(DBG.TAG.EVENT, analyzed_answer.ok ? 'EXO_OK' : 'EXO_NOK', 'emitting');
@@ -77,6 +94,18 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
             // Note : it is the controller who decides to create and destroy its subcontrollers
             // mistake identification will not be done at client level or we need a drop down
             // maybe in REP stage
+         },
+
+         'input' : function ( $el, ev ) {
+            var exo_controller = this;
+            //logWrite(DBG.TAG.DEBUG, "event target", ev.target.getAttribute('id'));
+            if (exo_controller.fsm.is('EXO_REP') && UT.getTargetID(ev) === exo_controller.viewAdapter.id_tsr_answer) {
+               logWrite(DBG.TAG.EVENT, "input event", ev.target);
+               exo_controller.process_key_input(//ev.keyCode,
+                  exo_controller.viewAdapter.get_input_text(),
+                  exo_controller.word_info.rowsUserTrans);
+            }
+            return true; // continue with the default treatment which is to show on screen the key
          },
 
          'al-ev-tsr-exo-ctrl-empty' : function ( $el, ev, word_info ) {
@@ -91,7 +120,8 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
             word_info = ev.word_info || word_info;
 
             logWrite(DBG.TAG.EVENT, "al-ev-tsr-exo-ctrl-hint", "received with args", word_info);
-            this.show_hint(word_info);
+            console.log("al-ev-tsr-exo-ctrl-show-hint: state machine in state", this.fsm.current);
+            this.show_hint(word_info, this.fsm.current);
          },
 
          exo_ctrl_empty : function exo_ctrl_empty ( word_info ) {
@@ -103,17 +133,46 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
             //this.viewAdapter.set_hint(word_info.rowsUserTrans[0]);
          },
 
-         show_hint : function ( word_info ) {
+         process_key_input : function ( /*keyCode,*/ input, rowsUserTrans ) {
+            var exo_controller = this;
+            /* we check that the input correspond to the beginning of one of the word in rowsUserTrans
+             // (possible translations) */
+            var found = false;
+            //input = input + String.fromCharCode(keyCode);
+            rowsUserTrans.some(function ( rowUserTrans, index ) {
+               var possible_trans = rowUserTrans.lemma_translation;
+               if (input.length <= possible_trans.length && UT.startsWith(possible_trans, input)) {
+                  logWrite(DBG.TAG.DEBUG, 'possible translation found', possible_trans);
+                  return found = true;
+               }
+               return false;
+            });
+
+            //TODO : add a close status, for when it is just an accent error
+            exo_controller.viewAdapter.set_answer_status(found ? 'right' : 'wrong');
+         },
+
+         show_hint : function ( word_info, fsm_state ) {
             // html format the hint sentences info
             // we have two set of example sentences
             // each of which can have several possible translations (polysemic words)
             // start with the one chosen by the user (in user translation)
-            this.viewAdapter.set_hint(this.format_hint_sentences(word_info));
+            this.viewAdapter.set_hint(this.format_hint_sentences(word_info, fsm_state));
          },
 
-         format_hint_sentences : function ( word_info ) {
+         format_hint_sentences : function ( word_info, fsm_state ) {
+            /* word_info   : {
+             current_word      : word_to_memorize,
+             rowsNoteInfo : rowsNoteInfo,
+             rowsUserTrans : translation chosen by the user for the lemma/word and maybe some example sentences
+             rowWordWeight : rowWordWeight
+             + timeSubmitted
+             + timeCreated
+             }
+             fsm_state {string} : information about the state of the fsm machine (EXO, EXO_HINT, EXO_REP etc.
+             */
             var tpl = [];
-            tpl.push("<table id='al-tsr-hint-tbl' data-content='hint_table'>",
+            tpl.push("<table class='al-tsr-hint-tbl' data-content='hint_table'>",
                      "<thead>",
                      "  <tr>",
                      "    <th>Your chosen translations</th>",
@@ -121,20 +180,36 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
                      "</thead>",
                      "<tbody>",
                      "{{#user_translations}}",
-                     "  <tr>",
+                     "  <tr class='{{toggle_hide}}'>",
                      "    <td>{{lemma_translation}}</td>",
-                     "  </tr>",
+                     "  </tr><tr class='{{toggle_hide}}'>",
                      "    <td>{{sample_sentence_first_lg}}</td>",
-                     "  </tr>",
+                     "  </tr><tr>",
                      "    <td><strong>{{sample_sentence_target_lg}}</strong></td>",
                      "  </tr>",
                      "{{/user_translations}}",
+                     "</tbody>",
+                     "</table>",
+                     "<table class='al-tsr-hint-tbl' data-content='hint_table'>",
+                     "<thead>",
+                     "  <tr>",
+                     "    <th>From your notes</th>",
+                     "  </tr>",
+                     "</thead>",
+                     "<tbody>",
+                     "{{#rowsNoteInfo}}",
+                     "  <tr>",
+                     "    <td>{{context_sentence}}</td>",
+                     "  <tr></tr>",
+                     "{{/rowsNoteInfo}}",
                      "</tbody>",
                      "</table>");
             var template = tpl.join("\n");
 
             var html_text = MUSTACHE.render(template,
-                                            {user_translations : word_info.rowsUserTrans});
+                                            {toggle_hide         : fsm_state === 'EXO_HINT' ? 'al-hide' : '',
+                                               user_translations : word_info.rowsUserTrans,
+                                               rowsNoteInfo      : word_info.rowsNoteInfo});
             return html_text;
          }
       });
@@ -161,22 +236,35 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
             var controller = this;
             this.stateMap = this.options.appState;
 
-            this.EXO_HINT_controller = this.EXO_REP_controller = undefined;
-
             // Show the view
             $el.html(TSR.mainView(this.mainViewAdapter));
+
+            //Create and start the state machine
+            this.fsm = this.createStateMachine();
+            // adding helper function which translate the state into the number of current attempt
+            this.fsm.get_trial_number_from_fsm_state = function ( sState ) {
+               switch (sState) {
+                  case 'EXO' :
+                     return 1;
+                  case 'EXO_HINT' :
+                     return 2;
+                  case 'EXO_REP' :
+                     return 3;
+                  default:
+                     throw 'get_trial_number_from_fsm_state: unknown state - cannot translate to trial number';
+                     break;
+               }
+            };
+
+            this.fsm.start();
 
             // Initialize the controller AFTER showing the view, otherwise the id used in the view do not exist on the page
             this.EXO_controller =
             new TSR.EXO_controller('#' + this.mainViewAdapter.id_exercise_container,
                                    {stateMap    : controller.stateMap,
+                                      fsm       : this.fsm,
                                       target    : '#' + this.mainViewAdapter.id_exercise_container,
                                       word_info : controller.stateMap.word_info});
-            //Create and start the state machine
-            this.fsm = this.createStateMachine();
-            this.fsm.start();
-
-            // TODO :
          },
 
          '#airlang-tsr-exercise-container EXO_OK' : function ( $el, ev, analyzed_answer ) {
@@ -193,9 +281,6 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
             var controller = this;
             logWrite(DBG.TAG.DEBUG, 'event EXO_NOK received in main controller');
             // advance to next state in state machine
-            // TODO: Think about if I need to pass value
-            // put value in controller accessible by all modules?
-            // or pass value around via args of event triggered?
             controller.fsm.nok();
          },
 
@@ -228,7 +313,7 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
                                     },
                                     callbacks : {
                                        onINIT : function onINIT ( event, from, to, args ) {
-                                          logWrite(DBG.TAG.INFO,"Machine initialized");
+                                          logWrite(DBG.TAG.INFO, "Machine initialized");
                                        }
                                        // So far unused. This is here because it is called at creation time
                                     }});
@@ -246,6 +331,7 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
                // as socket.io does a recursive search for binary prop which
                // exceeds stack size (and take time)
                // So for example no jQuery element
+               logWrite(DBG.TAG.SOCK, "get_word_to_memorize", "emitting stateMap");
                SOCK.RSVP_emit('get_word_to_memorize', filter_prop_EXO(stateMap))
                   .then(
                   function get_word_to_memorize_success ( result ) {
@@ -293,11 +379,23 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
 
                // show hint sentences
                can.trigger(document.getElementById(controller.mainViewAdapter.id_exercise_container),
+                           'al-ev-tsr-exo-ctrl-empty',
+                           controller.stateMap.word_info);
+               can.trigger(document.getElementById(controller.mainViewAdapter.id_exercise_container),
                            'al-ev-tsr-exo-ctrl-show-hint',
                            controller.stateMap.word_info);
             };
+
             fsm.onEXO_REP = function onEXO_REP ( event, from, to, args ) {
                logWrite(DBG.TAG.INFO, "Entered EXO_REP state");
+               // show hint sentences
+               can.trigger(document.getElementById(controller.mainViewAdapter.id_exercise_container),
+                           'al-ev-tsr-exo-ctrl-empty',
+                           controller.stateMap.word_info);
+               can.trigger(document.getElementById(controller.mainViewAdapter.id_exercise_container),
+                           'al-ev-tsr-exo-ctrl-show-hint',
+                           controller.stateMap.word_info);
+
                // TODO : Here we want to process each key and if it is wrong letter then change color till good answer full
                // also if more words, change color
                // if letter is ok but wrong accent, another color
@@ -311,6 +409,7 @@ define(['jquery', 'state-machine', 'mustache', 'TSRModel', 'socket', 'utils'], f
                // If no more then go to exit
                var stateMap = controller.stateMap;
 
+               logWrite(DBG.TAG.SOCK, "Emitting update_word_weight_post_tsr_exo (user_id not shown)", UT.inspect(stateMap.analyzed_answer));
                SOCK.RSVP_emit('update_word_weight_post_tsr_exo',
                               UT._extend(stateMap.analyzed_answer, {user_id : stateMap.user_id}))
                   .then(

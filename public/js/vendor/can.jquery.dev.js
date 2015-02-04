@@ -2130,7 +2130,8 @@
                 "mouseup", "reset", "resize", "scroll", "select", "submit", "focusin",
                 "focusout", "mouseenter", "mouseleave",
                 "touchstart", "touchmove", "touchcancel", "touchend", "touchleave",
-                "inserted", "removed"
+                "inserted", "removed",
+                'input' //added by Bruno Couriol on 04.01.2015
             ], function(v) {
                 processors[v] = basicProcessor;
             });

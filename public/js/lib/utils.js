@@ -741,6 +741,12 @@ function utilsFactory ( RSVP ) {
       }
    }
 
+   function parsedToken_count_tag ( aHTMLTokens, tagName ) {
+      return aHTMLTokens.reduce(function ( prev, html_token ) {
+         return prev + (html_token.name === tagName)
+      }, 0);
+   }
+
    /**
     * Purpose : Parse a DOM Tree whose root is given by $el
     * Action  : Add a html line corresponding to the tag at hand and number it sequentially for later identification
@@ -836,7 +842,12 @@ function utilsFactory ( RSVP ) {
          var html_begin_tag,
              tag_name = $el.prop("tagName");
 
-         if ('undefined' !== flag_no_transform && flag_no_transform) {
+         // Do nothing if there is no tag_name for some reason
+         if (!tag_name) {
+            return;
+         }
+
+         if (flag_no_transform) {
             // case when flag_no_transform is true
             // in that case we don't read mapAttr and else, we convert the tag attributes to html
             var arr = [];
@@ -907,12 +918,15 @@ function utilsFactory ( RSVP ) {
          });
 
          // Close the tag, we finished reading its content
-         var html_end_tag = "</" + $el.prop("tagName") + ">";
-         aHTMLparsed.push(html_end_tag);
-         aHTMLtokens.push({type          : 'html_end_tag', text : html_end_tag,
-                             word_number : count_words(html_end_tag), name : $el.prop("tagName")});
-         // and don't forget to comment it out as to be skipped when highlighting
-         comment_tag_out(html_end_tag);
+         // EXCEPTION :BUG SOLUTION : if the tag is BR then don't put an end tag
+         if (tag_name !== "BR") {
+            var html_end_tag = "</" + $el.prop("tagName") + ">";
+            aHTMLparsed.push(html_end_tag);
+            aHTMLtokens.push({type          : 'html_end_tag', text : html_end_tag,
+                                word_number : count_words(html_end_tag), name : $el.prop("tagName")});
+            // and don't forget to comment it out as to be skipped when highlighting
+            comment_tag_out(html_end_tag);
+         }
       }
    }
 
@@ -942,6 +956,10 @@ function utilsFactory ( RSVP ) {
    //TEST CODE
    //window.inspect = inspect;
    ////////
+
+   function getTargetID ( ev ) {
+      return ev.target.getAttribute('id');
+   }
 
    /**
     * Limitations :
@@ -1064,6 +1082,8 @@ function utilsFactory ( RSVP ) {
    }
 
    function sum ( a, b ) {return a + b}
+
+   function min ( a, b ) {return a < b ? a : b}
 
    /**
     * Logical or. No type check on arguments type, return value forced to boolean. Please make sure you pass
@@ -1553,6 +1573,10 @@ function utilsFactory ( RSVP ) {
       return _unaccent_letter_map[letter];
    }
 
+   function startsWith ( str, startStr ) {
+      return str.lastIndexOf(startStr, 0) === 0
+   }
+
    /**
     * Source : http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#JavaScript
     * The Levenshtein distance is a string metric for measuring the difference between two sequences. Informally, the Levenshtein distance between two words is the minimum number of single-character edits (i.e. insertions, deletions or substitutions) required to change one word into the other
@@ -1660,6 +1684,7 @@ function utilsFactory ( RSVP ) {
           create_jquery_event             : create_jquery_event,
           fn_get_prop                     : fn_get_prop,
           parseDOMtree_flatten_text_nodes : parseDOMtree_flatten_text_nodes,
+          getTargetID                     : getTargetID,
           getClass                        : getClass,
           assert_type                     : assert_type,
           assert_properties               : assert_properties,
@@ -1671,18 +1696,21 @@ function utilsFactory ( RSVP ) {
           log_error                       : log_error,
           qry_count_num_param             : qry_count_num_param,
           sum                             : sum,
+          min                             : min,
           or                              : or,
           identity                        : identity,
           f_none                          : f_none,
           count_word                      : count_word,
           is_word                         : is_word,
           unaccent_letter                 : unaccent_letter,
+          startsWith                      : startsWith,
           getEditDistance                 : getEditDistance,
           delegate_promise_error          : delegate_promise_error,
           error_handler                   : error_handler,
           basic_error_handler             : basic_error_handler,
           callback_ok                     : callback_ok,
-          default_node_callback           : default_node_callback
+          default_node_callback           : default_node_callback,
+          parsedToken_count_tag           : parsedToken_count_tag
        };
 
    _UT.type = {

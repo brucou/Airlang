@@ -83,7 +83,9 @@ function insert_word_weight ( user_id, word, first_language, target_language ) {
                last_revision_time          : new Date(),
                last_revision_easyness      : 1,
                last_revision_exercise_type : 1,
-               last_revision_grade         : 0
+               last_revision_grade         : 0//,
+               //               last_mistake                : 0,
+               //               last_word_distance          : 0
             }
          });
    }
@@ -144,13 +146,12 @@ function update_word_weight_post_exo ( obj, callback ) {
                }
                time_updated = analyzed_answer_merged.time_analyzed;
 
-               // TODO
-               // Age component:
-               // time is set to the time of now : in the formula it will be used to compute days difference
-
-               return update_specific_word_weight(analyzed_answer_merged.user_id, analyzed_answer_merged.correct_word,
+               // TODO: exercise type decide where to compute it : client vs. server, and how to compute it: for now 1
+               return update_specific_word_weight(analyzed_answer_merged.user_id, analyzed_answer_merged.lemma,
+                                                  analyzed_answer_merged.first_language, analyzed_answer_merged.target_language,
                                                   time_updated, analyzed_answer_merged.easyness,
-                                                  analyzed_answer_merged.exercise_type, analyzed_answer_merged.grade)
+                                                  analyzed_answer_merged.exercise_type ||
+                                                  1, analyzed_answer_merged.grade)
                   .then(set_word_weight_hist(word_weight_row, time_updated));
             })
       .then(U.callback_ok(callback), callback);
@@ -167,13 +168,15 @@ function set_word_weight_hist ( word_weight_row, time_updated ) {
    }
 }
 
-function update_specific_word_weight ( user_id, word, time, easyness, exercise_type, grade ) {
+function update_specific_word_weight ( user_id, lemma, fst_lg, tgt_lg, time, easyness, exercise_type, grade ) {
    return DB.get_db_adapter('TSR').exec_query(
       {action     : 'update',
          entity   : 'TSR_word_weight',
          criteria : {
-            user_id : user_id,
-            word    : word
+            user_id         : user_id,
+            word            : lemma,
+            first_language  : fst_lg,
+            target_language : tgt_lg
          },
          update   : {
             last_revision_time          : time,
@@ -219,39 +222,16 @@ function get_word_to_memorize ( appState, callback ) {
    // Get the adapter for executing query
    var user_id = appState.user_id;
    RSVP.all([get_word_weights(user_id, appState.first_language, appState.target_language), get_word_weights_cfg(user_id)])
-      .then(function success_qry_weight_and_cfg ( aDb_rows ) {
+      .then(function compute_weight_and_select_word ( aDb_rows ) {
                // TODO : remove duplicate words? Or assume there are none (removed at another stage)
-               /* reminder specs for config rows are:
-                user_id INTEGER,
-                mem_bucket_size SMALLINT,
-                age_param1 SMALLINT,
-                age_param2 SMALLINT,
-                progress_param1 SMALLINT,
-                progress_param2 SMALLINT,
-                difficulty_param1 SMALLINT,
-                difficulty_param2 SMALLINT,
-                bucket_weight0 SMALLINT,
-                bucket_weight1 SMALLINT,
-                bucket_weight2 SMALLINT,
-                bucket_weight3 SMALLINT,
-                */
-               /*
-                for weight rows:
-                id SERIAL,
-                user_id INTEGER,
-                word character varying,
-                box_weight INTEGER,
-                last_revision_time character varying,
-                last_revision_easyness SMALLINT,
-                last_revision_exercise_type SMALLINT,
-                last_revision_grade SMALLINT
-                */
+               // reminder specs for config rows are: pg_tsr_word_weight_cfg
+               //for weight rows: pg_tsr_word_weight
                var weight_rows = aDb_rows[0],
                    weight_cfg_row = aDb_rows[1][0], // there must only be one
                    total_weight,
                    selected_word;
                if (aDb_rows[1].length !== 1) {
-                  return U.throw_promise_error('get_word_to_memorize: found several rows in TSR_word_weight_cfg table!');
+                  return U.delegate_promise_error('get_word_to_memorize: found several or no rows in TSR_word_weight_cfg table!');
                }
                if (weight_rows.length == 0) {
                   return "";
@@ -271,7 +251,7 @@ function get_word_to_memorize ( appState, callback ) {
                }
 
                var aWeights = TSR_compute_weight(weight_rows, weight_cfg_row);
-               total_weight = aWeights.reduce(function ( prev, next ) {return prev + next}, 0);
+               total_weight = aWeights.reduce(U.sum, 0);
 
                //get a randon number between 0 and total_weight
                var random_number = Math.random() * total_weight;
@@ -337,11 +317,17 @@ function get_word_user_translation ( user_id, selected_word, first_language, tar
                      }});
 }
 
+/**
+ * Returns all relevant information about a word/lemma.
+ * TODO : That same function or maybe the calling function should return an exercise type (type word? MCQ? etc.)
+ * @param {Number} user_id
+ * @param {String} module
+ * @param {String} first_language
+ * @param {String} target_language
+ * @returns {Function}
+ */
 function get_word_info ( user_id, module, first_language, target_language ) {
    return function ( selected_word ) {
-      // Get some more info about the word to pass down for the exercise
-      // I could query more tables to have all word form for same lemma and some lexical analysis info
-      // But later. Could also have a higher function word -> all info on the word
       if (!selected_word) {
          return U.throw_promise_error('get_word_info: no/empty word passed as parameter!');
       }

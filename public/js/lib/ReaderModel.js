@@ -29,12 +29,12 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           //State objects
           var stateMap = {aNotes : undefined};
 
-          const TSR_WORD_CONTEXT_SENTENCE = 20; //TODO: put in a config object
+          const TSR_WORD_CONTEXT_SENTENCE = 15; //TODO: put in a config object
           var CLASS_SELECTOR_CHAR = ".";
           var ID_SELECTOR_CHAR = "#";
 
           // CONFIG - cache mechanism
-          const qry_translation_CACHE_SIZE = 1000; //max 1000 keys (frequent words) for this cache
+          const qry_translation_CACHE_SIZE = 500; //max 500 keys (frequent words) for this cache
           const qry_translation_CACHE_LOG = true;
 
           var qry_cache_options = {
@@ -58,9 +58,8 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
           ////////// Database query functions
           RM.srv_qry_word_translation = function srv_qry_word_translation ( word, callback ) {
-             //logEntry("srv_qry_word_translation");
+             logWrite(DBG.TAG.SOCK, "get_translation_info", "emitting", word);
              SOCK.emit('get_translation_info', word, callback);
-             //logExit("srv_qry_word_translation");
           };
 
           RM.srv_qry_important_words = function srv_qry_important_words ( word, callback ) {
@@ -69,6 +68,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               callback: executed when the server has finished its processing
               */
              //logEntry("srv_qry_important_words");
+             logWrite(DBG.TAG.SOCK, "highlight_important_words", "emitting", word);
              SOCK.emit('highlight_important_words', word, callback);
              return $.Deferred();
              //logExit("srv_qry_important_words");
@@ -110,7 +110,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               This case is currently considered pathological and ignored
               IMPROVEMENT : look if there is an article tag, in which case take the title and add it first with H1 tag before constructing the page
               */
-             //logEntry("extract_relevant_text_from_html");
+             html_source = html_text; // stub to get back html source in console
              var dfr = $.Deferred(),
                  MIN_SENTENCE_NUMBER = 7,
                  MIN_AVG_AVG_SENTENCE_LENGTH = 11,
@@ -698,7 +698,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               */
 
              var dfr = $.Deferred();
-             var aHTMLtokens = fn_parser($el).aHTMLtokens;
+             var aHTMLtokens = fn_parser($el).aHTMLtokens; parsed=aHTMLtokens;
              aHTMLtokens.type = 'array_of_html_token';
 
              logWrite(DBG.TAG.DEBUG, "html tokens", UT.inspect(aHTMLtokens, null, 3));
@@ -785,6 +785,9 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
            */
           RM.getTokenActionMap = function getTokenActionMap ( aTokens, aFilters ) {
              var aPromises = [];
+             //TEST CODE
+             token = aTokens;
+             ///////
 
              aFilters.forEach(
                 function ( filter, index, array ) {
@@ -796,7 +799,8 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
                    var i_adapter = DS.filter_get_data_adapter(aTokens.type, filter.input_type);
                    var o_adapter = DS.filter_get_data_adapter(filter.output_type, 'token_action_map');
-                   logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens", i_adapter(aTokens));
+                   logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens");
+                   console.log(i_adapter(aTokens));
 
                    var deferred_or_value =
                           DS.promise_value_adapter(
@@ -844,6 +848,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           RM.add_TSR_weight = function add_TSR_weight ( obj ) {
              // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
              return new RSVP.Promise(function ( resolve, reject ) {
+                logWrite(DBG.TAG.SOCK, "set_TSR_word_weights", "emitting", obj);
                 SOCK.emit('set_TSR_word_weights', obj,
                           UT.default_node_callback(resolve, reject));
              });

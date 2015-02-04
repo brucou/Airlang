@@ -10,7 +10,7 @@
 var DBG = {
    TAG : {
       TRACE   : "Trace", INFO : "Info", ERROR : "Error",
-      WARNING : "Warning", DEBUG : "DEBUG", EVENT : "Event"
+      WARNING : "Warning", DEBUG : "DEBUG", EVENT : "Event", SOCK : "Socket"
    },
 
    SEP : {
@@ -375,7 +375,9 @@ function debugFactory () {
             }
          }
       }
-      console.log(DBG.padding_right(tag, ' ', 6) + DBG.SEP.TAG + text);
+
+      var time_now = (new Date()+"").substr(16, 8);
+      console.log(time_now + "| " + DBG.padding_right(tag, ' ', 6) + DBG.SEP.TAG + text);
    };
 
    /////////////// Helper functions

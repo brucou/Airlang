@@ -88,9 +88,9 @@ requirejs(
     'socket',
     'Stateful',
     'TSRController',
-    'utils', 'url_load', 'rsvp'
+    'url_load', 'rsvp'
    ],
-   function ( $, RM, RC, SOCK, STATE, TSR, UT, UL, RSVP ) {
+   function ( $, RM, RC, SOCK, STATE, TSR, UL, RSVP ) {
       var appState = {};
 
       function start () {

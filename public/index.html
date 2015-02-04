@@ -45,7 +45,7 @@
         //never includes a ".js" extension since
         //the paths config could be for a directory.
         paths   : {
-            jquery          : '../vendor/jquery-1.10.2',
+            jquery          : '../vendor/jquery-1.10.2.min',
             cache           : '../vendor/cache',
             mustache        : '../vendor/mustache',
             rsvp            : '../vendor/rsvp',
@@ -56,7 +56,7 @@
     };
 </script>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>   -->
-<script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.js"><\/script>')</script>
+<script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.min.js"><\/script>')</script>
 <script type="text/javascript" src="js/vendor/jquery.ajax-cross-origin.min.js"></script>
 
 <script src="js/vendor/rsvp.js"></script>
@@ -102,7 +102,7 @@
 <option value="http://www.kolik-to-stoji.cz/kolik-vas-stoji-spotreba-elektriny/#more-85">kolik stoji spotreby elekc</option>
 <option value="http://www.kolik-to-stoji.cz/kolik-stoji-notebook/">notebook stoji</option>
 <option value="http://zena.centrum.cz/deti/zajimavosti/clanek.phtml?id=702818">děti stoji</option>
-<option value="http://www.learningjquery.com/2008/12/peeling-away-the-jquery-wrapper/">learningjQuery</option>
+<option value="http://www.financninoviny.cz/zpravodajstvi/zpravy/intel-provoz-starsiho-pc-zvysi-naklady-na-energii-az-40krat/1167756">financni noviny</option>
 <option value="http://ales-kalina.cz/blog/vztahy-blog/nesnazte-se-opravovat-nekompatibilni-vztah/">psicho idnes</option>
 <option value="http://ekonomika.idnes.cz/v-rusku-vypukla-kvuli-propadu-rublu-panika-dosly-dolary-i-eura-pve-/eko-zahranicni.aspx?c=A141216_183624_eko-zahranicni_ozr">idnes ru</option>
     <option value="http://ona.idnes.cz/nejpevnejsi-jsou-vztahy-atraktivniho-muze-a-osklive-zeny-pnm-/vztahy-sex.aspx?c=A110303_194154_vztahy-sex_lf&fb_action_ids=542556529104740&fb_action_types=og.recommends">ona idnes</option>
@@ -137,8 +137,8 @@
     </option>
     </option>
     <option
-            value="https://de.airbnb.com/s/Prague--Czech-Republic?cdn_spdy=1&checkin=08.08.2014&checkout=10.08.2014&guests=2&location=Prague%2C+Czech+Republic&ne_lat=50.11553907262407&ne_lng=14.473795724489719&page=2&search_by_map=true&sw_lat=50.05397840672632&sw_lng=14.40186960754636&zoom=13">
-        2nd page DE AirBnB
+            value="http://www.ceskenoviny.cz/svet/ukrajina/zpravy/dpa-utecencu-z-rozbombardovane-vychodni-ukrajiny-pribyva/1167572">
+        cesky noviny
     </option>
     <option
             value="http://zpravy.idnes.cz/britsky-premier-cameron-vyzyva-k-lepsi-obrane-nato-fxf-/zpr_nato.aspx?c=A140805_170157_zpr_nato_inc#utm_source=sph.idnes&utm_medium=richtext&utm_content=top6">britain idnes</option>
@@ -210,23 +210,22 @@ class='airlang-rdt-tt-transover'
 
 <!-- Template for the EXO state of the TSR tool-->
 <script id='tpl-tsr-tool-exo' type="text/mustache">
-<form>
-  <fieldset>
-    <legend> Enter the translation for the word </legend>
-    <p>
-      <label>Meaning :
-        <input id="airlang-tsr-answer" type="text" placeholder="Enter text here" autofocus>
-      </label>
-    </p>
-  </fieldset>
-</form>
-<div id="airlang-tsr-exo-rep-container">
-{{{tsr_exo_rep}}}
+<div id="al-tsr-container">
+  <form>
+    <fieldset>
+      <legend> Enter the translation for the word </legend>
+        <label>Meaning :
+          <input id="airlang-tsr-answer" class= "{{answer_status}}" type="text" placeholder="Enter text here" autofocus>
+        </label>
+    </fieldset>
+  </form>
+  <div id="airlang-tsr-exo-rep-container">
+    {{{tsr_exo_rep}}}
+  </div>
+  <div id="airlang-tsr-exo-hint-container">
+    {{{tsr_exo_hint}}}
+  </div>
 </div>
-<div id="airlang-tsr-exo-hint-container">
-{{{tsr_exo_hint}}}
-</div>
-
 </script>
 <!--  ----------- -->
 

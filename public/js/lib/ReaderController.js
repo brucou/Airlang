@@ -209,11 +209,12 @@ define(['jquery',
 
              // Two cases, the anchor object has an id property or it does not. Most of the time it won't
              var startNode = selectedRange.startContainer;
+             /*TEST CODE*/ stN = startNode; ////////
              var startOffset = selectedRange.startOffset;
              var textContent = startNode.textContent;
              // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-             //logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
+             logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
 
              // Init array variables tracing the counting
              var aCharLengths = [],
@@ -221,8 +222,11 @@ define(['jquery',
 
              // get the first parent with id
              var currentNode = RC.findParentWithId(startNode);
+             /*TEST CODE*/ currN = currentNode; ////////
+             logWrite(DBG.TAG.DEBUG, "current node", currentNode.nodeName, currentNode.textContent);
 
              // traverse tree till startNode and count words and characters while doing so
+             // TODO: case currentNode = startNode not handled
              count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
              //logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
@@ -240,7 +244,7 @@ define(['jquery',
                 if (!currentNode.isEqualNode(startNode)) {
                    // by construction, currentNode cannot be a TEXT_NODE the first time, as ancestor node have an ID
                    // and text node cannot have id
-                   if (currentNode.nodeType === currentNode.TEXT_NODE) {
+                   if (currentNode.nodeType === currentNode.TEXT_NODE || currentNode.nodeName === "BR") {
                       //logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
                       var text_content = currentNode.textContent;
                       var text_content_trim = text_content.trim();
@@ -254,7 +258,7 @@ define(['jquery',
                       }
                       return false;
                    }
-                   else {
+                   else {//TODO : SAUF BR which is not text node, and yet do not have child nodes
                       // otherwise we have an element node, which do not have a text, just proceed to the next child
                       if (!currentNode.hasChildNodes()) {
                          throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
@@ -354,11 +358,11 @@ define(['jquery',
                    viewAdapter.set_HTML_body(null);
 
                    RM.get_stored_notes(
-                      { module   : 'reader tool',
+                      { module           : 'reader tool',
                          first_language  : this.stateMap.first_language,
-                         target_language  : this.stateMap.target_language,
-                         user_id : 1, //TODO : temporary, the user_id should be obtained from some login
-                         url     : my_url})
+                         target_language : this.stateMap.target_language,
+                         user_id         : 1, //TODO : temporary, the user_id should be obtained from some login
+                         url             : my_url})
                       .then(
                       function get_stored_notes_success ( aNotes ) {
                          RM.make_article_readable(my_url)
@@ -395,7 +399,7 @@ define(['jquery',
                    this.stateMap.lemma_target_lg = ev.lemma_target_lg;
                    console.log("stateMap show and add note", this.stateMap);
                    this.show_and_add_note(this.element, this.stateMap);
-                   // TODO : fill the translation table and use lemma word instead of current word form
+                   logWrite(DBG.TAG.SOCK, "set_word_user_translation", "emitting");
                    SOCK.RSVP_emit('set_word_user_translation', {
                       user_id                   : this.stateMap.user_id,
                       word                      : this.stateMap.note.word, // word selected by click
@@ -444,20 +448,20 @@ define(['jquery',
 
                 add_note : function ( stateMap, viewAdapter, note ) {
                    return RSVP.all([
-                                      RM.add_notes({module    : 'reader tool',
-                                                      first_language : stateMap.first_language,
+                                      RM.add_notes({module            : 'reader tool',
+                                                      first_language  : stateMap.first_language,
                                                       target_language : stateMap.target_language,
-                                                      url     : viewAdapter.url_to_load,
-                                                      user_id : stateMap.user_id,
-                                                      word    : note.word,
-                                                      lemma   : stateMap.lemma_target_lg},
+                                                      url             : viewAdapter.url_to_load,
+                                                      user_id         : stateMap.user_id,
+                                                      word            : note.word,
+                                                      lemma           : stateMap.lemma_target_lg},
                                                    {context_sentence : note.context_sentence,
                                                       index          : note.index}),
-                                      RM.add_TSR_weight({user_id : stateMap.user_id,
-                                                           first_language : stateMap.first_language,
+                                      RM.add_TSR_weight({user_id           : stateMap.user_id,
+                                                           first_language  : stateMap.first_language,
                                                            target_language : stateMap.target_language,
                                                            // put the lemma in the list of words to TSR revise, not the declensed word
-                                                           word  : stateMap.lemma_target_lg})
+                                                           word            : stateMap.lemma_target_lg})
                                    ])
                       .then(function success_add_note ( param1, param2 ) {
                                // TODO: check success of addition through return values of promises

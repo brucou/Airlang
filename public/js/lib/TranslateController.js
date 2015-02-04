@@ -69,14 +69,15 @@ define(['jquery',
                         },
                         show                       : function () {this.set_display("block")},
                         hide                       : function () {this.set_display("none")},
+                        is_visible                 : function () {return this.display === 'block'},
                         set_input_text             : function ( text ) {
-                           $('#airlang-rdt-trans-input').val(text);
+                           $('#' + this.id_trans_input).val(text);
                         },
                         empty_input_text           : function ( text ) {
                            this.set_input_text("");
                         },
                         get_input_text             : function () {
-                           return $('#airlang-rdt-trans-input').val().trim();
+                           return $('#' + this.id_trans_input).val().trim();
                         },
                         get_translation_clicked_on : function ( ev ) {
                            var $tr = $(ev.target).closest('tr');
@@ -150,14 +151,19 @@ define(['jquery',
                 '{window} keydown' : function ( $el, ev ) {
                    var self = this;
                    logWrite(DBG.TAG.DEBUG, "keydown event", ev.keyCode);
-                   console.log("target event", ev.target);
+                   console.log("target event", ev.target.getAttribute('id'));
+                   console.log("visible tooltip", TC.viewTranslateAdapter.is_visible());
 
-                   if (ev.keyCode == 13) {
-                      self.submit($el, ev);
+                   if (ev.keyCode === 13) {
+                      if (TC.viewTranslateAdapter.is_visible()) {
+                         self.submit($el, ev, true); // submit done through enter key
+                      }
                    }
 
-                   if (ev.keyCode == 27 && this.options.dismiss_on == 'escape-key') {
-                      this.dismiss_and_return({translation_word : null});
+                   if (ev.keyCode === 27 && self.options.dismiss_on === 'escape-key') {
+                      if (TC.viewTranslateAdapter.is_visible()) {
+                         self.dismiss_and_return({translation_word : null});
+                      }
                    }
 
                    return true;
@@ -174,22 +180,22 @@ define(['jquery',
                    this.stateMap.objTrans = objTrans;
                 },
 
-                submit : function ( $el, ev ) {
+                submit : function ( $el, ev, enterKey ) {
                    var self = this;
                    // check event target
-                   logWrite(DBG.TAG.EVENT, 'submit', 'on element', '#' + ev.target.getAttribute('id'));
-                   if (ev.target.getAttribute('id') !== TC.viewTranslateAdapter.id_trans_input) {
-                      return;
+                   // should be #airlang-rdt-trans-input
+                   if (ev.target.getAttribute('id') !== TC.viewTranslateAdapter.id_trans_input && !enterKey) {
+                      return true;
                    }
-                   logWrite(DBG.TAG.DEBUG, "entering submit handler");
+
+                   logWrite(DBG.TAG.EVENT, 'submit', 'received on element', '#' + ev.target.getAttribute('id'));
                    var translation_word = this.stateMap.objTrans.translation_word;
                    if (!translation_word) {
                       this.stateMap.objTrans = TC.viewTranslateAdapter.get_translation_clicked_on(ev);
                    }
-                   else {
-                      // Dismiss the tooltip and return the translation of the word
-                      this.dismiss_and_return(this.stateMap.objTrans);
-                   }
+
+                   // Dismiss the tooltip and return the translation of the word
+                   this.dismiss_and_return(this.stateMap.objTrans);
                 },
 
                 resize : function ( tt ) {
@@ -388,9 +394,6 @@ define(['jquery',
                 },
 
                 show_translation : function ( word, ev ) {
-                   //TODO: no function show on tooltip...tooltip_html_content
-                   // basically, put the param here in {{}} and modify them, handle resize separately
-                   // how to debug!!!
                    logWrite(DBG.TAG.INFO, "Fetching translation for :", word);
 
                    var self = this;
@@ -493,15 +496,132 @@ define(['jquery',
                     "example_sentence_to, " +
                     "pgwordfrequency_short.freq_cat "
                     */
-                   logEntry("formatTranslationResults");
+
+                   console.log(aValues);
+                   const MAX_TRANSLATION_ROWS = 9;
+                   const EXAMPLE_SENTENCE_TO_SEP = '|';
+
+                   // First process example_sentence_to to replace | with line breaks
+                   aValues.forEach(function ( row_value ) {
+                      row_value && row_value.example_sentence_to &&
+                      (row_value.example_sentence_to =
+                       row_value.example_sentence_to.replace(EXAMPLE_SENTENCE_TO_SEP, '<br/>'));
+                   });
+
+                   function str_empty_if_null ( str ) {
+                      return (str === null) ? "" : str;
+                   }
+
+                   // Then process example_sentence_from to replace null with ""
+                   // And set the break between sentences from and to when need be
+                   aValues.forEach(function ( row_value ) {
+                      row_value.example_sentence_from = str_empty_if_null(row_value.example_sentence_from);
+                      row_value.example_sentence_from_sep = row_value.example_sentence_from ? '<br/>' : '';
+                   });
+                   var aValuesReduced = TC.reduce_lemma_translations(aValues);
+                   // Now put the lines with a sample sentence first
+                   var aValuesSampleFirst = [];
+                   aValuesReduced.forEach(function ( rowValues, index ) {
+                      if (rowValues.example_sentence_from) {
+                         // in aValuesSampleFirst, put lines with sentences, and remove them from aValuesReduced
+                         aValuesSampleFirst.push(rowValues);
+                         delete aValuesReduced[index];
+                      }
+                   });
+                   // then add the remaining lines in aValuesReduced to aValuesSampleFirst
+                   aValuesReduced.forEach(function ( rowValues, index ) {
+                      if (rowValues) {
+                         aValuesSampleFirst.push(rowValues);
+                      }
+                   });
+                   // Now limit to X rows
+                   var aValuesTruncated = aValuesSampleFirst.filter(function ( rowValues, index ) {
+                      return index < MAX_TRANSLATION_ROWS
+                   });
+
                    var html_text = MUSTACHE.render(RV.translation_template,
-                                                   {result_rows : aValues, translation_lemma : aValues[0].translation_lemma});
+                                                   {result_rows : aValuesTruncated, translation_lemma : aValuesTruncated[0].translation_lemma});
                    //logWrite(DBG.TAG.DEBUG, "html_text", html_text);
-                   logExit("formatTranslationResults");
                    return html_text;
                 }
 
              });
+
+          TC.reduce_lemma_translations = function reduce_lemma_translations ( aValues ) {
+             // aggregate different translations into groups of TRANS_GROUP_SIZE, separated by SENSE_SEP
+             const PREFIX_CHAR = "%";
+             const TRANS_GROUP_SIZE = "3";
+             const SENSE_SEP = "<br/>";
+             var mapTranslations = {};
+
+             function add_if_not_empty (source, add_str){
+                return source? (source + add_str) : '';
+             }
+
+             //check input parameters
+             if (!aValues) {
+                logWrite(DBG.TAG.ERROR, "reduce_lemma_translations : passed a null object aValues - ignoring");
+                return null;
+             }
+
+             // create a double map
+             aValues.forEach(function ( rowValue ) {
+                mapTranslations[rowValue.lemma] = mapTranslations[rowValue.lemma] || {};
+                var currLemma = mapTranslations[rowValue.lemma];
+                rowValue.sense = rowValue.sense || ""; // to avoid null values
+                var sense_prefix = (rowValue.example_sentence_from && rowValue.example_sentence_from.trim() )
+                   ? PREFIX_CHAR : "";
+                currLemma[sense_prefix + rowValue.sense] = rowValue;
+             });
+             // Duplicate values already eliminated by virtue of the map
+             var aLemmas = Object.keys(mapTranslations);
+             var aLemmasRowsValue = [];
+             aLemmas.forEach(function ( lemma, l_index ) {
+                aLemmasRowsValue[l_index] = [];
+                var aSenses = Object.keys(mapTranslations[lemma]);
+                // copy the rowValues to an array in the corresponding index
+                aSenses.forEach(function ( sense ) {sense.rowValue = mapTranslations[lemma][sense];});
+
+                if (aSenses.length === 0) { // cannot be empty by construction
+                   throw "reduce_lemma_translations : no sense for lemma " + lemma;
+                }
+                if (aSenses.length === 1) {
+                   aLemmasRowsValue[l_index].push(mapTranslations[lemma][aSenses[0]]);
+                   return;
+                }
+                var index_grp;
+                var change_grp_index = true,
+                    grp_size = -1;
+                var curr_rowV_index;
+                aSenses.forEach(function ( sense, s_index ) {
+                   // Case lemma, sense, example_sentence_from with the latter not empty
+                   if (mapTranslations[lemma][sense].sense.charAt(0) === PREFIX_CHAR) {return;}
+                   // case with several senses for same lemma and no example sentences
+                   // Group them
+                   grp_size = grp_size + 1;
+                   var remainder = grp_size % TRANS_GROUP_SIZE;
+                   if (!(remainder)) {
+                      return curr_rowV_index = aLemmasRowsValue[l_index].push(mapTranslations[lemma][sense]) - 1;
+                   }
+                   else {
+                      // remove the translation sense info as there are now several and they could be contradictory
+                      // one could also concatenate them, maybe later
+                      aLemmasRowsValue[l_index][curr_rowV_index].translation_sense = "";
+                      aLemmasRowsValue[l_index][curr_rowV_index].sense =
+                      (add_if_not_empty(aLemmasRowsValue[l_index][curr_rowV_index].sense, SENSE_SEP) + sense)
+                         .replace(PREFIX_CHAR, '');
+                   }
+                });
+             });
+             // now aLemmas should have for each lemma the list of senses in rowsValue
+             var aValuesReduced = [];
+             aLemmasRowsValue.forEach(function ( _aLemmasRowsValue ) {
+                _aLemmasRowsValue.forEach(function flatmap ( lemmaRowValue ) {aValuesReduced.push(lemmaRowValue);})
+             });
+             return aValuesReduced;
+             // now group the lemmas
+             // TODO
+          };
 
           return TC;
        })

@@ -407,7 +407,7 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
              this.setup_range(range, $("#3", $el)[0].firstChild.nextSibling.firstChild, 2);
              var context = {
                 stateGetIsUrlLoaded : function () {return true},
-                add_note : RC.add_note,
+                add_note            : RC.add_note,
                 viewAdapter         : {
                    setErrorMessage : function () {},
                    set_HTML_body   : function ( html_text ) {window.html_text = html_text}
@@ -442,5 +442,79 @@ define(['ReaderModel', 'TranslateController', 'ReaderController', 'data_struct',
                       })
           });
 
+          QUnit.module("translation info reduction", {
+             setup : function () {
+                this.aValues = [];
+                this.aValues.push({example_sentence_from   : "The technician is going to perform a check on the car.",
+                                     example_sentence_to   : "Mechanik provede technickou prověrku ( or: kontrolu) auta.,",
+                                     freq_cat              : "  ",
+                                     lemma                 : "check",
+                                     lemma_gram_info       : "n",
+                                     sense                 : "(inspection)",
+                                     translation_gram_info : "ž",
+                                     translation_lemma     : "prověrka",
+                                     translation_sense     : ""});
+                this.aValues.push({example_sentence_from   : "",
+                                     example_sentence_to   : null,
+                                     freq_cat              : "  ",
+                                     lemma                 : "audit",
+                                     lemma_gram_info       : "n",
+                                     sense                 : "(review)",
+                                     translation_gram_info : "ž",
+                                     translation_lemma     : "prověrka",
+                                     translation_sense     : ""});
+                this.aValues.push({example_sentence_from   : "",
+                                     example_sentence_to   : null,
+                                     freq_cat              : "  ",
+                                     lemma                 : "audit",
+                                     lemma_gram_info       : "n",
+                                     sense                 : "(by government)",
+                                     translation_gram_info : "ž",
+                                     translation_lemma     : "prověrka",
+                                     translation_sense     : "úřední"});
+
+             }
+          });
+          QUnit.test("One row", function ( assert ) {
+             result = TC.reduce_lemma_translations([this.aValues[0]]);
+             assert.deepEqual(result, [this.aValues[0]]);
+          });
+
+          QUnit.test("2 rows", function ( assert ) {
+             result = TC.reduce_lemma_translations([this.aValues[0], this.aValues[1]]);
+             assert.deepEqual(result, [this.aValues[0], this.aValues[1]]);
+          });
+
+          QUnit.test("3 rows- { (lemma, sense1), (lemma, sense2)} ", function ( assert ) {
+             result = TC.reduce_lemma_translations(this.aValues);
+             assert.deepEqual(result, [
+                                 {
+                                    "example_sentence_from" : "The technician is going to perform a check on the car.",
+                                    "example_sentence_to"   : "Mechanik provede technickou prověrku ( or: kontrolu) auta.,",
+                                    "freq_cat"              : "  ",
+                                    "lemma"                 : "check",
+                                    "lemma_gram_info"       : "n",
+                                    "sense"                 : "(inspection)",
+                                    "translation_gram_info" : "ž",
+                                    "translation_lemma"     : "prověrka",
+                                    "translation_sense"     : ""
+                                 },
+                                 {
+                                    "example_sentence_from" : "",
+                                    "example_sentence_to"   : null,
+                                    "freq_cat"              : "  ",
+                                    "lemma"                 : "audit",
+                                    "lemma_gram_info"       : "n",
+                                    "sense"                 : "(review), (by government)",
+                                    "translation_gram_info" : "ž",
+                                    "translation_lemma"     : "prověrka",
+                                    "translation_sense"     : ""
+                                 }
+                              ]
+             );
+          });
+
+          // TODO : also test null as sense and null as lemma, and three lemma, sense1-2-3, and bug also with
+          // case (lemma, sense1-2, sentences..)
           return {};
        });
