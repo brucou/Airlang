@@ -11,31 +11,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3e347fb8-ef22-4b99-8a9c-2990b9f7b2c6" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/assets/database/updating db from scrapper helper.sql" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/ReaderController.js" afterPath="$PROJECT_DIR$/public/js/lib/ReaderController.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/ReaderModel.js" afterPath="$PROJECT_DIR$/public/js/lib/ReaderModel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/ReaderViews.js" afterPath="$PROJECT_DIR$/public/js/lib/ReaderViews.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/TSRController.js" afterPath="$PROJECT_DIR$/public/js/lib/TSRController.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/TSRModel.js" afterPath="$PROJECT_DIR$/TSRModel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/TSRModel.js" afterPath="$PROJECT_DIR$/public/js/lib/TSRModel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/TranslateController.js" afterPath="$PROJECT_DIR$/public/js/lib/TranslateController.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/vendor/can.jquery.dev.js" afterPath="$PROJECT_DIR$/public/js/vendor/can.jquery.dev.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/database definition.sql" afterPath="$PROJECT_DIR$/database definition.sql" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/debug.js" afterPath="$PROJECT_DIR$/public/js/lib/debug.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/fake_data.js" afterPath="$PROJECT_DIR$/public/js/lib/fake_data.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/index.html" afterPath="$PROJECT_DIR$/public/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/main.js" afterPath="$PROJECT_DIR$/public/js/lib/main.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/assets/database/misc. queries.sql" afterPath="$PROJECT_DIR$/public/assets/database/misc. queries.sql" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/assets/database/qry_test_data.sql" afterPath="$PROJECT_DIR$/public/assets/database/qry_test_data.sql" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/css/screen.css" afterPath="$PROJECT_DIR$/public/css/screen.css" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/assets/database/script create freq. table.sql" afterPath="$PROJECT_DIR$/public/assets/database/script create freq. table.sql" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sio_logic.js" afterPath="$PROJECT_DIR$/sio_logic.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/temp.js" afterPath="$PROJECT_DIR$/public/js/lib/temp.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/QUnit/test_ReaderModel.js" afterPath="$PROJECT_DIR$/public/js/QUnit/test_ReaderModel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/mocha/test_tsr.js" afterPath="$PROJECT_DIR$/test/mocha/test_tsr.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/css/tooltip_iframe.css" afterPath="$PROJECT_DIR$/public/css/tooltip_iframe.css" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/utils.js" afterPath="$PROJECT_DIR$/public/js/lib/utils.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="Airlang.iws" />
@@ -74,7 +49,7 @@
       <file leaf-file-name="Stateful.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/public/js/lib/Stateful.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.25" vertical-offset="102" max-vertical-offset="646">
+            <state vertical-scroll-proportion="0.5150685" vertical-offset="16" max-vertical-offset="646">
               <caret line="26" column="0" selection-start-line="26" selection-start-column="0" selection-end-line="26" selection-end-column="0" />
               <folding />
             </state>
@@ -685,7 +660,11 @@
       <created>1420154340054</created>
       <updated>1420154340054</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="backup">
+      <created>1423077476515</created>
+      <updated>1423077476515</updated>
+    </task>
+    <option name="localTasksCounter" value="47" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -710,9 +689,9 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="132" y="0" width="1148" height="800" extended-state="0" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32791728" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32791728" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32776934" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.40353462" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.26067746" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -720,7 +699,7 @@
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24396783" sideWeight="0.6710335" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.35493374" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="632" y="335" width="623" height="423" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2551111" sideWeight="0.5007587" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3914328" sideWeight="0.50044686" order="9" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3914328" sideWeight="0.50044686" order="9" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.34020618" sideWeight="0.49910554" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3264402" sideWeight="0.49955556" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="true" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="combo" x="233" y="100" width="947" height="600" />
@@ -1222,7 +1201,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/Stateful.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.25" vertical-offset="102" max-vertical-offset="646">
+        <state vertical-scroll-proportion="0.5150685" vertical-offset="16" max-vertical-offset="646">
           <caret line="26" column="0" selection-start-line="26" selection-start-column="0" selection-end-line="26" selection-end-column="0" />
           <folding />
         </state>
