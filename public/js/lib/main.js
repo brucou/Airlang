@@ -82,7 +82,8 @@
 
 ///*
 requirejs(
-   ['jquery',
+   ['debug',
+    'jquery',
     'ReaderModel',
     'ReaderController',
     'socket',
@@ -90,7 +91,10 @@ requirejs(
     'TSRController',
     'url_load', 'rsvp'
    ],
-   function ( $, RM, RC, SOCK, STATE, TSR, UL, RSVP ) {
+   function ( DBG, $, RM, RC, SOCK, STATE, TSR, UL, RSVP ) {
+      // logger
+      var log = DBG.getLogger("main");
+
       var appState = {};
 
       function start () {
@@ -170,7 +174,7 @@ requirejs(
          ////////////
          // configure error handler to avoid silent failure or RSVP promises
          RSVP.on('error', function ( reason ) {
-            console.log(reason);
+            log.error(reason);
          });
          // Initialize socket connection and feature modules
          $.when(
@@ -182,7 +186,7 @@ requirejs(
                localStorage.clear();
                // Start Qunit if called from test index.html starting page
                if ('undefined' !== typeof QUnit) {
-                  console.log("Starting QUnit tests");
+                  log.info("Starting QUnit tests");
                   QUnit.start();
                }
 

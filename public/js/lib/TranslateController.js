@@ -34,15 +34,18 @@
  TODO : FEATURES : See how to mitigate the fact that ts_lexize cspell do not find the lexeme always
  - for instance, připomněl -> připomněl
  */
-define(['jquery',
+define(['debug',
+        'jquery',
         'mustache',
         'data_struct',
         'ReaderModel',
         'ReaderViews',
         'socket',
         'utils'],
-       function ( $, MUSTACHE, DS, RM, RV, SOCK, UT ) {
-
+       function ( DBG, $, MUSTACHE, DS, RM, RV, SOCK, UT ) {
+          // logger
+          var log = DBG.getLogger("TC");
+          
           var TC = {};
 
           TC.rtTranslateView = can.view('tpl-translate-tooltip');
@@ -143,16 +146,16 @@ define(['jquery',
                 },
 
                 '{target} al-ev-show_tooltip' : function ( $el, ev ) {
-                   logWrite(DBG.TAG.EVENT, "al-ev-show_tooltip", "received");
+                   log.event( "al-ev-show_tooltip", "received");
                    this.process(ev, this.$tooltip, this.options);
                    return false;
                 },
 
                 '{window} keydown' : function ( $el, ev ) {
                    var self = this;
-                   logWrite(DBG.TAG.DEBUG, "keydown event", ev.keyCode);
-                   console.log("target event", ev.target.getAttribute('id'));
-                   console.log("visible tooltip", TC.viewTranslateAdapter.is_visible());
+                   log.debug( "keydown event", ev.keyCode);
+                   log.debug("target event", ev.target.getAttribute('id'));
+                   log.debug("visible tooltip", TC.viewTranslateAdapter.is_visible());
 
                    if (ev.keyCode === 13) {
                       if (TC.viewTranslateAdapter.is_visible()) {
@@ -188,7 +191,7 @@ define(['jquery',
                       return true;
                    }
 
-                   logWrite(DBG.TAG.EVENT, 'submit', 'received on element', '#' + ev.target.getAttribute('id'));
+                   log.event( 'submit', 'received on element', '#' + ev.target.getAttribute('id'));
                    var translation_word = this.stateMap.objTrans.translation_word;
                    if (!translation_word) {
                       this.stateMap.objTrans = TC.viewTranslateAdapter.get_translation_clicked_on(ev);
@@ -205,7 +208,7 @@ define(['jquery',
 
                 dismiss_and_return : function ( return_object ) {
                    this.empty_and_hide();
-                   logWrite(DBG.TAG.EVENT, "al-ev-tooltip_dismiss", "emitting");
+                   log.event( "al-ev-tooltip_dismiss", "emitting");
                    this.stateMap.$rdt_el.trigger(UT.create_jquery_event("al-ev-tooltip_dismiss",
                                                                         return_object));
                 },
@@ -241,7 +244,7 @@ define(['jquery',
                       return hit_text_node;
                    }
 
-                   logEntry("getHitWord");
+                   log.entry("getHitWord");
                    var hit_elem = $(document.elementFromPoint(e.clientX, e.clientY));
                    var word_re = "\\p{L}{2,}";
                    var parent_font_style = {
@@ -255,15 +258,15 @@ define(['jquery',
                    });
 
                    if (text_nodes.length == 0) {
-                      logWrite(DBG.TAG.DEBUG, 'no text');
+                      log.debug( 'no text');
                       logExit("getHitWord");
                       return '';
                    }
 
                    var hit_text_node = getExactTextNode(text_nodes, e);
                    if (!hit_text_node) {
-                      logWrite(DBG.TAG.DEBUG, 'hit between lines');
-                      logExit("getHitWord");
+                      log.debug( 'hit between lines');
+                      log.exit("getHitWord");
                       return '';
                    }
 
@@ -271,7 +274,7 @@ define(['jquery',
                       var hw = '';
 
                       function getHitText ( node, parent_font_style ) {
-                         logWrite(DBG.TAG.DEBUG, "getHitText: '" + node.textContent + "'");
+                         log.debug( "getHitText: '" + node.textContent + "'");
 
                          if (XRegExp(word_re).test(node.textContent)) {
                             $(node).replaceWith(function () {
@@ -325,18 +328,18 @@ define(['jquery',
 
                          //no word under cursor? we are done
                          if (hit_word_elem.nodeName != 'TRANSOVER') {
-                            logWrite(DBG.TAG.DEBUG, "missed!");
+                            log.debug( "missed!");
                          }
                          else {
                             hw = $(hit_word_elem).text();
-                            logWrite(DBG.TAG.DEBUG, "got it: " + hw);
+                            log.debug( "got it: " + hw);
                          }
                       }
 
                       return hw;
                    });
 
-                   logWrite(DBG.TAG.INFO, "Word found: ", hit_word);
+                   log.info( "Word found: ", hit_word);
                    logExit("getHitWord");
                    return hit_word;
                 },
@@ -362,7 +365,7 @@ define(['jquery',
                    var word = '';
                    if (selection.toString()) {
 
-                      logWrite(DBG.TAG.DEBUG, 'Got selection: ' + selection.toString());
+                      log.debug( 'Got selection: ' + selection.toString());
 
                       var sel_container = selection.getRangeAt(0).commonAncestorContainer;
 
@@ -394,22 +397,22 @@ define(['jquery',
                 },
 
                 show_translation : function ( word, ev ) {
-                   logWrite(DBG.TAG.INFO, "Fetching translation for :", word);
+                   log.info( "Fetching translation for :", word);
 
                    var self = this;
                    RM.cached_translation(word, function ( err, aValues ) {
                       vValues = aValues;
                       if (err) {
-                         logWrite(DBG.TAG.ERROR, "An error ocurred", err);
+                         log.error( "An error ocurred", err);
                          return null;
                       }
                       if (aValues.length === 0) { // means server returned empty
-                         logWrite(DBG.TAG.WARNING, "Query did not return any values");
+                         log.warning( "Query did not return any values");
                          // dismiss the tooltip (invisible but still capting events away from other controllers
                          return null;
                       }
 
-                      logWrite(DBG.TAG.INFO, "Translation fetched");
+                      log.info( "Translation fetched");
 
                       // Get table html text which contains the translation of the word
                       var html_text = self.formatTranslationResults(aValues);
@@ -428,7 +431,7 @@ define(['jquery',
                       var pos = self.compute_position(ev.clientX, ev.clientY, $$tbl);
                       TC.viewTranslateAdapter.set_display("none");
                       $$tbl.remove();
-                      //logWrite(DBG.TAG.DEBUG, "HTML formatting :", html_text);
+                      //log.debug( "HTML formatting :", html_text);
 
                       TC.viewTranslateAdapter.set_HTML_tooltip(html_text);
                       TC.viewTranslateAdapter.show();
@@ -439,7 +442,7 @@ define(['jquery',
 
                       // send the shown_tooltip event to alert all controllers of the state
                       self.element.trigger(UT.create_jquery_event('al-ev-shown_tooltip'));
-                      logWrite(DBG.TAG.DEBUG, "displaying tooltip");
+                      log.debug( "displaying tooltip");
                    });
                 },
 
@@ -498,7 +501,7 @@ define(['jquery',
                     "pgwordfrequency_short.freq_cat "
                     */
 
-                   console.log(aValues);
+                   log.debug("aValues:", aValues);
                    const MAX_TRANSLATION_ROWS = 9;
                    const EXAMPLE_SENTENCE_TO_SEP = '|';
 
@@ -542,7 +545,7 @@ define(['jquery',
 
                    var html_text = MUSTACHE.render(RV.translation_template,
                                                    {result_rows : aValuesTruncated, translation_lemma : aValuesTruncated[0].translation_lemma});
-                   //logWrite(DBG.TAG.DEBUG, "html_text", html_text);
+                   //log.debug( "html_text", html_text);
                    return html_text;
                 }
 
@@ -561,7 +564,7 @@ define(['jquery',
 
              //check input parameters
              if (!aValues) {
-                logWrite(DBG.TAG.ERROR, "reduce_lemma_translations : passed a null object aValues - ignoring");
+                log.error( "reduce_lemma_translations : passed a null object aValues - ignoring");
                 return null;
              }
 

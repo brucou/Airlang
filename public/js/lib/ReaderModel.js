@@ -20,8 +20,11 @@
  * issue : better support for language-dependant punctuation signs and idiosyncrasy (... vs . etc.)
  */
 
-define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
-       function ( $, RSVP, DS, UL, UT, SOCK, CACHE, STATE ) {
+define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
+       function ( DBG, $, RSVP, DS, UL, UT, SOCK, CACHE, STATE ) {
+
+   // logger
+          var log = DBG.getLogger("RM");
 
           // module object
           var RM = {}; // Added so I can trace all member functions more easily
@@ -45,7 +48,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                 //console.log('key removed from cache :' + k);
              }};
           var localCache = new CACHE.LocalStorageCacheStorage('qry_translation_cache');
-          logWrite(DBG.TAG.DEBUG, "localcache", UT.inspect(localCache));
+          log.debug("localcache", UT.inspect(localCache));
 
           var qry_translation_cache = new CACHE(qry_translation_CACHE_SIZE, qry_translation_CACHE_LOG, localCache,
                                                 qry_cache_options);
@@ -58,7 +61,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
           ////////// Database query functions
           RM.srv_qry_word_translation = function srv_qry_word_translation ( word, callback ) {
-             logWrite(DBG.TAG.SOCK, "get_translation_info", "emitting", word);
+             log.sock("get_translation_info", "emitting", word);
              SOCK.emit('get_translation_info', word, callback);
           };
 
@@ -68,7 +71,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               callback: executed when the server has finished its processing
               */
              //logEntry("srv_qry_important_words");
-             logWrite(DBG.TAG.SOCK, "highlight_important_words", "emitting", word);
+             log.sock("highlight_important_words", "emitting", word);
              SOCK.emit('highlight_important_words', word, callback);
              return $.Deferred();
              //logExit("srv_qry_important_words");
@@ -88,12 +91,12 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                 .then(
                 RM.extract_relevant_text_from_html,
                 function url_load_error ( jqXHR, textStatus, errorThrown ) {
-                   logWrite(DBG.TAG.ERROR, "error encountered while fetching url");
+                   log.error("error encountered while fetching url");
                    dfr.reject(new DS.Error("<p> ERROR : could not retrieve the webpage : " + errorThrown +
                                            "</p>"));
                 })
                 .then(function extract_text_from_html_success ( html_highlighted_text ) {
-                         logWrite(DBG.TAG.INFO, "page highlighted!");
+                         log.info("page highlighted!");
                          dfr.resolve(html_highlighted_text);
                       },
                       function extract_text_from_html_failure ( ds_error ) {
@@ -118,7 +121,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                  DEST = "destination";
 
              if (!html_text) {
-                logWrite(DBG.TAG.WARNING, "empty page!! nothing to display");
+                log.warning("empty page!! nothing to display");
                 return dfr.reject(new DS.Error("<p> ERROR : nothing to display </p>" +
                                                "<p> Possible causes : empty page loaded! </p>"));
              }
@@ -137,7 +140,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
              // A little bit of tag cleaning, not really necessary in fact
 
-             logWrite(DBG.TAG.INFO, "Compute tag stats");
+             log.info("Compute tag stats");
              var aData = RM.generateTagAnalysisData($source);
              //TEST OODE
              window.aData = aData;
@@ -153,7 +156,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              /* A1.
               First compute the tag and text stats grouped by div
               */
-             logWrite(DBG.TAG.INFO, "Compute tag stats grouped by div");
+             log.info("Compute tag stats grouped by div");
              var aDivRow = RM.compute_text_stats_group_by_div(aData);
              //TEST OODE
              window.aDivRow = aDivRow;
@@ -161,7 +164,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
              /* we finished exploring, now gather the final stats (averages)
               */
-             logWrite(DBG.TAG.INFO, "We finished exploring, now gather the final stats (averages)");
+             log.info("We finished exploring, now gather the final stats (averages)");
              var i;
              for (i = 0; i < aDivRow.length; i++) {
                 aDivRow[i].avg_avg_sentence_length =
@@ -169,18 +172,18 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              }
 
              /* Identify the div classes to keep in the DOM */
-             logWrite(DBG.TAG.INFO, "Identify the div classes to keep in the DOM");
+             log.info("Identify the div classes to keep in the DOM");
              var selectedDivs = RM.select_div_to_keep(aDivRow, MIN_SENTENCE_NUMBER, MIN_AVG_AVG_SENTENCE_LENGTH);
              if (selectedDivs.length === 0) {
-                logWrite(DBG.TAG.WARNING, "no div selected!! nothing to display");
+                log.warning("no div selected!! nothing to display");
                 return dfr.reject(new DS.Error("<p> ERROR : nothing to display </p>" +
                                                "<p> Possible cause : no important paragraph could be identified </p>"));
              }
 
-             logWrite(DBG.TAG.INFO, "Reading and adding title");
+             log.info("Reading and adding title");
              RM.read_and_add_title_to_$el($source, $dest);
 
-             logWrite(DBG.TAG.INFO, "Highlighting important words");
+             log.info("Highlighting important words");
              // extract from selectedDivs only the divs
              var aSelectedDivSelectors = selectedDivs.map(function ( selectedDiv ) {
                 return selectedDiv.div;
@@ -190,14 +193,14 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                 .done(function highlight_important_words_success ( html_highlighted_text ) {
                          //following pattern function(err, result)
                          // if was successfully highlit then pass the $dest that was modified in place
-                         logWrite(DBG.TAG.INFO, "done processing highlight_important_words");
-                         logWrite(DBG.TAG.DEBUG, "dest", $dest.html().substring(0, 300));
+                         log.info("done processing highlight_important_words");
+                         log.debug("dest", $dest.html().substring(0, 300));
 
                          dfr.resolve(html_highlighted_text);
                       })
                 .fail(function highlight_important_words_failure ( error ) {
                          // this happens if one of the selectedDivs provokes an error
-                         logWrite(DBG.TAG.WARNING, "error occurred while processing highlight_important_words");
+                         log.warning("error occurred while processing highlight_important_words");
                          dfr.reject(new DS.Error("<p> " + error + "</p>"));
                       });
              $source.remove();
@@ -213,7 +216,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              var aDivRow = []; // contains stats for each div
              aData.forEach(function ( pdStatRow, index, array ) {
                 var div = pdStatRow.enclosing_div;
-                logWrite(DBG.TAG.DEBUG, "index, div, tagName", index, div, pdStatRow.tag);
+                log.debug( "index, div, tagName", index, div, pdStatRow.tag);
                 var iIndex = UT.getIndexInArray(aDivRow, "div", div);
 
                 if (iIndex > -1) { // div class already added to the stat array
@@ -243,11 +246,11 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                     pdStatRowPartial.avg_avg_sentence_length >= MIN_AVG_AVG_SENTENCE_LENGTH) {
                    // that div is selected candidate for display
                    selectedDivs.push(pdStatRowPartial);
-                   logWrite(DBG.TAG.INFO, "keeping div class, sentence_number, avg w/s", pdStatRowPartial.div,
+                   log.info("keeping div class, sentence_number, avg w/s", pdStatRowPartial.div,
                             pdStatRowPartial.sum_sentence_number, pdStatRowPartial.avg_avg_sentence_length);
                 }
                 else {
-                   logWrite(DBG.TAG.INFO, "discarding div class, sentence_number, avg w/s", pdStatRowPartial.div,
+                   log.info("discarding div class, sentence_number, avg w/s", pdStatRowPartial.div,
                             pdStatRowPartial.sum_sentence_number, pdStatRowPartial.avg_avg_sentence_length);
 
                 }
@@ -412,7 +415,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
            @returns {array} returns an array with text stats in ParagraphData object (div class, sentence number etc.)
            */
           RM.generateTagAnalysisData = function generateTagAnalysisData ( $source ) {
-             DBG.LOG_INPUT_VALUE('$source', $source);
+             log.debug('$source', $source);
 
              /* We only analyze the paragraph as:
               - they are a better indication of the content of the article
@@ -430,11 +433,11 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
               - number of links
               - the first enclosing div
               */
-             logWrite(DBG.TAG.DEBUG, "Computing stats on text with tags", tagHTML);
+             log.debug("Computing stats on text with tags", tagHTML);
              $(tagHTML, $source).each(get_tag_stat);
 
              //logExit("generateTagAnalysisData");
-             DBG.LOG_RETURN_VALUE(aData);
+             log.debug("returning aData : ", aData);
              return aData;
 
              /**
@@ -480,7 +483,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                       paragraghData.tag = tagName;
                       paragraghData.text = element.textContent.trim();
                       if (paragraghData.text === "") {
-                         logWrite(DBG.TAG.WARNING, "text in element is empty : ignoring");
+                         log.warning("text in element is empty : ignoring");
                          break;
                       }
 
@@ -506,12 +509,12 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                    case 3: //Represents textual content in an element or attribute
                       // that case should never happen because of the processing done prior to the call (wrap in span tags)
                       // for the sake of completeness we could define it though
-                      logWrite(DBG.TAG.WARNING, "text", element);
+                      log.warning("text", element);
                       break;
 
                    default:
                       //do nothing
-                      logWrite(DBG.TAG.WARNING, "do nothing");
+                      log.warning("do nothing");
                 }
              }
           };
@@ -534,7 +537,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
           RM.read_and_add_title_to_$el = function read_and_add_title_to_$el ( $source, $dest ) {
              // read the title tag from $source element and set it to $dest element
-             logWrite(DBG.TAG.DEBUG, "title", $("title", $source).text());
+             log.debug("title", $("title", $source).text());
              $dest.append($("<div id='article' class='title'/>"));
              var $dTitle = $("#article.title", $dest);
              var $title = $("title", $source);
@@ -548,7 +551,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              var $div = $("#" + div_id);
              $div.empty();
              if ($div.length !== 0) {
-                logWrite(DBG.TAG.WARNING, "html_text_to_DOM: already existing id. Was emptied", div_id);
+                log.warning("html_text_to_DOM: already existing id. Was emptied", div_id);
                 $div.remove();
              }
 
@@ -582,23 +585,23 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              function push_token_action ( word ) {
                 if (word.indexOf(StartSel_nospaces) == 0) {
                    // beginning of marking
-                   //logWrite(DBG.TAG.DEBUG, "found begin of marking");
+                   //log.debug("found begin of marking");
                    word = word.replace(new RegExp(StartSel_nospaces, "g"), "");
-                   //logWrite(DBG.TAG.DEBUG, "word after removal of startsel marking: ", word);
+                   //log.debug("word after removal of startsel marking: ", word);
                    mark = true;
                 }
                 if (mark == true && word.indexOf(StopSel_nospaces) > 0) {
                    word = word.replace(new RegExp(StopSel_nospaces, "g"), "");
-                   //logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
+                   //log.debug("associating action highlight to word ", word);
                    aTokenActionMap.push({token : {type : 'text', text : word}, action : RM.fn_html_highlight});
                    mark = false;
                 }
                 else if (mark === true) {
-                   //logWrite(DBG.TAG.DEBUG, "associating action highlight to word ", word);
+                   //log.debug("associating action highlight to word ", word);
                    aTokenActionMap.push({token : {type : 'text', text : word}, action : RM.fn_html_highlight});
                 }
                 else {
-                   //logWrite(DBG.TAG.DEBUG, "associating action none to word ", word);
+                   //log.debug("associating action none to word ", word);
                    aTokenActionMap.push({token : {type : 'text', text : word}, action : null});
                 }
              }
@@ -606,7 +609,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              ////
 
              var highlit_text = OStore.toString(); // the query returns with a OStore object
-             logWrite(DBG.TAG.DEBUG, "highlit_text", highlit_text);
+             log.debug("highlit_text", highlit_text);
              // TODO: to synchronize better with server instead of copying : move to common config file??
              highlit_text = highlit_text.replace(new RegExp(StartSel, "g"), StartSel_nospaces);
              highlit_text = highlit_text.replace(new RegExp(StopSel, "g"), StopSel_nospaces);
@@ -701,7 +704,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
              var aHTMLtokens = fn_parser($el).aHTMLtokens; parsed=aHTMLtokens;
              aHTMLtokens.type = 'array_of_html_token';
 
-             logWrite(DBG.TAG.DEBUG, "html tokens", UT.inspect(aHTMLtokens, null, 3));
+             log.debug("html tokens", UT.inspect(aHTMLtokens, null, 3));
 
              /*
               3. For each filter : apply filter to [html_parsed_token]
@@ -758,7 +761,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                               transposedResult.action.call(null, transposedResult.token) :
                               transposedResult.token);
                    });
-                   //logWrite(DBG.TAG.DEBUG, "aTokensActedOn", UT.inspect(aTokensActedOn, null, 4));
+                   //log.debug("aTokensActedOn", UT.inspect(aTokensActedOn, null, 4));
 
                    /*
                     * 6. [html_parsed_token] -> html_text
@@ -769,7 +772,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                            })
                       .join(" ");
 
-                   logWrite(DBG.TAG.DEBUG, "final_output",
+                   log.debug("final_output",
                             UT.inspect(final_output, null, 4));
 
                    dfr.resolve(final_output);
@@ -791,7 +794,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
              aFilters.forEach(
                 function ( filter, index, array ) {
-                   logWrite(DBG.TAG.DEBUG, "analysis of token by filter", UT.inspect(filter, null, 2));
+                   log.debug("analysis of token by filter", UT.inspect(filter, null, 2));
                    if (!filter.input_type || !filter.output_type) {
                       throw 'getTokenActionMap: type information not available. Possible cause is filter was not registered. Check filter ' +
                             filter.name
@@ -799,8 +802,8 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
 
                    var i_adapter = DS.filter_get_data_adapter(aTokens.type, filter.input_type);
                    var o_adapter = DS.filter_get_data_adapter(filter.output_type, 'token_action_map');
-                   logWrite(DBG.TAG.DEBUG, "executing filter ", filter.filter_name, "with tokens");
-                   console.log(i_adapter(aTokens));
+                   log.debug("executing filter ", filter.filter_name, "with tokens");
+                   log.debug(i_adapter(aTokens));
 
                    var deferred_or_value =
                           DS.promise_value_adapter(
@@ -811,12 +814,12 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                       // if the filter is not asynchronous, it must not expect nor use a second argument
                       // is asynchronous, it must have a second argument
                       if (err) {
-                         logWrite(DBG.TAG.ERROR,
+                         log.error(
                                   "getTokenActionMap: error returned by filter ", filter.filter_name, err);
                          deferred_or_value.reject(["error in highlight words", err].join(" : "));
                       }
                       else {
-                         logWrite(DBG.TAG.DEBUG, "executing output adapter", o_adapter.name || o_adapter.displayName);
+                         log.debug("executing output adapter", o_adapter.name || o_adapter.displayName);
                          // Note: we pass the tokens as a second optional parameter in case the output adapter needs
                          // that contextual info. Ideally, the adapter should only need the output of the filter
                          // as input
@@ -848,7 +851,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
           RM.add_TSR_weight = function add_TSR_weight ( obj ) {
              // Example obj :: {user_id : self.stateMap.user_id, word : note.word}
              return new RSVP.Promise(function ( resolve, reject ) {
-                logWrite(DBG.TAG.SOCK, "set_TSR_word_weights", "emitting", obj);
+                log.sock("set_TSR_word_weights", "emitting", obj);
                 SOCK.emit('set_TSR_word_weights', obj,
                           UT.default_node_callback(resolve, reject));
              });
@@ -873,7 +876,7 @@ define(['jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache',
                                                 typeof aNotes);
                          }
                          else {
-                            logWrite(DBG.TAG.DEBUG, "stateMap", UT.inspect(aNotes));
+                            log.debug("stateMap", UT.inspect(aNotes));
                             return RM.set_notes(aNotes);
                          }
                       },

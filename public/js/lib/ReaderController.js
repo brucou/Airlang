@@ -2,7 +2,8 @@
  * Created by bcouriol on 17/09/14.
  */
 //TODO : when movingto RxJS, don't forget to copy the version of rx.all where error handling show stack for debugging
-define(['jquery',
+define(['debug',
+        'jquery',
         'rsvp',
         'socket',
         'ReaderModel',
@@ -10,7 +11,9 @@ define(['jquery',
         'Stateful',
         'data_struct',
         'utils'],
-       function ( $, RSVP, SOCK, RM, TC, STATE, DS, UT ) {
+       function ( DBG, $, RSVP, SOCK, RM, TC, STATE, DS, UT ) {
+          // logger
+          var log = DBG.getLogger("RC");
           //TEST CODE
           trace(RM, 'RM');
           //trace(TC, 'TC');
@@ -164,30 +167,30 @@ define(['jquery',
                       function get_stored_notes_success ( aNotes ) {
                          RM.make_article_readable(my_url)
                             .fail(function make_article_readable_error ( Error ) {
-                                     logWrite(DBG.TAG.ERROR, "Error in make_article_readable", Error);
+                                     log.error( "Error in make_article_readable", Error);
                                      viewAdapter.setErrorMessage(Error.toString());
                                      viewAdapter.set_HTML_body(null);
                                   })
                             .done(function make_article_readable_success ( html_text ) {
-                                     logWrite(DBG.TAG.INFO, "URL read successfully");
+                                     log.info( "URL read successfully");
                                      viewAdapter.set_HTML_body(html_text);
                                      viewAdapter.setErrorMessage("");
                                      self.stateSetIsUrlLoaded(true);
                                   });
                       },
                       function get_stored_notes_failure () {
-                         logWrite(DBG.TAG.ERROR, 'RM.get_stored_notes', err);
+                         log.error( 'RM.get_stored_notes', err);
                       }
                    );
                 },
 
                 '{window} al-ev-tooltip_dismiss' : function tooltip_dismiss_handler ( $el, ev ) {
-                   logWrite(DBG.TAG.EVENT, "al-ev-tooltip_dismiss", "received");
+                   log.event("al-ev-tooltip_dismiss", "received");
                    // Update state
                    this.stateMap.tooltip_displayed = false;
                    // Check parameters : we need min. a word, lemma and translation
                    if (!ev.translation_word || !this.stateMap.note.word || !ev.lemma_target_lg) {
-                      logWrite(DBG.TAG.WARNING, "tooltip_dismiss_handler", "word or lemma or translation are falsy");
+                      log.warning("tooltip_dismiss_handler", "word or lemma or translation are falsy");
                       return false
                    }
                    // Add the note in the note table and visually display the annotated word
@@ -196,7 +199,7 @@ define(['jquery',
                    this.stateMap.lemma_target_lg = ev.lemma_target_lg;
                    console.log("stateMap show and add note", this.stateMap);
                    this.show_and_add_note(this.element, this.stateMap);
-                   logWrite(DBG.TAG.SOCK, "set_word_user_translation", "emitting");
+                   log.sock( "set_word_user_translation", "emitting");
                    SOCK.RSVP_emit('set_word_user_translation', {
                       user_id                   : this.stateMap.user_id,
                       word                      : this.stateMap.note.word, // word selected by click
@@ -211,13 +214,13 @@ define(['jquery',
                 },
 
                 '{window} al-ev-shown_tooltip' : function ( $el, ev ) {
-                   logWrite(DBG.TAG.EVENT, "al-ev-shown_tooltip", "received");
+                   log.event("al-ev-shown_tooltip", "received");
                    this.stateMap.tooltip_displayed = true;
                 },
 
                 'click' : function click ( $el, ev ) {
-                   logWrite(DBG.TAG.EVENT, "RC click", "received", "target", ev.target.tagName);
-                   logWrite(DBG.TAG.DEBUG, "tooltip displayed", this.stateMap.tooltip_displayed);
+                   log.event("RC click", "received", "target", ev.target.tagName);
+                   log.debug( "tooltip displayed", this.stateMap.tooltip_displayed);
 
                    // if the click is on the dropdown select then ignore
                    if (ev.target.nodeName === 'SELECT') {return true}
@@ -228,7 +231,7 @@ define(['jquery',
                    // Get all data necessary for adding the note if need be
                    // necessary to do it now, because it is based on the click selection which will change
                    // when displaying the tooltip
-                   logWrite(DBG.TAG.EVENT, "al-ev-show_tooltip", "emitting");
+                   log.event("al-ev-show_tooltip", "emitting");
                    var range = window.getSelection().getRangeAt(0);
                    UT._extend(this.stateMap, {
                       $rdt_el : $el, range : range,
@@ -351,10 +354,10 @@ define(['jquery',
                                // could be just a code whose semantics is defined at server level
                                // this will be used for cases where no ERROR is to be raised but it is relevant to give
                                // more info as per what went wrong
-                               logWrite(DBG.TAG.DEBUG, "added note remotely!")
+                               log.debug( "added note remotely!")
                             },
                             function failure_add_note ( err ) {
-                               logWrite(DBG.TAG.ERROR, "failure remotely adding note", UT.inspect(err));
+                               log.error( "failure remotely adding note", UT.inspect(err));
                             });
                 },
 
@@ -506,7 +509,7 @@ define(['jquery',
                 var ancestor_level = 0;
                 while (currentNode &&
                        (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") )) {
-                   //logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
+                   //log.debug( "no id found, looking higher up");
                    currentNode = currentNode.parentNode;
                    ancestor_level++;
                 }
@@ -515,7 +518,7 @@ define(['jquery',
                    throw 'findParentWithId: could not find a node with an ID...'
                 }
 
-                //logWrite(DBG.TAG.DEBUG, "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
+                //log.debug( "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
                 return currentNode;
              },
 
@@ -544,7 +547,7 @@ define(['jquery',
                 var textContent = startNode.textContent;
                 // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-                logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
+                log.debug( "start node", startNode.nodeName, textContent, "offset", startOffset);
 
                 // Init array variables tracing the counting
                 var aCharLengths = [],
@@ -554,13 +557,13 @@ define(['jquery',
                 var currentNode = RC.findParentWithId(startNode);
                 /*TEST CODE*/
                 currN = currentNode; ////////
-                logWrite(DBG.TAG.DEBUG, "current node", currentNode.nodeName, currentNode.textContent);
+                log.debug( "current node", currentNode.nodeName, currentNode.textContent);
 
                 // traverse tree till startNode and count words and characters while doing so
                 // TODO: case currentNode = startNode not handled
                 count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
-                //logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
+                //log.debug( "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
 
                 count_word_and_char_till_offset(startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
@@ -576,14 +579,14 @@ define(['jquery',
                       // by construction, currentNode cannot be a TEXT_NODE the first time, as ancestor node have an ID
                       // and text node cannot have id
                       if (currentNode.nodeType === currentNode.TEXT_NODE || currentNode.nodeName === "BR") {
-                         //logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
+                         //log.debug( "process text node from", currentNode.nodeName);
                          var text_content = currentNode.textContent;
                          var text_content_trim = text_content.trim();
                          var aWords = tokenizer(text_content_trim);
                          aCharLengths.push(text_content.length);
 
                          if (text_content_trim) {
-                            //logWrite(DBG.TAG.DEBUG, "non empty string: adding to word array");
+                            //log.debug( "non empty string: adding to word array");
                             // if text_content is only spaces, there is no words to count!!
                             aWordLengths.push(aWords.length);
                          }
@@ -594,11 +597,11 @@ define(['jquery',
                          if (!currentNode.hasChildNodes()) {
                             throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
                          }
-                         //logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
+                         //log.debug( "process children of node", currentNode.nodeName, "number of children",
                          //       currentNode.childNodes.length);
                          var nodeChildren = currentNode.childNodes;
                          return UT.some(nodeChildren, function some ( nodeChild, index, array ) {
-                            //logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
+                            //log.debug( "process child ", index, "with tag", nodeChild.nodeName, "of",
                             //       currentNode.nodeName);
 
                             var result = count_word_and_char_till_node(nodeChild, startNode, aCharLengths, aWordLengths,
@@ -609,7 +612,7 @@ define(['jquery',
                    }
                    else {
                       // found startNode!!
-                      //logWrite(DBG.TAG.DEBUG, "found startNode");
+                      //log.debug( "found startNode");
                       return true;
                    }
                 }
@@ -625,12 +628,12 @@ define(['jquery',
                    var current_offset = 0,
                        aWords = tokenizer(startNode.textContent);
                    aWords.some(function ( word, index, array ) {
-                      logWrite(DBG.TAG.DEBUG, "processing word", word);
+                      log.debug( "processing word", word);
                       aCharLengths.push(word.length);
                       // we put 1 because there is another word which has been parsed.
                       // Reminder : this array contains the number of words to be counted till reaching the final word
                       aWordLengths.push(word.trim() ? 1 : 0);
-                      //logWrite(DBG.TAG.DEBUG, "current_offset, startOffset", current_offset, startOffset);
+                      //log.debug( "current_offset, startOffset", current_offset, startOffset);
                       current_offset +=
                       word.length + (word.length == 0 ? 1 : (array[index + 1] ? 1 : 0) );
                       return !(current_offset <= startOffset);
@@ -777,7 +780,7 @@ define(['jquery',
              var ancestor_level = 0;
              while (currentNode &&
                     (currentNode.nodeType === currentNode.TEXT_NODE || !currentNode.getAttribute("id") )) {
-                //logWrite(DBG.TAG.DEBUG, "no id found, looking higher up");
+                //log.debug( "no id found, looking higher up");
                 currentNode = currentNode.parentNode;
                 ancestor_level++;
              }
@@ -786,7 +789,7 @@ define(['jquery',
                 throw 'findParentWithId: could not find a node with an ID...'
              }
 
-             //logWrite(DBG.TAG.DEBUG,                      "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
+             //log.debug(                      "found id in parent " + ancestor_level + " level higher : " + currentNode.getAttribute("id"));
              return currentNode;
           };
 
@@ -815,7 +818,7 @@ define(['jquery',
              var textContent = startNode.textContent;
              // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-             logWrite(DBG.TAG.DEBUG, "start node", startNode.nodeName, textContent, "offset", startOffset);
+             log.debug( "start node", startNode.nodeName, textContent, "offset", startOffset);
 
              // Init array variables tracing the counting
              var aCharLengths = [],
@@ -825,13 +828,13 @@ define(['jquery',
              var currentNode = RC.findParentWithId(startNode);
              /*TEST CODE*/
              currN = currentNode; ////////
-             logWrite(DBG.TAG.DEBUG, "current node", currentNode.nodeName, currentNode.textContent);
+             log.debug( "current node", currentNode.nodeName, currentNode.textContent);
 
              // traverse tree till startNode and count words and characters while doing so
              // TODO: case currentNode = startNode not handled
              count_word_and_char_till_node(currentNode, startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
-             //logWrite(DBG.TAG.DEBUG, "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
+             //log.debug( "found startNode", aCharLengths.reduce(UT.sum, 0), aWordLengths.reduce(UT.sum, 0));
 
              count_word_and_char_till_offset(startNode, aCharLengths, aWordLengths, RM.simple_tokenizer);
 
@@ -847,14 +850,14 @@ define(['jquery',
                    // by construction, currentNode cannot be a TEXT_NODE the first time, as ancestor node have an ID
                    // and text node cannot have id
                    if (currentNode.nodeType === currentNode.TEXT_NODE || currentNode.nodeName === "BR") {
-                      //logWrite(DBG.TAG.DEBUG, "process text node from", currentNode.nodeName);
+                      //log.debug( "process text node from", currentNode.nodeName);
                       var text_content = currentNode.textContent;
                       var text_content_trim = text_content.trim();
                       var aWords = tokenizer(text_content_trim);
                       aCharLengths.push(text_content.length);
 
                       if (text_content_trim) {
-                         //logWrite(DBG.TAG.DEBUG, "non empty string: adding to word array");
+                         //log.debug( "non empty string: adding to word array");
                          // if text_content is only spaces, there is no words to count!!
                          aWordLengths.push(aWords.length);
                       }
@@ -865,11 +868,11 @@ define(['jquery',
                       if (!currentNode.hasChildNodes()) {
                          throw "count_word_and_char_till_node: children nodes not found and we haven't reached the startNode!! Check the DOM, this is impossible";
                       }
-                      //logWrite(DBG.TAG.DEBUG, "process children of node", currentNode.nodeName, "number of children",
+                      //log.debug( "process children of node", currentNode.nodeName, "number of children",
                       //       currentNode.childNodes.length);
                       var nodeChildren = currentNode.childNodes;
                       return UT.some(nodeChildren, function some ( nodeChild, index, array ) {
-                         //logWrite(DBG.TAG.DEBUG, "process child ", index, "with tag", nodeChild.nodeName, "of",
+                         //log.debug( "process child ", index, "with tag", nodeChild.nodeName, "of",
                          //       currentNode.nodeName);
 
                          var result = count_word_and_char_till_node(nodeChild, startNode, aCharLengths, aWordLengths,
@@ -880,7 +883,7 @@ define(['jquery',
                 }
                 else {
                    // found startNode!!
-                   //logWrite(DBG.TAG.DEBUG, "found startNode");
+                   //log.debug( "found startNode");
                    return true;
                 }
              }
@@ -896,12 +899,12 @@ define(['jquery',
                 var current_offset = 0,
                     aWords = tokenizer(startNode.textContent);
                 aWords.some(function ( word, index, array ) {
-                   logWrite(DBG.TAG.DEBUG, "processing word", word);
+                   log.debug( "processing word", word);
                    aCharLengths.push(word.length);
                    // we put 1 because there is another word which has been parsed.
                    // Reminder : this array contains the number of words to be counted till reaching the final word
                    aWordLengths.push(word.trim() ? 1 : 0);
-                   //logWrite(DBG.TAG.DEBUG, "current_offset, startOffset", current_offset, startOffset);
+                   //log.debug( "current_offset, startOffset", current_offset, startOffset);
                    current_offset +=
                    word.length + (word.length == 0 ? 1 : (array[index + 1] ? 1 : 0) );
                    return !(current_offset <= startOffset);
