@@ -398,6 +398,7 @@ define(['jquery',
 
                    var self = this;
                    RM.cached_translation(word, function ( err, aValues ) {
+                      vValues = aValues;
                       if (err) {
                          logWrite(DBG.TAG.ERROR, "An error ocurred", err);
                          return null;

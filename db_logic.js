@@ -4,7 +4,6 @@
 
 /**
  * TODO : client pooling cf. https://github.com/brianc/node-postgres
- * TODO: instead of copying utils, reuse the one from client side U=require(.../.. etc/utils)
  * @type {exports}
  */
 
@@ -440,9 +439,6 @@ function pg_exec_query_failure ( callback ) {
  * @returns {{}}
  */
 function get_db_adapter ( identifier ) {
-   // TODO
-   // get an initialized database object to perform query or create one if not available
-   // that is another map where pg comes already initialized after app start-up (init function)
 
    var config = registry_adapters[identifier];
    if (!config) {

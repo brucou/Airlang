@@ -95,6 +95,7 @@ requirejs(
 
       function start () {
          // TODO : add a login mechanism to have different user ids
+         // TODO : do my own controller using uberproto for prototypal inheritance : http://daffl.github.io/uberproto/
          appState = {
             type            : 'appState',
             error_div       : '#application_error',

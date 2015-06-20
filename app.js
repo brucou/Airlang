@@ -15,7 +15,8 @@
  */
 
 // TODO: check if db connections are pooled, otherwise pool them : performance should be better
-
+// TODO : drop socket.io for  primus w/ faye: https://github.com/primus/primus#faye, http://feathersjs.com/
+// TODO : drop my artisanal REST through socket for feathers
 var http, express, app, io, server, _; // server connection variables
 var pgClient; //postgresSQL connection variable
 
