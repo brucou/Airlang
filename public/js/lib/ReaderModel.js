@@ -701,7 +701,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
               */
 
              var dfr = $.Deferred();
-             var aHTMLtokens = fn_parser($el).aHTMLtokens; parsed=aHTMLtokens;
+             var aHTMLtokens = fn_parser($el).aHTMLtokens, parsed=aHTMLtokens;
              aHTMLtokens.type = 'array_of_html_token';
 
              log.debug("html tokens", UT.inspect(aHTMLtokens, null, 3));
@@ -805,10 +805,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
                    log.debug("executing filter ", filter.filter_name, "with tokens");
                    log.debug(i_adapter(aTokens));
 
-                   var deferred_or_value =
-                          DS.promise_value_adapter(
-                             filter.call(null, i_adapter(aTokens), result_callback),
-                             result_callback);
+                   var deferred_or_value = filter.call(null, i_adapter(aTokens), result_callback);
 
                    function result_callback ( err, result ) {
                       // if the filter is not asynchronous, it must not expect nor use a second argument
@@ -830,7 +827,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
                       }
                    }
 
-                   aPromises.push(deferred_or_value.promise());
+                   aPromises.push(deferred_or_value);
                    // filter returns either a plain object or a promise/deferred. In any case that is stored
                 });
              return aPromises;
