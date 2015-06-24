@@ -1,14 +1,15 @@
 /**
  * Created by bcouriol on 13/12/14.
  */
-var LOG = require('./public/js/lib/debug'),
-DB = require('./db_logic'),
-Util = require('util'),
-U = require('./public/js/lib/utils'), // load the client side utils
-RSVP = require('rsvp');
+var LOG = require('./public/js/lib/debug').getLogger("TSRModel"),
+   logger = require('./logger')('TSRModel'),
+   DB = require('./db_logic'),
+   Util = require('util'),
+   U = require('./public/js/lib/utils'), // load the client side utils
+   RSVP = require('rsvp');
 
 function add_note ( note_qry_obj, callback ) {
-   LOG.write(LOG.TAG.EVENT, "received object", Util.inspect(note_qry_obj));
+   LOG.event("received object", Util.inspect(note_qry_obj));
    /* note_obj ::
     {
     action   : 'insert if not exists',
@@ -23,23 +24,23 @@ function add_note ( note_qry_obj, callback ) {
 }
 
 function set_word_user_translation ( obj, callback ) {
-   LOG.write(LOG.TAG.EVENT, "received object", Util.inspect(obj));
+   LOG.event("received object", Util.inspect(obj));
    // 1. look if a row already exists with the same parameters but removing the sample sentences (not part of the key)
    // To do that create the objects that will be used in the query
    // criteria contains the fields of the key to be checked against
    // values object contains all the fields which will be inserted in the table (if not exists)
    var criteria_obj = {
-          word              : obj.word,
-          lemma             : obj.lemma_target_lg,
-          lemma_translation : obj.translation_word,
-          first_language    : obj.first_language,
-          target_language   : obj.target_language,
-          user_id           : obj.user_id,
-          morph_info        : '-'
-       },
-       values_obj = {
-          sample_sentence_first_lg  : obj.sample_sentence_first_lg,
-          sample_sentence_target_lg : obj.sample_sentence_target_lg};
+         word              : obj.word,
+         lemma             : obj.lemma_target_lg,
+         lemma_translation : obj.translation_word,
+         first_language    : obj.first_language,
+         target_language   : obj.target_language,
+         user_id           : obj.user_id,
+         morph_info        : '-'
+      },
+      values_obj = {
+         sample_sentence_first_lg  : obj.sample_sentence_first_lg,
+         sample_sentence_target_lg : obj.sample_sentence_target_lg};
    U._extend(values_obj, criteria_obj);
 
    // do a select on user_id, word, lemma, lemma_translation, morph_info

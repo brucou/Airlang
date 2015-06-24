@@ -2,11 +2,12 @@
  * Created by bcouriol on 27/11/14.
  */
 
-var LOG = require('./public/js/lib/debug'),
-DB = require('./db_logic'),
-Util = require('util'),
-U = require('./public/js/lib/utils'), // load the client side utils
-RSVP = require('rsvp');
+var LOG = require('./public/js/lib/debug').getLogger("TSRModel"),
+   logger = require('./logger')('TSRModel'),
+   DB = require('./db_logic'),
+   Util = require('util'),
+   U = require('./public/js/lib/utils'), // load the client side utils
+   RSVP = require('rsvp');
 
 // Memorization module handlers
 /**
@@ -34,7 +35,7 @@ function set_word_weights ( obj, callback ) {
             }
             else {
                // word already there
-               LOG.write(LOG.TAG.WARNING, "Word is already being revised - ignoring");
+               LOG.warning( "Word is already being revised - ignoring");
                callback(null, null); // the null value of result may be observed  on the calling side and decided on
             }
          }, callback);
@@ -49,9 +50,9 @@ function compute_box_weight ( aResolves ) {
    // config has bucket_weight_0, bucket_weight_1, bucket_weight_2
    // sends an exception if there is no configuration value
    var word_list_length_a = aResolves[0],
-       row_tsr_config_a = aResolves[1],
-       word_list_length,
-       row_tsr_config;
+      row_tsr_config_a = aResolves[1],
+      word_list_length,
+      row_tsr_config;
 
    U.assert_type([word_list_length_a], [
       {word_list_length_a : 'Array'}
@@ -126,8 +127,8 @@ function get_word_weights ( user_id, fst_lg, tgt_lg ) {
 
 function update_word_weight_post_exo ( obj, callback ) {
    var analyzed_answer_merged = obj,
-       word_weight_row = null,
-       time_updated = null;
+      word_weight_row = null,
+      time_updated = null;
    /*   ok       : ok, correct_word : correct_word, answer : answer, time_taken_sec : time_taken_sec,
     mistake  : compute_word_mistake(correct_word, answer, word_info),
     time_analyzed:
@@ -227,9 +228,9 @@ function get_word_to_memorize ( appState, callback ) {
                // reminder specs for config rows are: pg_tsr_word_weight_cfg
                //for weight rows: pg_tsr_word_weight
                var weight_rows = aDb_rows[0],
-                   weight_cfg_row = aDb_rows[1][0], // there must only be one
-                   total_weight,
-                   selected_word;
+                  weight_cfg_row = aDb_rows[1][0], // there must only be one
+                  total_weight,
+                  selected_word;
                if (aDb_rows[1].length !== 1) {
                   return U.delegate_promise_error('get_word_to_memorize: found several or no rows in TSR_word_weight_cfg table!');
                }
@@ -294,9 +295,9 @@ function get_weighted_index ( w_index, aWeights ) {
 function TSR_compute_weight ( weight_rows, weight_cfg_row ) {
    return weight_rows.map(function ( weight_row ) {
       var box_weight = weight_row.box_weight,
-          age_component = tsr_compute_age(weight_row, weight_cfg_row),
-          progress_component = tsr_compute_progress(weight_row, weight_cfg_row),
-          difficulty_component = tsr_compute_difficulty(weight_row, weight_cfg_row);
+         age_component = tsr_compute_age(weight_row, weight_cfg_row),
+         progress_component = tsr_compute_progress(weight_row, weight_cfg_row),
+         difficulty_component = tsr_compute_difficulty(weight_row, weight_cfg_row);
 
       return box_weight * age_component * progress_component * difficulty_component;
    })
@@ -356,8 +357,8 @@ function get_word_info ( user_id, module, first_language, target_language ) {
 function tsr_compute_age ( weight_row, weight_cfg_row ) {
    const day_in_ms = 86400000;
    var last_revision_time = Date.parse(weight_row.last_revision_time),
-       now = new Date(),
-       days_difference = (now - last_revision_time) / day_in_ms;
+      now = new Date(),
+      days_difference = (now - last_revision_time) / day_in_ms;
    return weight_cfg_row.age_param1 * Math.pow(weight_cfg_row.age_param2, days_difference);
 }
 
@@ -382,7 +383,7 @@ function tsr_compute_progress ( weight_row, weight_cfg_row ) {
    // progress_param1 * progress_param2 ^ (- f(last_revision_grade) )
 
    var last_revision_grade = weight_row.last_revision_grade,
-       progress_power_factor = -last_revision_grade;
+      progress_power_factor = -last_revision_grade;
    return weight_cfg_row.progress_param1 * Math.pow(weight_cfg_row.progress_param2, progress_power_factor);
 }
 

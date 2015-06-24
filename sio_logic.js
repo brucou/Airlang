@@ -2,7 +2,8 @@
  * Created by bcouriol on 15/09/14.
  */
 var SIO = {},
-LOG = require('./public/js/lib/debug'),
+// LOG = require('./public/js/lib/debug'),
+logger = require('./logger')('sio_logic'),
 DB = require('./db_logic'),
 Util = require('util'),
 U = require('./public/js/lib/utils'), // load the client side utils
@@ -32,11 +33,11 @@ var queryIsOneWordImportant = "select to_tsvector('cs', '%s') @@ to_tsquery('cs'
 
 // Main query functions
 function sio_onHighlight_important_words ( msg, callback ) {
-   LOG.write(LOG.TAG.INFO, 'highlight_important_words message received', msg);
+   logger.info( 'highlight_important_words message received', msg);
 
    var freq_word_list = DB.get_important_words();
    if (!freq_word_list || freq_word_list.length === 0) {
-      LOG.write(LOG.TAG.ERROR, 'list of important word not set');
+      logger.error( 'list of important word not set');
       callback('list of important word not set', null);
       return;
    }
@@ -50,7 +51,7 @@ function sio_onHighlight_important_words ( msg, callback ) {
 }
 
 function sio_onGet_translation_info ( msg, callback ) {
-   LOG.write(LOG.TAG.INFO, 'get_translation_info message received: ', msg);
+   logger.info( 'get_translation_info message received: ', msg);
    // $1 : dictionary (here cspell)
    // $2 : the word to be lemmatize
    // The right left -1 -1 is dedicated to removing the begin and end parenthesis
@@ -66,7 +67,7 @@ function sio_on_REST ( qry_param, callback ) {
    // qry_param  is an object of the form :{action: *, entity : *, criteria : *, values: *, update: *}
    // where action in [select|update|delete|create|insert if not exists] i.e the typical CRUD actions
    //       entity represents information to subselecting information from returned query objects
-   LOG.write(LOG.TAG.EVENT, "received REST object", Util.inspect(qry_param));
+   logger.event( "received REST object", Util.inspect(qry_param));
 
    // This should identify in particular:
    // - which database system to use (postgres, MongoDB)
@@ -78,7 +79,7 @@ function sio_on_REST ( qry_param, callback ) {
 // Initialization functions
 SIO.initialize_socket_cnx = function initialize_socket_cnx ( server ) {
    io = require('socket.io')(server);
-   LOG.write(LOG.TAG.INFO, "socket initialized");
+   logger.info( "socket initialized");
    return io;
 };
 
@@ -95,7 +96,7 @@ SIO.init_listeners = function init_listeners () {
    mapListeners.channels.forEach(function ( channel ) {
       io.of(channel).on(
          'connect', function ( socket ) {
-            LOG.write(LOG.TAG.INFO, 'attaching socket handlers for topics on channel ', channel);
+            logger.info( 'attaching socket handlers for topics on channel ', channel);
             mapListeners.topic_handlers.forEach(function ( topic_handler ) {
                if (topic_handler.channel === channel) {
                   socket.on(topic_handler.topic, topic_handler.handler);

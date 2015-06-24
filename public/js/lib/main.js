@@ -84,37 +84,74 @@
 requirejs(
    ['debug',
     'jquery',
-    'ReaderModel',
-    'ReaderController',
-    'socket',
-    'Stateful',
+    'shell',
+    'readerModule',
     'TSRController',
-    'url_load', 'rsvp'
+    'url_load'
    ],
-   function ( DBG, $, RM, RC, SOCK, STATE, TSR, UL, RSVP ) {
+   function ( DBG, $, SHELL, RDT, TSR, UL ) {
       // logger
       var log = DBG.getLogger("main");
+      init_log();
 
-      var appState = {};
+      // TEST
+      $(function () {
+        // Register modules
 
-      function start () {
-         // TODO : add a login mechanism to have different user ids
-         // TODO : do my own controller using uberproto for prototypal inheritance : http://daffl.github.io/uberproto/
-         appState = {
-            type            : 'appState',
-            error_div       : '#application_error',
-            user_id         : 1,
-            // NOTE : ISO 639-2 codes are used for encoding language information
-            first_language  : 'eng',
-            target_language : 'cze'
+        SHELL.register_module(RDT);
+         /*
+          Defining and configuring the application level router and routes
+          */
+         var routerConfig = {
+            param                : {
+               'all' : /(.*)/
+            },
+            routes               : {
+               // NOTE  :xxx only matches one word. When an $ is encountered, that's the end of the matching
+               // NOTE : matching is exact, i.e. if there is anything after, there is no match
+               '/' : function () {
+                  log.info("home page: nothing there yet for now", arguments)
+               }
+            },
+            routeLogger          : function routeLogger () {
+               log.info("changing route to " + window.location);
+            },
+            routeNotFoundHandler : function routeNotFoundHandler () {
+               log.error("routeNotFoundHandler", this);
+               log.error("routeNotFoundHandler", arguments);
+            },
+            routeResource        : {
+               // this contains function which are referred by their string name in the router object
+            },
+            configure            : {
+               notfound     : this.routeNotFoundHandler,
+               before       : this.routeLogger,
+               resource     : this.routeResource,
+               html5history : false
+            },
+            startupRoute         : '/rdt/something&else=3'
          };
+         var router = SHELL.configure_router(routerConfig);
 
-         //TODO Change user_id in new RC... to appState, or pass a clone of the object
-         new RC.ReaderToolController("#reader_tool",
-                                     {  user_id         : 1,
-                                        first_language  : appState.first_language,
-                                        target_language : appState.target_language,
-                                        translate_by    : 'click'});
+
+         // Initialize socket connection and feature modules
+         localStorage.clear();
+
+         // TEST CODE
+         init_fake();
+         ////////////
+         // Start Qunit if called from test index.html starting page
+         if ('undefined' !== typeof QUnit) {
+            log.info("Starting QUnit tests");
+            QUnit.start();
+         }
+         ////////////
+
+         // Start the app
+         SHELL.init();
+         SHELL.start_app(router, RDT.name);
+
+         // TODO : implement it with the router and module mechanism
          // TSR button handler
          // no controller, just a click handler
          $("#TSR").click(function ( event ) {
@@ -122,8 +159,19 @@ requirejs(
             //TODO: think about what data to pass the controller
             // appState is certainly one of them, maybe not views and adapters
             // put the model in another file
-            new TSR.mainController("#TSR_div", {appState : appState}); //TODO : appState with user_id
+            new TSR.mainController("#TSR_div", {appState : SHELL.env}); //TODO : appState with user_id
          });
+      });
+
+      function start () {
+
+         //TODO Change user_id in new RC... to appState, or pass a clone of the object
+         new RC.ReaderToolController("#reader_tool",
+                                     {  user_id         : 1,
+                                        first_language  : appState.first_language,
+                                        target_language : appState.target_language,
+                                        // TODO : to put in config of RM or view??
+                                        translate_by    : 'click'});
       }
 
       function init_log () {
@@ -163,36 +211,5 @@ requirejs(
          //RM.set_notes([]);
       }
 
-      $(function () {
-         init_log();
-         // TEST CODE
-         //trace.config('ReaderToolController', 'Constructor', false);
-         //trace(RM, 'RM');
-         //trace(RC, 'RC');
-         //trace(IO, 'IO');
-         init_fake();
-         ////////////
-         // configure error handler to avoid silent failure or RSVP promises
-         RSVP.on('error', function ( reason ) {
-            log.error(reason);
-         });
-         // Initialize socket connection and feature modules
-         $.when(
-            SOCK.init(),
-            STATE.init(),
-            RM.init()
-         ).then(
-            function () {
-               localStorage.clear();
-               // Start Qunit if called from test index.html starting page
-               if ('undefined' !== typeof QUnit) {
-                  log.info("Starting QUnit tests");
-                  QUnit.start();
-               }
-
-               // Start the app
-               start();
-            });
-      });
    });
 // */

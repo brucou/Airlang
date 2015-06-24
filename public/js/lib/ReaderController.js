@@ -1,7 +1,7 @@
 /**
  * Created by bcouriol on 17/09/14.
  */
-//TODO : when movingto RxJS, don't forget to copy the version of rx.all where error handling show stack for debugging
+   //TODO : when movingto RxJS, don't forget to copy the version of rx.all where error handling show stack for debugging
 define(['debug',
         'jquery',
         'rsvp',
@@ -20,7 +20,7 @@ define(['debug',
           //trace(DS, 'DS');
           ////////////
           var RC = {};
-          rtView  = RC.rtView = can.view('tpl-reader-tool-stub');
+          rtView = RC.rtView = can.view('tpl-reader-tool-stub');
 
           RC.view = {
              template    : [
@@ -151,8 +151,8 @@ define(['debug',
 
                 '#url_param change' : function combo_load_url ( $el, ev ) {
                    var viewAdapter = this.view.viewAdapter,
-                       my_url = $el.val(),
-                       self = this;
+                      my_url = $el.val(),
+                      self = this;
                    viewAdapter.attr("url_to_load", my_url);
                    viewAdapter.setErrorMessage(null);
                    viewAdapter.set_HTML_body(null);
@@ -167,19 +167,19 @@ define(['debug',
                       function get_stored_notes_success ( aNotes ) {
                          RM.make_article_readable(my_url)
                             .fail(function make_article_readable_error ( Error ) {
-                                     log.error( "Error in make_article_readable", Error);
+                                     log.error("Error in make_article_readable", Error);
                                      viewAdapter.setErrorMessage(Error.toString());
                                      viewAdapter.set_HTML_body(null);
                                   })
                             .done(function make_article_readable_success ( html_text ) {
-                                     log.info( "URL read successfully");
+                                     log.info("URL read successfully");
                                      viewAdapter.set_HTML_body(html_text);
                                      viewAdapter.setErrorMessage("");
                                      self.stateSetIsUrlLoaded(true);
                                   });
                       },
                       function get_stored_notes_failure () {
-                         log.error( 'RM.get_stored_notes', err);
+                         log.error('RM.get_stored_notes', err);
                       }
                    );
                 },
@@ -199,7 +199,7 @@ define(['debug',
                    this.stateMap.lemma_target_lg = ev.lemma_target_lg;
                    console.log("stateMap show and add note", this.stateMap);
                    this.show_and_add_note(this.element, this.stateMap);
-                   log.sock( "set_word_user_translation", "emitting");
+                   log.sock("set_word_user_translation", "emitting");
                    SOCK.RSVP_emit('set_word_user_translation', {
                       user_id                   : this.stateMap.user_id,
                       word                      : this.stateMap.note.word, // word selected by click
@@ -220,7 +220,7 @@ define(['debug',
 
                 'click' : function click ( $el, ev ) {
                    log.event("RC click", "received", "target", ev.target.tagName);
-                   log.debug( "tooltip displayed", this.stateMap.tooltip_displayed);
+                   log.debug("tooltip displayed", this.stateMap.tooltip_displayed);
 
                    // if the click is on the dropdown select then ignore
                    if (ev.target.nodeName === 'SELECT') {return true}
@@ -282,9 +282,9 @@ define(['debug',
 
                 hasMouseReallyMoved : function ( e ) { //or is it a tremor?
                    var left_boundry = parseInt(this.last_mouse_stop.x) - 5,
-                       right_boundry = parseInt(this.last_mouse_stop.x) + 5,
-                       top_boundry = parseInt(this.last_mouse_stop.y) - 5,
-                       bottom_boundry = parseInt(this.last_mouse_stop.y) + 5;
+                      right_boundry = parseInt(this.last_mouse_stop.x) + 5,
+                      top_boundry = parseInt(this.last_mouse_stop.y) - 5,
+                      bottom_boundry = parseInt(this.last_mouse_stop.y) + 5;
                    return e.clientX > right_boundry || e.clientX < left_boundry || e.clientY > bottom_boundry ||
                           e.clientY < top_boundry;
                 },
@@ -354,10 +354,10 @@ define(['debug',
                                // could be just a code whose semantics is defined at server level
                                // this will be used for cases where no ERROR is to be raised but it is relevant to give
                                // more info as per what went wrong
-                               log.debug( "added note remotely!")
+                               log.debug("added note remotely!")
                             },
                             function failure_add_note ( err ) {
-                               log.error( "failure remotely adding note", UT.inspect(err));
+                               log.error("failure remotely adding note", UT.inspect(err));
                             });
                 },
 
@@ -445,13 +445,13 @@ define(['debug',
 
                 // Two cases, the anchor object has an id property or it does not. Most of the time it won't
                 var startNode = selectedRange.startContainer,
-                    firstIDNode = RC.findParentWithId(startNode),
-                    // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+                   firstIDNode = RC.findParentWithId(startNode),
+                // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-                    parent_node_with_id = RC.findParentWithId(startNode),
-                    id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
+                   parent_node_with_id = RC.findParentWithId(startNode),
+                   id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
 
-                    rootNode = document.getElementById("0");
+                   rootNode = document.getElementById("0");
                 if (!rootNode) {
                    throw 'getNoteFromWordClickedOn: no element with id="0" - this function can only be called on a DOM parsed with parseDOMTree '
                 }
@@ -547,17 +547,17 @@ define(['debug',
                 var textContent = startNode.textContent;
                 // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-                log.debug( "start node", startNode.nodeName, textContent, "offset", startOffset);
+                log.debug("start node", startNode.nodeName, textContent, "offset", startOffset);
 
                 // Init array variables tracing the counting
                 var aCharLengths = [],
-                    aWordLengths = [];
+                   aWordLengths = [];
 
                 // get the first parent with id
                 var currentNode = RC.findParentWithId(startNode);
                 /*TEST CODE*/
                 currN = currentNode; ////////
-                log.debug( "current node", currentNode.nodeName, currentNode.textContent);
+                log.debug("current node", currentNode.nodeName, currentNode.textContent);
 
                 // traverse tree till startNode and count words and characters while doing so
                 // TODO: case currentNode = startNode not handled
@@ -626,9 +626,9 @@ define(['debug',
                    }
 
                    var current_offset = 0,
-                       aWords = tokenizer(startNode.textContent);
+                      aWords = tokenizer(startNode.textContent);
                    aWords.some(function ( word, index, array ) {
-                      log.debug( "processing word", word);
+                      log.debug("processing word", word);
                       aCharLengths.push(word.length);
                       // we put 1 because there is another word which has been parsed.
                       // Reminder : this array contains the number of words to be counted till reaching the final word
@@ -716,13 +716,13 @@ define(['debug',
 
              // Two cases, the anchor object has an id property or it does not. Most of the time it won't
              var startNode = selectedRange.startContainer,
-                 firstIDNode = RC.findParentWithId(startNode),
-                 // Beware that the first character of textContent can be a space because of the way we construct the html of the page
+                firstIDNode = RC.findParentWithId(startNode),
+             // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-                 parent_node_with_id = RC.findParentWithId(startNode),
-                 id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
+                parent_node_with_id = RC.findParentWithId(startNode),
+                id_of_parent_node_with_id = parent_node_with_id.getAttribute("id"),
 
-                 rootNode = document.getElementById("0");
+                rootNode = document.getElementById("0");
              if (!rootNode) {
                 throw 'getNoteFromWordClickedOn: no element with id="0" - this function can only be called on a DOM parsed with parseDOMTree '
              }
@@ -818,17 +818,17 @@ define(['debug',
              var textContent = startNode.textContent;
              // Beware that the first character of textContent can be a space because of the way we construct the html of the page
 
-             log.debug( "start node", startNode.nodeName, textContent, "offset", startOffset);
+             log.debug("start node", startNode.nodeName, textContent, "offset", startOffset);
 
              // Init array variables tracing the counting
              var aCharLengths = [],
-                 aWordLengths = [];
+                aWordLengths = [];
 
              // get the first parent with id
              var currentNode = RC.findParentWithId(startNode);
              /*TEST CODE*/
              currN = currentNode; ////////
-             log.debug( "current node", currentNode.nodeName, currentNode.textContent);
+             log.debug("current node", currentNode.nodeName, currentNode.textContent);
 
              // traverse tree till startNode and count words and characters while doing so
              // TODO: case currentNode = startNode not handled
@@ -897,9 +897,9 @@ define(['debug',
                 }
 
                 var current_offset = 0,
-                    aWords = tokenizer(startNode.textContent);
+                   aWords = tokenizer(startNode.textContent);
                 aWords.some(function ( word, index, array ) {
-                   log.debug( "processing word", word);
+                   log.debug("processing word", word);
                    aCharLengths.push(word.length);
                    // we put 1 because there is another word which has been parsed.
                    // Reminder : this array contains the number of words to be counted till reaching the final word

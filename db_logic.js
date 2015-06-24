@@ -7,7 +7,7 @@
  * @type {exports}
  */
 
-var LOG = require('./public/js/lib/debug'),
+var LOG = require('./public/js/lib/debug').getLogger("db_logic"),
 U = require('./public/js/lib/utils'), // load the client side utils
 Util = require('util'), // load the node server side util
 RSVP = require('rsvp');
@@ -88,7 +88,7 @@ function register_queries () {
 
 ///////// Helper functions
 function init_pg_cnx () {
-   LOG.write(LOG.TAG.DEBUG, "database URL", process.env.DATABASE_URL);
+   LOG.debug("database URL", process.env.DATABASE_URL);
 
    return new RSVP.Promise(function ( resolve, reject ) {
       pg.connect(process.env.DATABASE_URL, function ( err, client ) {
@@ -98,7 +98,7 @@ function init_pg_cnx () {
             return null;
          }
          pgClient = client;
-         LOG.write(LOG.TAG.DEBUG, 'successfully got a database client from which to do queries');
+         LOG.debug('successfully got a database client from which to do queries');
          exec_qry_freq_word_list(); // that updates important_words
          resolve();
       });
@@ -305,7 +305,7 @@ function pg_register_query ( query_name, query_string, arg_number, aDefaultArgs 
    var query_obj = registry[query_name];
    if (query_obj) {
       // Here just warns, it could be in other cases to throw an exception
-      LOG.write(LOG.TAG.WARNING, "Found another query with the same name - overwriting it!");
+      LOG.warning("Found another query with the same name - overwriting it!");
    }
 
    // copying default arguments
@@ -390,7 +390,7 @@ function pg_exec_query ( query_name, aArgs ) {
       var pgClient = get_db_client(); // do something in case there is no client
       if (!pgClient) {
          console.log("no database client connection found");
-         LOG.write(LOG.TAG.ERROR, 'no database client connection found');
+         LOG.error( 'no database client connection found');
          reject(Error('no database client connection found'));
       }
 
@@ -398,16 +398,16 @@ function pg_exec_query ( query_name, aArgs ) {
          query_string, aArgs,
          function pg_exec_query_cb ( err, result ) {
             if (err) {
-               LOG.write(LOG.TAG.ERROR, 'error running query ' + query_name, err);
+               LOG.error( 'error running query ' + query_name, err);
                reject(Error(err));
                return;
             }
             if (result && result.rows) {
-               //LOG.write(LOG.TAG.DEBUG, "query results", Util.inspect(result.rows));
+               //LOG.debug( "query results", Util.inspect(result.rows));
                resolve(result);
             }
          });
-      LOG.write(LOG.TAG.INFO, 'query sent to database server, waiting for callback');
+      LOG.info('query sent to database server, waiting for callback');
    });
 
    return promise;
@@ -417,7 +417,7 @@ function pg_exec_query_success ( callback, extractDataFromResult ) {
    return function ( result ) {
       if (result && result.rows) {
          var returnedResult = extractDataFromResult(result);
-         LOG.write(LOG.TAG.DEBUG, "callback results", returnedResult);
+         LOG.debug( "callback results", returnedResult);
          callback(null, returnedResult);
       }
       else {
@@ -478,14 +478,14 @@ function pg_single_qry_exec_fn ( pgClient, query_str_args_obj ) {
                            var err_message =
                            ['pg_single_qry_exec_fn:', 'while running query ', query_str_args_obj.qry_string,
                             'with args', query_str_args_obj.aArgs, 'error ocurred'].join(" ");
-                           LOG.write(LOG.TAG.ERROR, err_message, err);
+                           LOG.error( err_message, err);
                            reject(Error(err_message + " " + err));
                            return;
                         }
                         if (result) {
-                           LOG.write(LOG.TAG.DEBUG, 'executed query', query_str_args_obj.qry_string,
+                           LOG.debug( 'executed query', query_str_args_obj.qry_string,
                                      'with args', query_str_args_obj.aArgs);
-                           LOG.write(LOG.TAG.DEBUG, 'db_adapter query returns', Util.inspect(result.rows));
+                           LOG.debug( 'db_adapter query returns', Util.inspect(result.rows));
                            resolve(result.rows);
                         }
                      })
@@ -517,7 +517,7 @@ function make_pg_qry_exec_fn ( table_config ) {
                                                 {qry_string : query_2, aArgs : aArgs.slice(U.qry_count_num_param(query_1))})
                         : null;
                   }, function error ( err ) {
-                     LOG.write(LOG.TAG.ERROR, "make_pg_qry_exec_fn : insert if not exists : Error occured in while executing first query", err)
+                     LOG.error( "make_pg_qry_exec_fn : insert if not exists : Error occured in while executing first query", err)
                      // rethrow the error
                      return U.delegate_promise_error("make_pg_qry_exec_fn : insert if not exists : " +
                                                      "Error occured in while executing first query: " + err);
@@ -555,7 +555,7 @@ function register_db_adapter ( qry, config ) {
    var query_obj = registry_adapters[qry];
    if (query_obj) {
       // Here just warns, it could be in other cases to throw an exception
-      LOG.write(LOG.TAG.WARNING, "Found another database adapter with the same name - overwriting it!");
+      LOG.warning( "Found another database adapter with the same name - overwriting it!");
    }
 
    registry_adapters [qry] = config;

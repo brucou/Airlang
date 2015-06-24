@@ -15,6 +15,7 @@
 
  * nice to have : treat wikipedia as a special case. More special cases? http://en.wikipedia.org/wiki/Perranzabuloe
  * TODO : BUGS
+ * TODO : enlever toutes les promises jquery et utiliser RSVP partout
  * issue : treat the case of text in div with no class or id (http://www.praha3.cz/noviny/akce-mestske-casti/vinohradske-vinobrani-nabidne-produkty.html)
  * issue : analyse why some paragraphs are not parsed : http://prazsky.denik.cz/zpravy_region/lenka-mrazova-dokonalost-je-moje-hodnota-20140627.html
  * issue : better support for language-dependant punctuation signs and idiosyncrasy (... vs . etc.)
