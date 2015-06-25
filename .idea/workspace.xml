@@ -10,8 +10,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3e347fb8-ef22-4b99-8a9c-2990b9f7b2c6" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/js/lib/readerViews.js" />
-      <change type="DELETED" beforePath="C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\js\lib\ReaderViews.js" afterPath="" />
+      <change type="MOVED" beforePath="C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\js\lib\ReaderViews.js" afterPath="$PROJECT_DIR$/public/js/lib/readerViews.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <list id="ff976d14-450c-4e70-8128-8a02a22f0390" name="Failed commit: Default" comment="removed old controler">
@@ -53,10 +52,11 @@
       <file leaf-file-name="readerViews.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/public/js/lib/readerViews.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.25247526" vertical-offset="0" max-vertical-offset="404">
-              <caret line="1131" column="0" selection-start-line="1131" selection-start-column="0" selection-end-line="1131" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.2173913" vertical-offset="0" max-vertical-offset="19295">
+              <caret line="7" column="82" selection-start-line="7" selection-start-column="82" selection-end-line="7" selection-end-column="82" />
               <folding>
                 <element signature="e#44#112#0" expanded="true" />
+                <element signature="e#195#53714#0" expanded="true" />
                 <element signature="e#4307#4655#0" expanded="true" />
                 <element signature="e#4516#4644#0" expanded="true" />
                 <element signature="e#4984#7078#0" expanded="true" />
@@ -850,7 +850,11 @@
       <created>1435227342034</created>
       <updated>1435227342034</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="removed old controler">
+      <created>1435228209239</created>
+      <updated>1435228209239</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="TodoView" selected-index="2">
@@ -875,7 +879,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="115" y="0" width="1165" height="800" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32791728" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32791728" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -887,7 +891,7 @@
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.35493374" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="632" y="335" width="623" height="423" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2551111" sideWeight="0.5007587" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32791728" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3338257" sideWeight="0.49910554" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3338257" sideWeight="0.49910554" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3264402" sideWeight="0.49955317" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="true" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="combo" x="233" y="100" width="947" height="600" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -1631,10 +1635,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/readerViews.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.25247526" vertical-offset="0" max-vertical-offset="404">
-          <caret line="1131" column="0" selection-start-line="1131" selection-start-column="0" selection-end-line="1131" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.2173913" vertical-offset="0" max-vertical-offset="19295">
+          <caret line="7" column="82" selection-start-line="7" selection-start-column="82" selection-end-line="7" selection-end-column="82" />
           <folding>
             <element signature="e#44#112#0" expanded="true" />
+            <element signature="e#195#53714#0" expanded="true" />
             <element signature="e#4307#4655#0" expanded="true" />
             <element signature="e#4516#4644#0" expanded="true" />
             <element signature="e#4984#7078#0" expanded="true" />
