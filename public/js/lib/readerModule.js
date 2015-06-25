@@ -109,163 +109,166 @@ define(['debug',
         'readerViews',
         'utils'],
        function ( DBG, PubSub, RSVP, RM, RV, UT ) {
-          // logger
-          var log = DBG.getLogger("readerModule");
+         // logger
+         var log = DBG.getLogger("readerModule");
 
-          var rdt = {
-             name: 'rdt', // mandatory for routing, is used as the prefix for the route
-             init: function init(module, options) {
-                // module object passed as parameter as we do not have the this attached
-                // options so far is not used
-                // TODO : fill-in the model with a fetch
-                // TODO : no-op for now
-                module.model.init();
+         var rdt = {
+           name       : 'rdt', // mandatory for routing, is used as the prefix for the route
+           init       : function init ( module, options ) {
+             // module object passed as parameter as we do not have the this attached
+             // options so far is not used
+             // TODO : fill-in the model with a fetch
+             // TODO : no-op for now
+             module.model.init();
+           },
+           components : {
+             ReaderToolComponent : RV.ReaderToolComponent,
+             Tooltip             : RV.TranslationTooltip
+           },
+           // This section contains all the function which have a side-effect on the persistent data storage
+           // representing the model, as well as the auxiliary functions which help describing these side effect
+           // and helpers which together constitute the model logic
+           // if it has no side effect, it is a helper function, in which we strive to have only pure functions
+           model      : RM,
+           specs      : {
+             'default'         : {
+               view : 'showUrl'
              },
-             components: {
-                ReaderToolComponent: RV.ReaderToolComponent,
-                Tooltip: RV.TranslationTooltip
+             'showUrl'         : {
+               _create          : {
+                 constructor : 'ReaderToolComponent',
+                 params      : {
+                   el     : 'airlang-rdt-tt-container',
+                   append : true,
+                   data   : {},
+                   state  : {}
+                 }
+               },
+               _default_state   : {
+                 // DOC : shoud hold all posssible state fields : serving thus as documentation of the possible states
+                 // TODO feature : should be possible to describe permanent dependencies
+                 // For instance webpage_readable depends on state.url, and model.notes (but only the notes for that user, e.g. the local notes object)
+                 // In the controller, I would read the dependencies and create a hash structure containing the callbacks
+                 //        with their params
+                 // Change of state.XX properties : state.set (prop, value) ou state.set(hash),
+                 //        set function to define, state object to initialize properly in controller
+                 // Reaction to change :
+                 // 1. Check that effective change (o.e. not set to same value)
+                 // 2. lookup callback structure for prop who changed, should find function, context, and params to execute
+                 // 3. Execute function with params. That functions updates state.prop in place.
+                 //        Don't forget that the state object was passed as an OUT parameter to the fn
+                 // 4. If return value then we update view_state according to the returned value
+                 // Note: Be careful that order should not matter
+                 //       i.e. if two props depends on same prop, then their value should be the same in any order of exec
+                 // 5. If change is communicated through event (model change), same
+                 //      Maybe communicate all changes through events with 'change' channel?
+                 url                  : "",
+                 webpage_readable     : undefined,
+                 is_tooltip_displayed : false,
+                 word_to_translate    : undefined,
+                 user_id              : undefined,
+                 first_language       : undefined,
+                 target_language      : undefined,
+                 // error message field
+                 error_message        : "",
+                 // child view
+                 tooltip              : undefined,
+                 // not necessary in this version
+                 lemma_target_lg      : null // NO
+               },
+               _pubsub          : PubSub,
+               url              : function ( module, view, state ) {
+                 return {
+                   url_to_load : state.url
+                 }
+               },
+               webpage_readable : function ( module, view, state ) {
+                 var model = module.model;
+                 var helpers = model.helpers;
+
+                 if (!state.url) {
+                   return {webpage_readable : ""};
+                 }
+
+                 return new RSVP.Promise(function ( resolve, reject ) {
+                   log.info("getting stored notes");
+                   model.notes.fetch({
+                                       module          : 'reader tool',
+                                       first_language  : state.first_language,
+                                       target_language : state.target_language,
+                                       user_id         : state.user_id,
+                                       url             : state.url
+                                     }).then(
+                     function get_stored_notes_success ( aNotes ) {
+                       log.debug("get_stored_notes_success(aNotes)", aNotes);
+                       log.info("reading and presenting getting the url");
+                       model.make_article_readable(state.url, aNotes)
+                         .then(
+                         function make_article_readable_success ( html_text ) {
+                           log.info("URL read successfully");
+                           resolve({webpage_readable : state.url ? html_text : "", error_message : ""});
+                         },
+                         function make_article_readable_error ( Error ) {
+                           log.error("Error in make_article_readable", Error);
+                           reject(Error);
+                         }
+                       );
+                     },
+                     function get_stored_notes_failure ( err ) {
+                       log.error('get_stored_notes', err);
+                       reject(err);
+                     }
+                   );
+                 });
+               }
              },
-             // This section contains all the function which have a side-effect on the persistent data storage
-             // representing the model, as well as the auxiliary functions which help describing these side effect
-             // and helpers which together constitute the model logic
-             // if it has no side effect, it is a helper function, in which we strive to have only pure functions
-             model: RM,
-             specs: {
-                'default': {
-                   view: 'showUrl'
-                },
-                'showUrl': {
-                   _create: {
-                      constructor: 'ReaderToolComponent',
-                      params: {
-                         el: 'airlang-rdt-tt-container',
-                         append: true,
-                         data: {},
-                         state: {}
-                      }
-                   },
-                   _default_state: {
-                      // DOC : shoud hold all posssible state fields : serving thus as documentation of the possible states
-                      // TODO feature : should be possible to describe permanent dependencies
-                      // For instance webpage_readable depends on state.url, and model.notes (but only the notes for that user, e.g. the local notes object)
-                      // In the controller, I would read the dependencies and create a hash structure containing the callbacks
-                      //        with their params
-                      // Change of state.XX properties : state.set (prop, value) ou state.set(hash),
-                      //        set function to define, state object to initialize properly in controller
-                      // Reaction to change :
-                      // 1. Check that effective change (o.e. not set to same value)
-                      // 2. lookup callback structure for prop who changed, should find function, context, and params to execute
-                      // 3. Execute function with params. That functions updates state.prop in place.
-                      //        Don't forget that the state object was passed as an OUT parameter to the fn
-                      // 4. If return value then we update view_state according to the returned value
-                      // Note: Be careful that order should not matter
-                      //       i.e. if two props depends on same prop, then their value should be the same in any order of exec
-                      // 5. If change is communicated through event (model change), same
-                      //      Maybe communicate all changes through events with 'change' channel?
-                      url: "",
-                      webpage_readable: undefined,
-                      is_tooltip_displayed: false,
-                      word_to_translate: undefined,
-                      user_id: undefined,
-                      first_language: undefined,
-                      target_language: undefined,
-                      // error message field
-                      error_message: "",
-                      // child view
-                      tooltip: undefined,
-                      // not necessary in this version
-                      lemma_target_lg: null // NO
-                   },
-                   _pubsub: PubSub,
-                   url: function (module, view, state) {
-                      return {
-                         url_to_load: state.url
-                      }
-                   },
-                   webpage_readable: function (module, view, state) {
-                      var model = module.model;
-                      var helpers = model.helpers;
-
-                      if (!state.url) return {webpage_readable : ""};
-
-                      return new RSVP.Promise(function (resolve, reject) {
-                         log.info("getting stored notes");
-                         model.notes.get_stored_notes({
-                                                         module: 'reader tool',
-                                                         first_language: state.first_language,
-                                                         target_language: state.target_language,
-                                                         user_id: state.user_id,
-                                                         url: state.url
-                                                      }).then(
-                            function get_stored_notes_success(aNotes) {
-                               log.debug("get_stored_notes_success(aNotes)", aNotes);
-                               log.info("reading and presenting getting the url");
-                               model.make_article_readable(state.url, aNotes)
-                                  .then(
-                                  function make_article_readable_success(html_text) {
-                                     log.info("URL read successfully");
-                                     resolve({webpage_readable: state.url ? html_text : "", error_message: ""});
-                                  },
-                                  function make_article_readable_error(Error) {
-                                     log.error("Error in make_article_readable", Error);
-                                     reject(Error);
-                                  }
-                               );
-                            },
-                            function get_stored_notes_failure(err) {
-                               log.error('get_stored_notes', err);
-                               reject(err);
-                            }
-                         );
-                      });
-                   }
-                },
-                'showUrl.tooltip': {//NOTE: I have to keep fullname, as I can have several tooltips with differents specs
-                   _create: {
-                      constructor: 'Tooltip',
-                      params: {
-                         el: 'airlang-rdt-tt-container',
-                         append: true,
-                         data: {},
-                         state: {}
-                      }
-                   },
-                   _default_state: {
-                      ev: {clientX: 20, clientY: 20},
-                      word: ''
-                   },
-                   _pubsub: PubSub, //TODO : Maybe gather in one object event_emitter
-                   word: function (module, view, state) {
-                      // I need to catch a reference of the tooltip instance
-                      // I also need to return a promise here
-                      return new RSVP.Promise(function (resolve, reject) {
-                         log.info("requesting translation from server for word : ", state.word);
-                         RM.cached_translation(state.word_to_translate, function (err, aValues) {
-                            if (err) {
-                               PubSub.err('RDT', "Error fetching translation for word : " + state.word_to_translate);
-                               log.info("Error while fetching translation for word : ", state.word_to_translate);
-                               reject(err);
-                            }
-                            else {
-                               var result = view.helpers.showTranslation.bind(view)(state.word_to_translate, state.ev, aValues);
-                               if (result) {
-                                  // !! Here we suppose that the tooltip will be displayed without problem
-                                  // Big supposition, but I leave it here to show the PubSub mechanism
-                                  // for communication child -> parent
-                                  view._channel.emit(view.props.TYPE_INFO, view.props.TOOLTIP_SHOWN);
-                                  resolve(result);
-                               } else {
-                                  reject({err: 'Translation query did not return any values'})
-                               }
-                            }
-                         });
-                      });
-                   },
-                   ev: function () { // already set when processing word
-                   }
-                }
+             'showUrl.tooltip' : {//NOTE: I have to keep fullname, as I can have several tooltips with differents specs
+               _create        : {
+                 constructor : 'Tooltip',
+                 params      : {
+                   el     : 'airlang-rdt-tt-container',
+                   append : true,
+                   data   : {},
+                   state  : {}
+                 }
+               },
+               _default_state : {
+                 ev   : {clientX : 20, clientY : 20},
+                 word : ''
+               },
+               _pubsub        : PubSub, //TODO : Maybe gather in one object event_emitter
+               word           : function ( module, view, state ) {
+                 // I need to catch a reference of the tooltip instance
+                 // I also need to return a promise here
+                 return new RSVP.Promise(function ( resolve, reject ) {
+                   log.info("requesting translation from server for word : ", state.word);
+                   RM.cached_translation(state.word_to_translate, function ( err, aValues ) {
+                     if (err) {
+                       PubSub.err('RDT', "Error fetching translation for word : " + state.word_to_translate);
+                       log.info("Error while fetching translation for word : ", state.word_to_translate);
+                       reject(err);
+                     }
+                     else {
+                       var result = view.helpers.showTranslation.bind(view)(state.word_to_translate, state.ev, aValues);
+                       if (result) {
+                         // !! Here we suppose that the tooltip will be displayed without problem
+                         // Big supposition, but I leave it here to show the PubSub mechanism
+                         // for communication child -> parent
+                         view._channel.emit(view.props.TYPE_INFO, view.props.TOOLTIP_SHOWN);
+                         resolve(result);
+                       }
+                       else {
+                         reject({err : 'Translation query did not return any values'})
+                       }
+                     }
+                   });
+                 });
+               },
+               ev             : function () { // already set when processing word
+               }
              }
-          };
+           }
+         };
 
          return rdt;
        });
