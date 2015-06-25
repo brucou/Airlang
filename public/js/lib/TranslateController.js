@@ -39,7 +39,7 @@ define(['debug',
         'mustache',
         'data_struct',
         'readerModel',
-        'ReaderViews',
+        'readerViews',
         'socket',
         'utils'],
        function ( DBG, $, MUSTACHE, DS, RM, RV, SOCK, UT ) {
