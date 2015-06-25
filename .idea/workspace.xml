@@ -9,7 +9,7 @@
     <bookmark url="file://$PROJECT_DIR$/TSRModel.js" description="TSR - server - compute weight" line="294" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3e347fb8-ef22-4b99-8a9c-2990b9f7b2c6" name="Default" comment="had to delete and pasted file because of incoherency between git terminal and git webstorm. Big issues when renaming and deleting files">
+    <list default="true" id="3e347fb8-ef22-4b99-8a9c-2990b9f7b2c6" name="Default" comment="">
       <change type="MOVED" beforePath="C:\Documents and Settings\bcouriol\coding\Webstorm\Airlang\public\js\lib\ReaderViews.js" afterPath="$PROJECT_DIR$/public/js/lib/readerViews.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
@@ -858,7 +858,11 @@
       <created>1435228272616</created>
       <updated>1435228272616</updated>
     </task>
-    <option name="localTasksCounter" value="63" />
+    <task id="LOCAL-00063" summary="had to delete and pasted file because of incoherency between git terminal and git webstorm. Big issues when renaming and deleting files">
+      <created>1435228350430</created>
+      <updated>1435228350430</updated>
+    </task>
+    <option name="localTasksCounter" value="64" />
     <servers />
   </component>
   <component name="TodoView" selected-index="2">
