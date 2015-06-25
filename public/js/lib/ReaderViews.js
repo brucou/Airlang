@@ -1,4 +1,7 @@
 /**
+ * Created by bcouriol on 25/06/15.
+ */
+/**
  * Created by bcouriol on 28/08/14.
  * Big update on 24.6.15
  */
@@ -1047,4 +1050,82 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
     Component_TT_Input       : Component_TT_Input,
     TranslationTooltip       : TranslationTooltip
   };
+
+  /**
+   *           RC.view = {
+             template    : [
+                '<select id="url_param">',
+                '<option value=""></option>',
+                '  <!--',
+                '    <option value="http://www.lemonde.fr/pixels/article/2014/06/03/accueillir-snowden-en-france-les-points-cles-du-debat_4431332_4408996.h',
+                '    Le monde',
+                '    </option>',
+                '    <option value="http://www.voxeurop.eu/cs/content/editorial/4765047-jsme-zpet">VoxEurop cs',
+                '    </option>',
+                '    <option value="http://mobile.nytimes.com/2014/06/07/sports/tennis/novak-djokovic-and-rafael-nadal-in-french-open-final.html">',
+                '    nytimes',
+                '    </option>',
+                '    <!--  -->',
+                '  <option value="http://stackoverflow.com/questions/6743912/get-the-pure-text-without-html-element-by-javascript">',
+                '    stackflow',
+                '  </option>',
+                '  <option value="http://www.kolik-to-stoji.cz/kolik-vas-stoji-spotreba-elektriny/#more-85">kolik stoji spotreby elekc</option>',
+                '  <option value="http://www.kolik-to-stoji.cz/kolik-stoji-notebook/">notebook stoji</option>',
+                '  <option value="http://zena.centrum.cz/deti/zajimavosti/clanek.phtml?id=702818">děti stoji</option>',
+                '  <option value="http://www.financninoviny.cz/zpravodajstvi/zpravy/intel-provoz-starsiho-pc-zvysi-naklady-na-energii-az-40krat/1167756">financni',
+                '  <option value="http://ales-kalina.cz/blog/vztahy-blog/nesnazte-se-opravovat-nekompatibilni-vztah/">psicho idnes</option>',
+                '  <option value="http://ekonomika.idnes.cz/v-rusku-vypukla-kvuli-propadu-rublu-panika-dosly-dolary-i-eura-pve-/eko-zahranicni.aspx?c=A141216_183624_eko-zahranicni_ozr">idnes ru</option>',
+                '  <option value="http://www.voxeurop.eu/cs/content/editorial/4765047-jsme-zpet">VoxEurop cs',
+                '  </option>',
+                '  <option value="http://ekonomika.idnes.cz/platba-kartou-a-hotovosti-zahranici-d7j-/ekonomika.aspx?c=A140625_211824_ekonomika_maq#utm_source">idnes.cz',
+                '  </option>',
+                '  <option value="http://ekonomika.idnes.cz/shaangu-koupe-ekol-0no-/ekonomika.aspx?c=A140704_215639_ekonomika_maq">',
+                '    ekonomika',
+                '  </option>',
+                '  <option value="http://prazsky.denik.cz/zpravy_region/lenka-mrazova-dokonalost-je-moje-hodnota-20140627.html">',
+                '    denik',
+                '  </option>',
+                '  <option value="http://www.courrierinternational.com/article/2014/06/20/ukraine-un-plan-de-paix-lourd-de-menaces">',
+                '    courrier international',
+                '  </option>',
+                '  <option value="http://sip.denik.cz/sex-a-vztahy/sokujici-zjisteni-cesi-jsou-v-sexu-suverenne-nejlepsi-na-svete-20140706.html">',
+                '    denik 2',
+                '  </option>',
+                '  <option value="http://www.w3schools.com/html/html_tables.asp">w3schools table</option>',
+                '  <option value="http://perishablepress.com/perfect-pre-tags/">code pre</option>',
+                '  <option value="http://www.wordreference.com/czen/p%C5%99ijmout">dict czech</option>',
+                '  <option value="http://ekonomika.idnes.cz/koruna-je-nejslabsi-od-brezna-2009-k-dolaru-je-na-dvouletem-minimu-pvb-/ekonomika.aspx?c=A140805_171821_ekonomika_spi">finance idnes',
+                '  </option>',
+                '  <option value="http://www.ceskenoviny.cz/svet/ukrajina/zpravy/dpa-utecencu-z-rozbombardovane-vychodni-ukrajiny-pribyva/1167572">',
+                '    cesky noviny',
+                '  </option>',
+                '  <option value="http://zpravy.idnes.cz/britsky-premier-cameron-vyzyva-k-lepsi-obrane-nato-fxf-/zpr_nato.aspx?c=A140805_170157_zpr_nato_inc#utm_source=sph.idnes&utm_medium=richtext&utm_content=top6">britain idnes</option>',
+                '  <option value="http://www.praha3.cz/noviny/akce-mestske-casti/vinohradske-vinobrani-nabidne-produkty.html">Wine',
+                '  </option>',
+                '  <option value="http://ona.idnes.cz/jak-prestat-kourit-a-nepribrat-dza-/zdravi.aspx?c=A140912_114509_zdravi_pet">Ona',
+                '  </option>',
+                '  ',
+                '  <option value="http://ekonomika.idnes.cz/odbory-air-france-ukoncily-po-tydnech-stavku-neni-vhodna-doba-tvrdi-1pz-/eko-doprava.aspx?c=A140928_133029_eko-doprava_hro">',
+                '  Air France',
+                '  </option>',
+                '</select>',
+                '<span id="url">{{url_to_load}}</span>',
+                '<div id="error_message"> {{{ error_message }}} </div>',
+                '<div id="content">{{{ webpage_readable }}}</div>'
+             ].join(" "),
+
+  viewAdapter : new
+    can.Map({
+              url_to_load      : ' ',
+              webpage_readable : ' ',
+              error_message    : ' ',
+              setErrorMessage  : function ( text ) {
+                this.attr("error_message", text);
+              },
+              set_HTML_body    : function ( html_text ) {
+                this.attr("webpage_readable", html_text)
+              }
+            })
+};
+   */
 });
