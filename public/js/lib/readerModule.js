@@ -105,7 +105,7 @@
 define(['debug',
         'pubsub',
         'rsvp',
-        'ReaderModel',
+        'readerModel',
         'readerViews',
         'utils'],
        function ( DBG, PubSub, RSVP, RM, RV, UT ) {
