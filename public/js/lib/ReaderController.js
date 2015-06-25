@@ -8,7 +8,7 @@ define(['debug',
         'socket',
         'ReaderModel',
         'TranslateController',
-        'Stateful',
+        'stateful',
         'data_struct',
         'utils'],
        function ( DBG, $, RSVP, SOCK, RM, TC, STATE, DS, UT ) {

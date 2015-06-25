@@ -21,7 +21,7 @@
  * issue : better support for language-dependant punctuation signs and idiosyncrasy (... vs . etc.)
  */
 
-define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'Stateful'],
+define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket', 'cache', 'stateful'],
        function ( DBG, $, RSVP, DS, UL, UT, SOCK, CACHE, STATE ) {
 
          // logger

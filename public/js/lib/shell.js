@@ -6,7 +6,7 @@ define(['debug',
         'router',
         'rsvp',
         'socket',
-        'Stateful',
+        'stateful',
         'utils'],
        function ( DBG, PubSub, Router, RSVP, SOCK, STATE, UT ) {
          // logger
