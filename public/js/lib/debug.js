@@ -269,10 +269,6 @@ function debugFactory () {
       }
    };
 
-   DBG.inspect = function ( obj ) {
-      return obj;
-   }; // node already has a console.log which use inspect
-
    DBG.setConfig = function setConfig ( tag, bool_flag, by_default ) {
       DBG.CONFIG[tag] = {DETAIL : bool_flag, BY_DEFAULT : by_default.by_default};
       return setConfig; // for chaining
@@ -438,12 +434,6 @@ function debugFactory () {
       // @debugger eval code:1:1
    };
 
-   DBG.set_inspect_function = function set_inspect_function () {
-      if ('undefined' !== typeof UT) {
-         DBG.inspect = UT.inspect
-      }
-   };
-
    DBG.lastElemArray = function lastElemArray ( array ) {
       return array[array.length - 1];
    };
@@ -546,50 +536,6 @@ function debugFactory () {
       }
       return obj;
    };
-
-   DBG.LOG_RETURN_VALUE = function ( obj ) {
-      DBG.set_inspect_function();
-      logWrite(DBG.TAG.DEBUG, "Returns : ", DBG.shorten(DBG.inspect(obj)));
-   };
-
-   DBG.LOG_INPUT_VALUE = function ( arg_list_txt /* argument list*/ ) {
-      /**
-       * arg_list_txt : string taken from the parameter line of the function source
-       *                Ex: function ($el, ev) -> arg_list_txt should be '$el, ev'
-       * argument_list: actual arguments passed to the function corresponding to arg_list_txt
-       */
-      DBG.set_inspect_function();
-      const ARG_SEP = ',';
-      var arity = arguments.length;
-      if (arity === 0) {
-         // pathological case, should not happen, do nothing
-         logWrite(DBG.TAG.WARNING,
-                  "When logging arguments passed to function: LOG_INPUT_VALUE called with no arguments");
-      }
-      if (arity === 1) {
-         // then the first parameter should be an empty chain
-         if (arg_list_txt.trim().length !== 0) {
-            throw "When logging arguments passed to function: A non-empty list of args (" + arg_list_txt
-               + ") is passed but no arguments to correspond for it";
-         }
-         logWrite(DBG.TAG.DEBUG, "Called without arguments");
-      }
-      var args = Array.prototype.slice.call(arguments);
-      args.shift(); // removing first arg (arg_list_txt)
-      var arg_list = arg_list_txt.split(ARG_SEP);
-
-      if (args.length !== arg_list.length) {
-         throw 'When logging arguments passed to function: list of parameters and number of parameters passed mismatch'
-      }
-
-      logWrite(DBG.TAG.DEBUG, "Called with:");
-      arg_list.forEach(
-         function ( value, index, array ) {
-            logWrite(DBG.TAG.DEBUG, arg_list[index], DBG.shorten(DBG.inspect(args[index])));
-         });
-   };
-   /////////////// TRACE functionalities
-
    // Configuration of the module
    DBG.default_config();
 

@@ -182,8 +182,6 @@ requirejs(
          DBG.disableLog
          (DBG.TAG.DEBUG, "putValueInCache")
          (DBG.TAG.DEBUG, "disaggregate_input")
-         (DBG.TAG.DEBUG, "async_cached_f")
-         (DBG.TAG.TRACE, "async_cached_f")
          (DBG.TAG.TRACE, "propagateResult")
          (DBG.TAG.TRACE, "async cached callback")
          (DBG.TAG.DEBUG, "highlight_text_in_div")

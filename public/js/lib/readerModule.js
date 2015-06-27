@@ -164,7 +164,6 @@ define(['debug',
                  //      Maybe communicate all changes through events with 'change' channel?
                  url                  : "",
                  webpage_readable     : undefined,
-                 is_tooltip_displayed : false,
                  word_to_translate    : undefined,
                  user_id              : undefined,
                  first_language       : undefined,
@@ -174,7 +173,7 @@ define(['debug',
                  // child view
                  tooltip              : undefined,
                  // not necessary in this version
-                 lemma_target_lg      : null // NO
+                 lemma_target_lg      : undefined
                },
                _pubsub          : PubSub,
                url              : function ( module, view, state ) {
@@ -242,14 +241,14 @@ define(['debug',
                  // I also need to return a promise here
                  return new RSVP.Promise(function ( resolve, reject ) {
                    log.info("requesting translation from server for word : ", state.word);
-                   RM.cached_translation(state.word_to_translate, function ( err, aValues ) {
+                   RM.cached_translation(state.word, function ( err, aValues ) {
                      if (err) {
-                       PubSub.err('RDT', "Error fetching translation for word : " + state.word_to_translate);
-                       log.info("Error while fetching translation for word : ", state.word_to_translate);
+                       PubSub.err('RDT', "Error fetching translation for word : " + state.word);
+                       log.info("Error while fetching translation for word : ", state.word);
                        reject(err);
                      }
                      else {
-                       var result = view.helpers.showTranslation.bind(view)(state.word_to_translate, state.ev, aValues);
+                       var result = view.helpers.showTranslation.bind(view)(state.word, state.ev, aValues);
                        if (result) {
                          // !! Here we suppose that the tooltip will be displayed without problem
                          // Big supposition, but I leave it here to show the PubSub mechanism

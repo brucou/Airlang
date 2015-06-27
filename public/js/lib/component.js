@@ -3,6 +3,9 @@
  */
 
 define(['debug', 'ractive', 'utils'], function ( DBG, Ractive, UT ) {
+  // logger
+  var log = DBG.getLogger("RactiveComponent");
+
    var Component =
       Ractive.extend({
                         _props   : {
@@ -181,7 +184,8 @@ define(['debug', 'ractive', 'utils'], function ( DBG, Ractive, UT ) {
                            function attachErrorHandlers ( self ) {
                               if (!self.error_handler) {
                                  self.error_handler = function generic_error_handler ( view, error ) {
-                                    logWrite(DBG.ERROR, "error occurred in view %s : %s", view.name, error);
+                                    log.error("error occurred in view %s : %s", view.name, error);
+                                   throw error;
                                  }
                               }
                            }

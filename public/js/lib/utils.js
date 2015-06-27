@@ -12,8 +12,11 @@
  * - - isNaN recognizes english formatting of numbers only
  */
 
-function utilsFactory(RSVP) {
-   Array.prototype.isItArray = true;
+function utilsFactory(DBG, RSVP) {
+  // logger
+  var log = DBG.getLogger("utils");
+
+  Array.prototype.isItArray = true;
 
    var slice = Array.prototype.slice;
 
@@ -55,7 +58,7 @@ function utilsFactory(RSVP) {
       var self = this;
 
       if (!initialCache) {//no cache passed as parameter
-         logWrite(DBG.TAG.INFO, "async function will not be cached");
+         log.info("async function will not be cached");
       }
       else {
          cvCachedValues = initialCache; // if a cache is passed in parameter then use that one
@@ -69,8 +72,8 @@ function utilsFactory(RSVP) {
             fValue = cvCachedValues.getItem(value);
             if (fValue) {
                // value already cached, no callback, no execution, just assigning the value to the output array
-               logWrite(DBG.TAG.DEBUG, "Computation for value already in cache!", inspect(value),
-                        inspect(fValue));
+               log.debug("Computation for value already in cache!", value,
+                        fValue);
                logExit("async_cached_f");
                return f_node_callback(null, fValue); //TODO check if callback is node type or not
             }
@@ -562,11 +565,11 @@ function utilsFactory(RSVP) {
          //logEntry("propagateResult");
          /*         if (self.deferred) {
           if (err) {
-          logWrite(DBG.TAG.ERROR, "error while propagating result in OutputStore from async call!");
+          log.error("error while propagating result in OutputStore from async call!");
           self.deferred.reject(err);
           }
           else {
-          logWrite(DBG.TAG.DEBUG, "Successfully resolved promise with result from async call");
+          log.debug("Successfully resolved promise with result from async call");
           self.deferred.resolve(self.aStore);
           }
           }
@@ -575,8 +578,8 @@ function utilsFactory(RSVP) {
          //logExit("propagateResult");
       }; // default parameters, execute action after 1 value is stored
       defaults.callback = function (err, result) {
-         logWrite(DBG.TAG.WARNING, "no callback function for asynchronous function call!");
-         logWrite(DBG.TAG.DEBUG, "err, result", err, UT.inspect(result));
+         log.warning("no callback function for asynchronous function call!");
+         log.debug("err, result", err, UT.inspect(result));
       };
 
       init = init || defaults;
@@ -831,7 +834,7 @@ function utilsFactory(RSVP) {
       _parseDOMtree($el, aHTMLparsed, aHTMLtokens, aCommentPos);
       var html_parsed_text = aHTMLparsed.join(" ");
 
-      //logWrite(DBG.TAG.DEBUG, "parsed HTML", aHTMLparsed.join("\n"));
+      //log.debug("parsed HTML", aHTMLparsed.join("\n"));
       return {
          aHTMLparsed: aHTMLparsed,
          aHTMLtokens: aHTMLtokens,
@@ -914,7 +917,7 @@ function utilsFactory(RSVP) {
                var replace_attr_value = mapAttrClass[attribute][attr_value_in_$el ?
                                                                 attr_value_in_$el.toLowerCase() :
                                                                 undefined];
-               logWrite(DBG.TAG.DEBUG, "attribute name, attribute value, mapping", attribute, attr_value_in_$el,
+               log.debug("attribute name, attribute value, mapping", attribute, attr_value_in_$el,
                         replace_attr_value);
                return [accu,
                        (attr_value_in_$el && replace_attr_value) ?
@@ -1454,7 +1457,7 @@ function utilsFactory(RSVP) {
          args.shift();
          var message = args.join(" ");
          // TODO : add a CONFIG flag to allow for silent failure or not logging in console
-         logWrite(DBG.TAG.ERROR, message);
+         log.error(message);
          throw message;
       }
    }
@@ -1810,7 +1813,7 @@ function utilsFactory(RSVP) {
    else {
       context[name] = definition.apply(context);
    }
-})('utils', utilsFactory, this, ['rsvp']);
+})('utils', utilsFactory, this, ['debug', 'rsvp']);
 
 /**
  * global define:true module:true window: true

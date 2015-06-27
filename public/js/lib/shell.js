@@ -278,21 +278,17 @@ define(['debug',
            configure_router      : function configure_shell_level_router ( myRouter ) {
 
              // Get router object
-             var router = Router();
+             router = Router();
              // apply configuration options
              router.configure(myRouter.configure);
              // Apply alias for regexp
              UT.apply_to_props(myRouter.param, function ( obj, key ) {
                router.param(key, obj[key]);
              });
-             // Apply route handlers, passing the router and an empty view object in a closure
+             // Define route handlers /module_name/* for each module registered in shell
              shell.get_module_names().forEach(function ( module_name ) {
-               router.on(["", module_name, ":all"].join("/"), (function () {
-                 // From the module, we get the init constructors and the specs
-                 var module_definition = shell.get_module_definition(module_name);
-                 var controller = shell.get_controller(module_definition);
-                 return controller.bind(shell, router);
-               })());
+               router.on(["", module_name, ":all"].join("/"),
+                         shell.get_controller(shell.get_module_definition(module_name)).bind(shell, router));
              });
              // Assign also the extra routes in addition to the modules routes
              Object.keys(myRouter.routes).forEach(function ( route ) {
@@ -309,7 +305,7 @@ define(['debug',
            start_app             : function ( router, module ) {
              // Start the router
              router.init();
-             router.setRoute('/' + module + '/');
+             //router.setRoute('/' + module + '/');
              log.info("app started");
            },
            set_env               : function ( hashObj ) {
@@ -329,6 +325,7 @@ define(['debug',
            // configure error handler to avoid silent failure or RSVP promises
            RSVP.on('error', function ( reason ) {
              log.error(reason);
+             throw reason;
            });
 
            // configure PubSub exception handler to avoid silent failures
@@ -351,7 +348,6 @@ define(['debug',
 
            // Set environment variables which will be passed to every module
            shell.set_env({
-                           error_div       : '#application_error',
                            user_id         : 1, // supposedly set after authentification phase
                            // NOTE : ISO 639-2 codes are used for encoding language information
                            first_language  : 'eng',

@@ -12,28 +12,6 @@
  - if in the controller there are two identical strings matching to event handlers, only the last one is taken into account
  */
 
-/**
- * TODO: CODE QUALITY
- * - Change name of ReaderViews to TranslateView (related to TranslateController)
- * - Establish a naming pattern for all app (and css classes etc.)
- * TODO : CODE QUALITY : factoriser tout dans ReaderViews
- nom template : tpl--... : NO!! get_view (retourne can-view)
- Ainsi le nom du template est encapsule dans RV
- div in template :  reader-tool-tooltip NO!! que ce soit une methode . RV. getReaderToolDiv -> $el
- ainsi on peut tout modifier dans view sans modifier le controlleur
- div out template : ici y'a pas vu qu'on ajoute a body NO!!!! mettre le render dans la view??
- A priori render seulement une fois, car le reste est dynamically updated
- * TODO : FEATURES
- * - !!! probably I cannot have several tooltips because I only have one adapter. Should call a new ..Adapter in the controller
- * - afficher qqch dans la tooltip en cas de rien retourné par la translation
- * - passer aux synonymes cf. wordnet
- TODO : FEATURES : remettre de l'ordre dans l'affichage des translation du tooltip
- - d'abord les phrases qui ont des translations
- - apres celle qui ont un sens à coté et pas de translation
- - apres celle qui n'ont ni sens ni translation (enlever la ligne vide...)
- TODO : FEATURES : See how to mitigate the fact that ts_lexize cspell do not find the lexeme always
- - for instance, připomněl -> připomněl
- */
 define(['debug',
         'jquery',
         'mustache',

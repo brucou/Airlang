@@ -5,7 +5,24 @@
  * Created by bcouriol on 28/08/14.
  * Big update on 24.6.15
  */
+/**
+ * TODO: CODE QUALITY
+ * - Establish a naming pattern for all app (and css classes etc.)
+ * TODO : CODE QUALITY : factoriser tout dans ReaderViews
+ * TODO : FEATURES
+ * - afficher qqch dans la tooltip en cas de rien retourné par la translation
+ * - passer aux synonymes cf. wordnet
+ TODO : FEATURES : remettre de l'ordre dans l'affichage des translation du tooltip
+ - d'abord les phrases qui ont des translations
+ - apres celle qui ont un sens à coté et pas de translation
+ - apres celle qui n'ont ni sens ni translation (enlever la ligne vide...)
+ TODO : FEATURES : See how to mitigate the fact that ts_lexize cspell do not find the lexeme always
+ - for instance, připomněl -> připomněl
+ */
 define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT ) {
+  // logger
+  var log = DBG.getLogger("RV");
+
   var RV;
   var tpl = [];
   tpl.push("<table id='table_tooltip' data-content='translation_table'>");
@@ -139,7 +156,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
           view.go([
                     {
                       action : 'showUrl',
-                      state  : { url : url, webpage_readable : "", is_tooltip_displayed : false}
+                      state  : { url : url, webpage_readable : ""}
                     }
                   ]);
         },
@@ -178,7 +195,8 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
             }
           },
           'submit' : function tt_listener ( view, message, channel ) {
-            var chosen_translation = message;
+            var objTrans = message;
+            log.event("received translation : ", objTrans);
             // change the model locally
             // TODO ideally like this
             // Update model.notes
@@ -400,11 +418,11 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
             return model.filter_selected_words(aHTMLtoken, [note])
           };
           modified_filter_selected_words.input_type =
-          RM.filter_selected_words.input_type;
+          model.filter_selected_words.input_type;
           modified_filter_selected_words.output_type =
-          RM.filter_selected_words.output_type;
+          model.filter_selected_words.output_type;
           modified_filter_selected_words.filter_name =
-          RM.filter_selected_words.filter_name;
+          model.filter_selected_words.filter_name;
 
           return RSVP.all(
             [
@@ -469,7 +487,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
                    return (node.nodeType === node.TEXT_NODE)
                      //returns number of words in the text node. "" does not count for a word
                      ?
-                          RM.simple_tokenizer(node.textContent).map(UT.count_word).reduce(UT.sum, 0)
+                          model.simple_tokenizer(node.textContent).map(UT.count_word).reduce(UT.sum, 0)
                      // not a text node so no words to count here
                      :
                           0;
@@ -716,18 +734,19 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
                       return ev.keyCode == 13;
                     })
             .map(function ( _ ) {
-                   return view.get('chosen_translation');
+                   console.log("Rx_submit_translation : objTrans", view.state.objTrans);
+                   return view.state.objTrans;
                  })
         }
       },
       handlers           : {
-        'Rx_select_translation' : function ( view, objTrans ) {
+        'Rx_select_translation' : function Rx_select_translation ( view, objTrans ) {
           view.set({chosen_translation : objTrans.translation_word});
           view.state.objTrans = objTrans;
         },
-        'Rx_submit_translation' : function ( view, chosen_translation ) {
-          console.log("submit_translation", chosen_translation);
-          view._channel.emit(view.props.TYPE_SUBMIT, chosen_translation);
+        'Rx_submit_translation' : function Rx_submit_translation ( view, objTrans ) {
+          log.debug("submit_translation", objTrans);
+          view._channel.emit(view.props.TYPE_SUBMIT, objTrans);
         }
       },
       channel            : 'TranslationTooltip',
@@ -744,7 +763,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
             var $tr = $(ev.target).closest('tr');
             var $tr_next_1st_child, $tr_1st_child = null;
             var translation_word, sample_sentence_first_lg,
-              sample_sentence_target_lg, lemma_target_lg = null;
+              sample_sentence_target_lg, lemma_target_lg = undefined;
             /* this row could be one of four possibilities:
              1. nothing
              2. the header row which contains the transation_lemma word
