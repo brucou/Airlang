@@ -112,25 +112,25 @@ define(['debug',
          // logger
          var log = DBG.getLogger("readerModule");
 
-         var rdt = {
-           name       : 'rdt', // mandatory for routing, is used as the prefix for the route
-           init       : function init ( module, options ) {
+         var rdt = {};
+         rdt.name       = 'reader_tool'; // mandatory for routing, is used as the prefix for the route
+           rdt.init       = function init ( module, options ) {
              // module object passed as parameter as we do not have the this attached
              // options so far is not used
              // TODO : fill-in the model with a fetch
              // TODO : no-op for now
              module.model.init();
-           },
-           components : {
+           };
+           rdt.components = {
              ReaderToolComponent : RV.ReaderToolComponent,
              Tooltip             : RV.TranslationTooltip
-           },
+           };
            // This section contains all the function which have a side-effect on the persistent data storage
            // representing the model, as well as the auxiliary functions which help describing these side effect
            // and helpers which together constitute the model logic
            // if it has no side effect, it is a helper function, in which we strive to have only pure functions
-           model      : RM,
-           specs      : {
+           rdt.model      = RM;
+           rdt.specs      = {
              'default'         : {
                view : 'showUrl'
              },
@@ -162,18 +162,19 @@ define(['debug',
                  //       i.e. if two props depends on same prop, then their value should be the same in any order of exec
                  // 5. If change is communicated through event (model change), same
                  //      Maybe communicate all changes through events with 'change' channel?
-                 url                  : "",
-                 webpage_readable     : undefined,
-                 word_to_translate    : undefined,
-                 user_id              : undefined,
-                 first_language       : undefined,
-                 target_language      : undefined,
+                 url               : "",
+                 module            : rdt.name,
+                 webpage_readable  : undefined,
+                 word_to_translate : undefined,
+                 user_id           : undefined,
+                 first_language    : undefined,
+                 target_language   : undefined,
                  // error message field
-                 error_message        : "",
+                 error_message     : "",
                  // child view
-                 tooltip              : undefined,
+                 tooltip           : undefined,
                  // not necessary in this version
-                 lemma_target_lg      : undefined
+                 lemma_target_lg   : undefined
                },
                _pubsub          : PubSub,
                url              : function ( module, view, state ) {
@@ -192,7 +193,7 @@ define(['debug',
                  return new RSVP.Promise(function ( resolve, reject ) {
                    log.info("getting stored notes");
                    model.notes.fetch({
-                                       module          : 'reader tool',
+                                       module          : rdt.name,
                                        first_language  : state.first_language,
                                        target_language : state.target_language,
                                        user_id         : state.user_id,
@@ -266,8 +267,7 @@ define(['debug',
                ev             : function () { // already set when processing word
                }
              }
-           }
-         };
+           };
 
          return rdt;
        });
