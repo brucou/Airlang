@@ -102,10 +102,10 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
 
         //events are called in the context of the main object
         'Rx_select_url'    : function ( view ) {
-          console.log("Rx_select_url : creating observable");
+          log.info("Rx_select_url : creating observable");
           return Rx.Observable.fromEvent(document.getElementById(view.template_selectors.url_choice), 'change')
             .map(function ( ev ) {
-                   console.log("URL selected", ev.target.value);
+                   log.info("URL selected", ev.target.value);
                    return ev.target.value;
                  })
         },
@@ -114,7 +114,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
         // selection can has several words, which makes index property not applicable
         // Here we do only click, because mouseover would require a different observable making
         'Rx_selected_word' : function ( view ) {
-          console.log("Rx_selected_word : creating observable");
+          log.info("Rx_selected_word : creating observable");
           return Rx.Observable.fromEvent(document.getElementById(view.template_selectors.content), 'click')
             .filter(function ( ev ) {
                       console.log("is_tooltip_displayed : ", view.state.is_tooltip_displayed);
@@ -134,24 +134,24 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
                    var selection = window.getSelection();
                    var selectedRange = selection.getRangeAt(0);
                    var note = view.helpers.getNoteFromWordClickedOn(view, selectedRange);
-                   console.log("Rx_selected_word: note", note);
+                   log.debug("Rx_selected_word: note", note);
                    return {
-                     e            : e,
+                     e                : e,
                      //                        word: view.helpers.getWordFromSelection(e, document, window.getSelection(), view.props.translate_by,                            view.helpers.getHitWord),
-                     word         : UT.remove_punct(note.word),
-                     index        : note.index,
-                     root_node_id : '0'
+                     word             : UT.remove_punct(note.word),
+                     index            : note.index,
+                     context_sentence : note.context_sentence,
+                     root_node_id     : '0'
                    }
                  })
             .filter(function non_empty ( obj ) {
-                      console.log("word clicked on : ", obj.word);
                       return obj.word;
                     })
         }
       },
       handlers           : {
         'Rx_select_url' : function H_display_url ( view, url ) {
-          console.log("handling url : ", url);
+          log.info("handling url : ", url);
           // Update the route with the new state
           view.go([
                     {
@@ -163,8 +163,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
 
         'Rx_selected_word' : function H_show_translation ( view, obj ) {
           // In principle we get here after having made sure that the tooltip is not displayed
-          console.log("handling word : ", obj.word);
-          console.log("note index : ", obj.index);
+          log.info("handling word : ", obj);
 
           var word = obj.word;
           var ev = {clientX : obj.e.clientX, clientY : obj.e.clientY};
@@ -195,7 +194,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
             }
           },
           'submit' : function tt_listener ( view, message, channel ) {
-            var objTrans = message;
+            var objTrans = message.content;
             log.event("received translation : ", objTrans);
             // change the model locally
             // TODO ideally like this
@@ -214,7 +213,13 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
              index : obj.index,
              root_node_id: obj.root_node_id
              } */
-            view.helpers.show_note(view);
+            view.helpers.show_note(view, objTrans);
+            view.go([
+                      {
+                        action : 'showUrl',
+                        state  : { url : url, webpage_readable : ""}
+                      }
+                    ]);
           }
         }
       },
@@ -401,7 +406,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
           return hit_word;
         },
 
-        show_note : function show_note ( view ) {
+        show_note : function show_note ( view, objTrans ) {
           var helpers = view.helpers;
           var model = view.module.model;
           var note = view.state.note;
@@ -431,7 +436,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
                 [modified_filter_selected_words]
               ),
 
-              model.notes.add_note(view.state, view, note)
+              model.notes.add_notes(view.state, view, objTrans)
             ]).then(function update_html_text ( aPromiseResults ) {
                       // update the html in reader controller
                       var highlighted_text = aPromiseResults[0];
@@ -553,7 +558,6 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
         getWordIndexFromIDParent : function getWordIndexFromIDParent ( view, $el, selectedRange ) {
           var helpers = view.helpers;
           var model = view.module.model;
-          console.log("model", model)
           //var selectedRange = window.getSelection().getRangeAt(0);
           // if it is just a click, then anchor and focus point to the same location
           // but that means there is no selection having been done previously
@@ -561,8 +565,6 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
 
           // Two cases, the anchor object has an id property or it does not. Most of the time it won't
           var startNode = selectedRange.startContainer;
-          /*TEST CODE*/
-          stN = startNode; ////////
           var startOffset = selectedRange.startOffset;
           var textContent = startNode.textContent;
           // Beware that the first character of textContent can be a space because of the way we construct the html of the page
@@ -734,7 +736,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
                       return ev.keyCode == 13;
                     })
             .map(function ( _ ) {
-                   console.log("Rx_submit_translation : objTrans", view.state.objTrans);
+                   log.debug("Rx_submit_translation : objTrans", view.state.objTrans);
                    return view.state.objTrans;
                  })
         }
@@ -874,7 +876,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
            "pgwordfrequency_short.freq_cat "
            */
 
-          console.log(aValues);
+          log.debug("aValues", aValues);
           // Isolating external dependencies
           var MAX_TRANSLATION_ROWS = this.props.MAX_TRANSLATION_ROWS;
           var EXAMPLE_SENTENCE_TO_SEP = this.props.EXAMPLE_SENTENCE_TO_SEP;

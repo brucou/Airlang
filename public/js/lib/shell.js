@@ -42,12 +42,19 @@ define(['debug',
          var shell = {
            module_registry       : {},
            get_module_names      : function () {
-             return ['rdt'];
+             // TODO : go through all own props in module_registry and return the name property
+             var aModuleNames = [];
+             UT.apply_to_props(shell.module_registry, function (_, module_name) {
+               aModuleNames.push(module_name);
+             });
+             log.debug("module names :", aModuleNames);
+             return aModuleNames;
            },
            register_module       : function register_module ( module ) {
              var module_registry = this.module_registry;
              if (module && module.name) {
                module_registry[module.name] = module;
+               log.info("Registered module ", module.name);
              }
              else {
                throw ("register_module: incorrect argument module : must be truthy and with a name: " + module);
@@ -55,6 +62,7 @@ define(['debug',
            },
            get_module_definition : function ( module_name ) {
              var module_registry = this.module_registry;
+             log.debug("getting definition of module ", module_name, module_registry[module_name]);
              return (!module_registry[module_name])
                ? PubSub.err('SHELL', 'could not find module ' + module_name) && undefined
                : module_registry[module_name]
@@ -300,6 +308,7 @@ define(['debug',
                log.error(message)
              });
 
+             log.debug("router configured");
              return router;
            },
            start_app             : function ( router, module ) {

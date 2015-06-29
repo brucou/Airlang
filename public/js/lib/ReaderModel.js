@@ -70,7 +70,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
 
          ////////// Database query functions
          RM.srv_qry_word_translation = function srv_qry_word_translation ( word, callback ) {
-           log.sock("get_translation_info", "emitting", word);
+           log.sock("get_translation_info", "emitting", word.substring(0, 200));
            SOCK.emit('get_translation_info', word, callback);
          };
 
@@ -87,7 +87,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
          };
 
          RM.highlight_words = RM.srv_qry_important_words; // no caching
-         RM.cached_translation = UT.async_cached(RM.srv_qry_word_translation, qry_translation_cache);
+         translate = RM.cached_translation = UT.async_cached(RM.srv_qry_word_translation, qry_translation_cache);
 
          ////////// Text processing main functions
          RM.make_article_readable = function make_article_readable ( your_url, aNotes ) {
@@ -720,7 +720,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
            var aHTMLtokens = fn_parser($el).aHTMLtokens, parsed = aHTMLtokens;
            aHTMLtokens.type = 'array_of_html_token';
 
-           log.debug("html tokens", UT.inspect(aHTMLtokens, null, 3));
+           log.debug("html tokens", aHTMLtokens);
 
            /*
             3. For each filter : apply filter to [html_parsed_token]
@@ -777,7 +777,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
                          transposedResult.action.call(null, transposedResult.token) :
                          transposedResult.token);
                });
-               //log.debug("aTokensActedOn", UT.inspect(aTokensActedOn, null, 4));
+               // log.debug("aTokensActedOn", aTokensActedOn);
 
                /*
                 * 6. [html_parsed_token] -> html_text
@@ -788,8 +788,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
                       })
                  .join(" ");
 
-               log.debug("final_output",
-                         UT.inspect(final_output, null, 4));
+               log.debug("final_output", final_output);
 
                dfr.resolve(final_output);
              });
@@ -810,7 +809,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
 
            aFilters.forEach(
              function ( filter, index, array ) {
-               log.debug("analysis of token by filter", UT.inspect(filter, null, 2));
+               log.debug("analysis of token by filter", filter);
                if (!filter.input_type || !filter.output_type) {
                  throw 'getTokenActionMap: type information not available. Possible cause is filter was not registered. Check filter ' +
                        filter.filter_name
@@ -898,8 +897,9 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
              return final_index === word_index;
            });
            // Note: the edge cases (word not found) are not considered as we get here after already finding the word
-           note.context_sentence = aWords.slice(Math.max(real_index - TSR_WORD_CONTEXT_SENTENCE, 0),
-                                                real_index + TSR_WORD_CONTEXT_SENTENCE).join(" ");
+           note.context_sentence = aWords.slice(Math.max(real_index - RM.config.TSR_WORD_CONTEXT_SENTENCE, 0),
+                                                real_index + RM.config.TSR_WORD_CONTEXT_SENTENCE).join(" ");
+           log.debug("note:", note);
            return note;
          };
 
@@ -926,27 +926,42 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
                            reject("result for querying state object Notes : expected array, returned type");
                          }
                          else {
-                           log.debug("Notes fetched:", UT.inspect(aNotes));
+                           log.debug("Notes fetched:", aNotes);
                            //                            return RM.notes.set_notes(aNotes);
                            resolve(RM.notes.data = aNotes);
                          }
                        },
                        function failure ( err ) {
-                         return log.error("get_stored_stateful_object:",
-                                          "error querying state object Notes :", UT.inspect(err));
                          reject("error querying state object Notes");
+                         return log.error("get_stored_stateful_object:",
+                                          "error querying state object Notes :", err);
                        });
              })
            },
-           add_notes : function add_notes ( key_exists, fields_remainder ) {
-             /*return SOCK.RSVP_emit('add_note', {
-              action   : 'insert if not exists',
-              entity   : 'Notes',
-              criteria : key_exists,
-              values   : UT._extend(key_exists, fields_remainder)});*/
+           add_notes : function add_notes ( state, view, objTrans ) {
+             /* objTrans
+              translation_word          : translation_word,
+              sample_sentence_first_lg  : sample_sentence_first_lg,
+              sample_sentence_target_lg : sample_sentence_target_lg,
+              lemma_target_lg           : lemma_target_lg
+              */
+             var key = {
+               module          : state.module,
+               first_language  : state.first_language,
+               target_language : state.target_language,
+               user_id         : state.user_id
+             };
+             var fields_remainder = {
+               url : state.url,
+               word :state.note.word,
+               lemma : objTrans.lemma_target_lg,
+               context_sentence : state.note.context_sentence,
+               index : state.note.index
+             };
+             log.debug("row to add",key, fields_remainder);
              return STATE.insert_if_ne_stored_stateful_object('Notes',
-                                                              {  criteria : key_exists,
-                                                                values    : UT._extend(key_exists, fields_remainder)});
+                                                              {  criteria : key,
+                                                                values    : UT._extend(key, fields_remainder)});
            },
 
            add_TSR_weight : function add_TSR_weight ( obj ) {
