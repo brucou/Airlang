@@ -253,7 +253,7 @@ function qry_make_sql_query ( query_obj, index_$param, config ) {
          break;
 
       default:
-         throw 'qry_make_sql_query : action field not in list of allowed possibilities: ' + action;
+        throw 'qry_make_sql_query : action field not in list of allowed possibilities: ' + action;
          break;
    }
 }
@@ -496,6 +496,7 @@ function make_pg_qry_exec_fn ( table_config ) {
    // NOTE : the database client must have been initialized prior in the init function of the module
    var pgClient = get_db_client();
    return function ( query_obj ) {
+     LOG.info("query_obj :", query_obj);
       var qry = qry_make_sql_query(query_obj, 1, table_config);
       var qry_string = qry.qry_string;
       var aArgs = qry.aArgs;

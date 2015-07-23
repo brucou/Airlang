@@ -3,10 +3,13 @@
  */
 
 define(['socketio', 'rsvp', 'utils'], function ( IO, RSVP, UT ) {
+  // logger
+  var log = DBG.getLogger("QUERY");
+
    var state_socket;
    var STATE_NAMESPACE = '/state';
 
-   // Helper functions
+  // Helper functions
    function cb_stored_stateful_object ( resolve, reject ) {
       return function ( err, result ) {
          // 2d. In case of error, do not throw exception, resolve the promise with an error message
@@ -61,6 +64,7 @@ define(['socketio', 'rsvp', 'utils'], function ( IO, RSVP, UT ) {
    }
 
    function execute_stateful_query (qryParam ) {
+     log.sock("execute_stateful_query ", qryParam);
       // TODO : refactor to use SOCK.RSVP_emit (NEW: socket, same)
       return (!state_socket) ?
              UT.log_error("execute_stateful_query", "socket not initialized?") :

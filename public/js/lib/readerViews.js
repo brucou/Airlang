@@ -196,28 +196,13 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
           'submit' : function tt_listener ( view, message, channel ) {
             var objTrans = message.content;
             log.event("received translation : ", objTrans);
-            // change the model locally
-            // TODO ideally like this
-            // Update model.notes
-            //    view.model.notes.add(chosen_translation);
-            // Change the route
-            // There is then NO routing problem :
-            // then the url is displayed webpage_readable is recalculated as f(model, g(url))
-            // and that g(url) is cached so cost nothing to recall
-            // BUT I compute everytime f(model, g(url)
-            // which is less efficient that just displaying the delta f(model.t+1,..) = small_op(f(model.t, ..))
 
-            // I should have this in state
-            /*state: {
-             word: word, ev: ev,
-             index : obj.index,
-             root_node_id: obj.root_node_id
-             } */
-            view.helpers.show_note(view, objTrans);
+            var model = view.module.model;
+            model.notes.add_notes(view.state, view, objTrans);
             view.go([
                       {
                         action : 'showUrl',
-                        state  : { url : url, webpage_readable : ""}
+                        state  : { url : view.state.url, webpage_readable : ""}
                       }
                     ]);
           }
@@ -317,14 +302,14 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
           });
 
           if (text_nodes.length == 0) {
-            logWrite(DBG.TAG.DEBUG, 'no text');
+            log.debug('no text');
             logExit("getHitWord");
             return '';
           }
 
           var hit_text_node = getExactTextNode(text_nodes, e);
           if (!hit_text_node) {
-            logWrite(DBG.TAG.DEBUG, 'hit between lines');
+            log.debug('hit between lines');
             logExit("getHitWord");
             return '';
           }
@@ -333,8 +318,8 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
             var hw = '';
 
             function getHitText ( node, parent_font_style ) {
-              logWrite(DBG.TAG.DEBUG, "getHitText: '" +
-                                      node.textContent + "'");
+              log.debug("getHitText: '" +
+                        node.textContent + "'");
 
               if (XRegExp(word_re).test(node.textContent)) {
                 $(node).replaceWith(function () {
@@ -390,59 +375,20 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
 
               //no word under cursor? we are done
               if (hit_word_elem.nodeName != 'TRANSOVER') {
-                logWrite(DBG.TAG.DEBUG, "missed!");
+                log.debug("missed!");
               }
               else {
                 hw = $(hit_word_elem).text();
-                logWrite(DBG.TAG.DEBUG, "got it: " + hw);
+                log.debug("got it: " + hw);
               }
             }
 
             return hw;
           });
 
-          logWrite(DBG.TAG.INFO, "Word found: ", hit_word);
+          log.info("Word found: ", hit_word);
           logExit("getHitWord");
           return hit_word;
-        },
-
-        show_note : function show_note ( view, objTrans ) {
-          var helpers = view.helpers;
-          var model = view.module.model;
-          var note = view.state.note;
-
-          // Edge case, we do not have a valid note object in the state object
-          // That should never happen but we have it here as a guard
-          if (!(note.word && note.index && note.root_note_id)) {
-            view.set({error_message : "Trying to execute show_note but no note object found!"});
-          }
-
-          log.debug("show_note : note", note);
-          // modify the filter selected words to include the closure on the note
-          var modified_filter_selected_words = function ( aHTMLtoken ) {
-            return model.filter_selected_words(aHTMLtoken, [note])
-          };
-          modified_filter_selected_words.input_type =
-          model.filter_selected_words.input_type;
-          modified_filter_selected_words.output_type =
-          model.filter_selected_words.output_type;
-          modified_filter_selected_words.filter_name =
-          model.filter_selected_words.filter_name;
-
-          return RSVP.all(
-            [
-              model.apply_highlighting_filters_to_text(
-                $(view._helpers.jQueryfyID(note.root_node_id)), model.fn_parser_and_transform([], [], true),
-                [modified_filter_selected_words]
-              ),
-
-              model.notes.add_notes(view.state, view, objTrans)
-            ]).then(function update_html_text ( aPromiseResults ) {
-                      // update the html in reader controller
-                      var highlighted_text = aPromiseResults[0];
-                      view.set({error_message : "", webpage_readable : highlighted_text});
-                      return highlighted_text;
-                    });
         },
 
         /**
@@ -667,13 +613,27 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
         }
 
       },
-      error_handler      : function ( view, error ) {
-        // error is an instance of the generic type Error in javascript
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
-        // TODO : add processing of other type of error - this is for "cannot load url"
-        view.set({error_message : error.message + error.stack});
-        view.set({webpage_readable : ""});
-        throw error;
+      error_handler      : function ReaderToolComponent_error_handler ( hashFailedPromisesReasons, error_handler_stack, view_name, current_view, parsed_route_view ) {
+        // TODO : add processing of all foreseeable type of error emanating from subordinated views, and own view too
+        // Possible errors:
+        // showURL.tooltip : word has no translation in database
+        // showURL : cannot load webpage
+        var reason;
+        if (reason = hashFailedPromisesReasons.word) {
+          var logg = error_handler_stack.pop().error_handler_result.log;
+          var hashPartialViewStateProps = {
+            action : UT.config.error.action.OK,
+            log    : [logg].join(" "),
+            data   : {}
+          };
+          hashPartialViewStateProps.data[view_name] = {error_message : reason.err};
+          return hashPartialViewStateProps;
+        }
+        return {
+          action : UT.config.error.action.THROW_ERR,
+          log    : ["Unknown error in view", view_name].join(" "),
+          data   : undefined
+        }
       },
       module             : 'rdt',
       name               : 'ReaderToolComponent'
@@ -826,12 +786,12 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
          */
         showTranslation : function showTranslation ( word, ev, aValues ) {
           if (aValues.length === 0) { // means server returned empty
-            logWrite(DBG.TAG.WARNING, "Query did not return any values");
+            log.warning("Query did not return any values");
             // dismiss the tooltip (invisible but still capting events away from other controllers
             return null;
           }
 
-          logWrite(DBG.TAG.INFO, "Translation fetched");
+          log.info("Translation fetched");
 
           // Get table html text which contains the translation of the word
           var objFormattedTranslationResults = this.helpers.formatTranslationResults(aValues);
@@ -939,7 +899,7 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
 
           //check input parameters
           if (!aValues) {
-            logWrite(DBG.TAG.ERROR, "reduce_lemma_translations : passed a null object aValues - ignoring");
+            log.error("reduce_lemma_translations : passed a null object aValues - ignoring");
             return null;
           }
 
@@ -1061,6 +1021,25 @@ define(['debug', 'component', 'rx', 'utils'], function ( DBG, Component, Rx, UT 
         }
       },
       //    channel: {name: 'tooltip_channel'},
+      error_handler      : function TranslationTooltip_error_handler ( hashFailedPromisesReasons, error_handler_stack, view_name, view, parsed_route_view ) {
+        log.trace("TT_eh");
+        var reason;
+
+        if (reason = hashFailedPromisesReasons.word) {
+          return {
+            action : UT.config.error.action.ESCALATE,
+            log    : [reason.err.toString()].join(" "),
+            data   : reason
+          }
+        }
+        else {
+          return {
+            action : UT.config.error.action.THROW_ERR,
+            log    : ["Unknown error in view", view_name].join(" "),
+            data   : undefined
+          }
+        }
+      },
       name               : 'TranslationTooltip'
     });
 

@@ -183,9 +183,14 @@ define(['debug', 'ractive', 'utils'], function ( DBG, Ractive, UT ) {
 
                            function attachErrorHandlers ( self ) {
                               if (!self.error_handler) {
-                                 self.error_handler = function generic_error_handler ( view, error ) {
-                                    log.error("error occurred in view %s : %s", view.name, error);
-                                   throw error;
+                                 self.error_handler = function generic_error_handler ( hashFailedPromisesReasons,
+                                                                                       view_name, current_view, parsed_route_view ) {
+                                    log.error("error occurred in view %s : %o", view_name, hashFailedPromisesReasons);
+                                   return {
+                                     action : UT.config.error.action.THROW_ERR,
+                                     log : ["error in view", view_name, "while computing state properties ", Object.keys(hashFailedPromisesReasons)].join(" "),
+                                     data : hashFailedPromisesReasons
+                                   }
                                  }
                               }
                            }

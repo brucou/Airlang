@@ -177,16 +177,16 @@ define(['debug',
                  lemma_target_lg   : undefined
                },
                _pubsub          : PubSub,
-               url              : function ( module, view, state ) {
+               url              : function ( module, view, url_state ) {
                  return {
-                   url_to_load : state.url
+                   url_to_load : url_state.url
                  }
                },
-               webpage_readable : function ( module, view, state ) {
+               webpage_readable : function ( module, view, url_state ) {
                  var model = module.model;
                  var helpers = model.helpers;
 
-                 if (!state.url) {
+                 if (!url_state.url) {
                    return {webpage_readable : ""};
                  }
 
@@ -194,19 +194,19 @@ define(['debug',
                    log.info("getting stored notes");
                    model.notes.fetch({
                                        module          : rdt.name,
-                                       first_language  : state.first_language,
-                                       target_language : state.target_language,
-                                       user_id         : state.user_id,
-                                       url             : state.url
+                                       first_language  : url_state.first_language,
+                                       target_language : url_state.target_language,
+                                       user_id         : url_state.user_id,
+                                       url             : url_state.url
                                      }).then(
                      function get_stored_notes_success ( aNotes ) {
                        log.debug("get_stored_notes_success(aNotes)", aNotes);
                        log.info("reading and presenting getting the url");
-                       model.make_article_readable(state.url, aNotes)
+                       model.make_article_readable(url_state.url, aNotes)
                          .then(
                          function make_article_readable_success ( html_text ) {
                            log.info("URL read successfully");
-                           resolve({webpage_readable : state.url ? html_text : "", error_message : ""});
+                           resolve({webpage_readable : url_state.url ? html_text : "", error_message : ""});
                          },
                          function make_article_readable_error ( Error ) {
                            log.error("Error in make_article_readable", Error);
@@ -237,19 +237,19 @@ define(['debug',
                  word : ''
                },
                _pubsub        : PubSub, //TODO : Maybe gather in one object event_emitter
-               word           : function ( module, view, state ) {
+               word           : function ( module, view, url_state ) {
                  // I need to catch a reference of the tooltip instance
                  // I also need to return a promise here
                  return new RSVP.Promise(function ( resolve, reject ) {
-                   log.info("requesting translation from server for word : ", state.word);
-                   RM.cached_translation(state.word, function ( err, aValues ) {
+                   log.info("requesting translation from server for word : ", url_state.word);
+                   RM.cached_translation(url_state.word, function ( err, aValues ) {
                      if (err) {
-                       PubSub.err('RDT', "Error fetching translation for word : " + state.word);
-                       log.info("Error while fetching translation for word : ", state.word);
+                       PubSub.err('RDT', "Error fetching translation for word : " + url_state.word);
+                       log.info("Error while fetching translation for word : ", url_state.word);
                        reject(err);
                      }
                      else {
-                       var result = view.helpers.showTranslation.bind(view)(state.word, state.ev, aValues);
+                       var result = view.helpers.showTranslation.bind(view)(url_state.word, url_state.ev, aValues);
                        if (result) {
                          // !! Here we suppose that the tooltip will be displayed without problem
                          // Big supposition, but I leave it here to show the PubSub mechanism

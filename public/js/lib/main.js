@@ -79,6 +79,82 @@
  to return the object)
  So we start the app here.
  */
+/**
+// TODO : log filtering by function & module & ?
+// TODO : while is this exiting count_word_and_char_till_node
+// TODO : dealing with promises rejected in setview state. General question of error handling : state change? throw? granularity
+// TODO : Why is the tooltip kept in memeory? is it because it is kept a reference of it in the parent?
+// TODO : for error, implement a go to previous state mechanism (history system basically), or exit, or?
+//        The thing is if the model has changed, the previous state will reflect the new model state not the previous model state
+//        This might then semantically not be a proper 'rollback'
+//        - Option 1 : each view has an eror handler, which can do things and must return
+//                     + view name
+//                     + error message
+//                     + error code
+//                     + fatal : boolean, whether the error is fatal or not, i.e. can be ignored
+//                   : in the module, there is a high_level error handler which takes all the error returned by its views
+//                     and decide on a course of action:
+//                     + throws an exception
+//                     + logs an error message
+//                     + returns to previous state
+//                     + destroy erroneous view
+//                     + move to any other state of choice (could be an error view for example, or just an error message displayed on screen)
+//        - Option 2 : all errors are handled in the promise itself, so promises always resolve
+//                   : could be impossible in many cases or confusing
+//        So Option 1 seems the best.
+// Implementation:
+// - For each view to display
+/**
+ * + set view state (from specs, url state)
+ * + if error in one of the promises or in one of the computed view state (promise rejected or function return ERROR object)
+ * + + execute view error handler -> view name, error message, error code, fatal?
+ * + + execute module error handler with view error data
+ * + + according to decision by module error handler, perform action
+ * + + + actions can be predefined (cf. above) ...
+ * + + + ... or a handler function is passed module, router, model, view arguments and executed
+ * + + + according to that action, the view loop can be interrupted (for example to navigate back to previous state)
+ *
+ * AD-HOC ERROR OBJECT
+ * Error message
+ * Normal Stack
+ * error handler stack
+ * Error type (STRING -so it can be namespaced wih . if necessary)
+ *
+ * ERROR HANDLERS
+ * - IN VIEWS
+ * - + error_handlers : {error_type : fn_handler :: (error returned by promise or exception, url state -> view_state handler provoking error,
+ *                                                   previous url state hash, pending state hash, view, model, module, router) {}}
+ *     with default : fn_default_handler for all error_type not specified
+ *   + returns hash :
+ *     . action : [OK, ESCALATE, PREVIOUS_STATE, TO_OTHER_STATE, ...] - actions are nothing to do, solve up, or do this and nothing else
+ *     . eror_handler_stack : stack of error handlers results :
+ *                     log description of the action taken (explanation of corrective course of action)
+ *                     and also path info about view name, module etc. so we know where it happened
+ *                     -> can be made into one function (error, previous_state..., MESSAGE) ->  log message
+ *     . data : hash to be used to precise the parameters of the action to be performed
+ *     . log
+ *
+ * - IN CONTROLLER
+ * - + If action is OK : continue as if nothing happened with other view state fields
+ * - + If action is XXX_STATE, then :
+ *     - stop the view state field update loop
+ *     - route to the new state (params about that state is in 'data' property)
+ * - + If action is ESCALATE then :
+ *     - execute MODULE error handler with :
+ *       . escalating view
+ *       . view state field triggering escalation
+ *       . hash returned by VIEW error handler
+ *     - OR execute SHELL error handler if MODULE error handler says ESCALATE
+ *     !!!! Be aware of case when error handler returns promises :
+ *     !!!! if any promise is pending then we update optimistically the view state
+ *     !!!! When a promise returns resolved, we update
+ *     !!!! When a promise returns in error, it must be rejected with an ad-hoc exception and we run the normal error handling mechanism
+ *     !!!! We can rollback state, but we need another mechanism to rollback the model for perfect undo
+ * Promise or state functions THROW ad-hoc exceptions (which sets the error type)
+ * if an erroneous promise cannot resolve itself after all, then it also throws
+ *
+ * ATTENTION : racing conditions - two promises, one in error fail first and modifies state, then second succeed and modifies state already modified when it should not
+*/
 
 ///*
 requirejs(
@@ -201,6 +277,7 @@ requirejs(
          (DBG.TAG.TRACE, "parseDOMtree")
          (DBG.TAG.DEBUG, "apply_highlighting_filters_to_text")
          (DBG.TAG.TRACE, "simple_tokenizer");
+        DBG.setModuleConfig("RM", false);
       }
 
       function init_fake () {

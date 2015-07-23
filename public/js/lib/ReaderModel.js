@@ -346,11 +346,9 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
            // Reminder aNotes :: (word, index)
            // if called with custom-made notes object, use that, otherwise use the stored one.
            //aNotes = (aNotes && UT.isArray(aNotes)) ? aNotes : RM.get_notes();
-           log.debug("aNotes.length passed", aNotes.length);
            if (!aNotes || !UT.isArray(aNotes)) {
              aNotes = RM.notes.data;
            }
-           log.debug("aNotes.length now", aNotes.length);
            // main case : sort note word index by ascending order so we can retrieve them in that order
            aNotes.sort(function sort_notes ( a, b ) {
              return a.index - b.index;
@@ -766,7 +764,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
                    return action_a ? action_a : action_b;
                  })
                });
-               logWriteShort(DBG.TAG.DEBUG, "aTransposedResults - action reduce"
+               log.debug("aTransposedResults - action reduce"
                  , aTransposedResults
                );
 
@@ -817,8 +815,7 @@ define(['debug', 'jquery', 'rsvp', 'data_struct', 'url_load', 'utils', 'socket',
 
                var i_adapter = DS.filter_get_data_adapter(aTokens.type, filter.input_type);
                var o_adapter = DS.filter_get_data_adapter(filter.output_type, 'token_action_map');
-               log.debug("executing filter ", filter.filter_name, "with tokens");
-               log.debug(i_adapter(aTokens));
+               log.debug("executing filter ", filter.filter_name);
 
                var deferred_or_value = filter.call(null, i_adapter(aTokens), result_callback);
 
