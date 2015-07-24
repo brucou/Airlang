@@ -11,15 +11,7 @@
   <component name="ChangeListManager">
     <list id="3e347fb8-ef22-4b99-8a9c-2990b9f7b2c6" name="Default" comment="" />
     <list id="ff976d14-450c-4e70-8128-8a02a22f0390" name="Failed commit: Default" comment="removed old controler" />
-    <list default="true" id="7737e8d8-98e4-4bd7-bc73-affdd3a7e655" name="Failed commit: Default (2)" comment="corrected a thousand bugs.&#10;Now the error handling mechanism is tested in the most obvious case. Pathological cases to test. Asynchronous update of the view. Change the name of the function and final refactoring commentint?&#10;There was problem with the sockets that I never got to understand, just refreshing and restaerting the server worked.">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/js/vendor/underscore-min.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/js/vendor/underscore.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/codeStyleSettings.xml" afterPath="$PROJECT_DIR$/.idea/codeStyleSettings.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/component.js" afterPath="$PROJECT_DIR$/public/js/lib/component.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/index.html" afterPath="$PROJECT_DIR$/public/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/readerViews.js" afterPath="$PROJECT_DIR$/public/js/lib/readerViews.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/shell.js" afterPath="$PROJECT_DIR$/public/js/lib/shell.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/lib/utils.js" afterPath="$PROJECT_DIR$/public/js/lib/utils.js" />
+    <list default="true" id="7737e8d8-98e4-4bd7-bc73-affdd3a7e655" name="Failed commit: Default (2)" comment="removed sate from the hash&#10;implemenetd CHANGE_STATE&#10;included underscore">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="Airlang.iws" />
@@ -238,8 +230,8 @@
       <file leaf-file-name="shell.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/public/js/lib/shell.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.60971785" vertical-offset="3113" max-vertical-offset="5406">
-              <caret line="552" column="40" selection-start-line="552" selection-start-column="40" selection-end-line="552" selection-end-column="40" />
+            <state vertical-scroll-proportion="0.2633229" vertical-offset="3113" max-vertical-offset="5406">
+              <caret line="539" column="98" selection-start-line="539" selection-start-column="98" selection-end-line="539" selection-end-column="98" />
               <folding>
                 <element signature="e#0#43#0" expanded="true" />
                 <element signature="e#2213#2597#0" expanded="true" />
@@ -945,7 +937,11 @@
       <created>1435620218048</created>
       <updated>1435620218048</updated>
     </task>
-    <option name="localTasksCounter" value="68" />
+    <task id="LOCAL-00068" summary="removed sate from the hash&#10;implemenetd CHANGE_STATE&#10;included underscore">
+      <created>1437707738479</created>
+      <updated>1437707738479</updated>
+    </task>
+    <option name="localTasksCounter" value="69" />
     <servers />
   </component>
   <component name="TodoView" selected-index="2">
@@ -1010,7 +1006,6 @@
     <option name="myTodoPanelSettings">
       <TodoPanelSettings />
     </option>
-    <MESSAGE value="some changes in the translate controllerand I don't know what else&#10;oh yeah the state machine for sleecting word to memorize is working now - but I have to introduce the word translations&#10;" />
     <MESSAGE value="The The note functionality is now almost working in conjunction with the showing the translation&#10;Remains to store not the word but the lemma. This implies subtle changes in the logic" />
     <MESSAGE value="some corrections, refactoring of utils, now dismissing the window after including the note" />
     <MESSAGE value="refactored, and added table for translation" />
@@ -1035,7 +1030,8 @@
     <MESSAGE value="&#10;" />
     <MESSAGE value="&#10;x" />
     <MESSAGE value="corrected a thousand bugs.&#10;Now the error handling mechanism is tested in the most obvious case. Pathological cases to test. Asynchronous update of the view. Change the name of the function and final refactoring commentint?&#10;There was problem with the sockets that I never got to understand, just refreshing and restaerting the server worked." />
-    <option name="LAST_COMMIT_MESSAGE" value="corrected a thousand bugs.&#10;Now the error handling mechanism is tested in the most obvious case. Pathological cases to test. Asynchronous update of the view. Change the name of the function and final refactoring commentint?&#10;There was problem with the sockets that I never got to understand, just refreshing and restaerting the server worked." />
+    <MESSAGE value="removed sate from the hash&#10;implemenetd CHANGE_STATE&#10;included underscore" />
+    <option name="LAST_COMMIT_MESSAGE" value="removed sate from the hash&#10;implemenetd CHANGE_STATE&#10;included underscore" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1659,8 +1655,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/public/js/lib/shell.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.60971785" vertical-offset="3113" max-vertical-offset="5406">
-          <caret line="552" column="40" selection-start-line="552" selection-start-column="40" selection-end-line="552" selection-end-column="40" />
+        <state vertical-scroll-proportion="0.2633229" vertical-offset="3113" max-vertical-offset="5406">
+          <caret line="539" column="98" selection-start-line="539" selection-start-column="98" selection-end-line="539" selection-end-column="98" />
           <folding>
             <element signature="e#0#43#0" expanded="true" />
             <element signature="e#2213#2597#0" expanded="true" />
