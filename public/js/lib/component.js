@@ -32,8 +32,8 @@ define(['debug', 'ractive', 'utils'], function ( DBG, Ractive, UT ) {
                               //               {action: 'showUrl.tooltip', state: {word: word, ev: ev} }]
                               var objRoute = {};
                               aViews.forEach(function ( hash ) {
-                                 objRoute[hash.action] = {};
-                                 objRoute[hash.action].state = hash.state;
+                                 objRoute[hash.action] = hash.state;
+                                 // objRoute[hash.action].state = hash.state;
                               });
                               view_list
                                  .filter(function ( view_name ) {
@@ -45,7 +45,7 @@ define(['debug', 'ractive', 'utils'], function ( DBG, Ractive, UT ) {
                                                 // we have a child view, undefine/remove the corresponding property in the parent
                                                 // NOTE : undefine is enough as JSON do not parse undefined properties
                                                 // console.log("deleting from route field ", view_name);
-                                                UT.traverse_dir_xpath(objRoute, path_split.dirname).state[path_split.filename] =
+                                                UT.traverse_dir_xpath(objRoute, path_split.dirname)[path_split.filename] =
                                                 undefined;
                                              }
                                           });

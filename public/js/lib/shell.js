@@ -64,8 +64,8 @@ define(['debug',
              var module_registry = this.module_registry;
              log.debug("getting definition of module ", module_name, module_registry[module_name]);
              return (!module_registry[module_name])
-               ? PubSub.err('SHELL', 'could not find module ' + module_name) && undefined
-               : module_registry[module_name]
+                 ? PubSub.err('SHELL', 'could not find module ' + module_name) && undefined
+                 : module_registry[module_name]
            },
            get_controller        : function get_controller ( module_definition ) {
              var module = { //TODO : that is basically a shallow copy of module_definition and extension
@@ -96,7 +96,7 @@ define(['debug',
                 * @returns error_handler_result.data
                 * @returns error_handler_result.error_handler_stack
                 */
-               function execute_error_handlers ( views, view_name, parsed_route_view, hashFailedPromisesReasons ) {
+               function execute_error_handlers ( views, view_name, parsed_route, hashFailedPromisesReasons ) {
                  // TODO : refactor to remove hashErrorhandlers now that I have views -> will be views[view_name].error_handler
                  // Helpers
                  /**
@@ -110,20 +110,26 @@ define(['debug',
                   * @param views : array containing all initialized views defined in the specs of the module
                   * @returns {hash} error_handler_result : returns the result of the error handler ({action, data, log, error_handler_stack})
                   */
+                 function get_list_hierarchy ( view_name ) {
+                   // We want showURL.tooltip -> [showURL.tooltip, showURL]
+                   var list_view_names = [],
+                       view_name_components = view_name.split(".");
+                   view_name_components
+                       .reduce(function ( prev, next ) {
+                                 var view_name = prev + (prev ? "." : "") + next;
+                                 list_view_names.push(view_name);
+                                 return view_name;
+                               }, "");
+                   list_view_names.reverse();
+                   return list_view_names;
+                 }
+
                  function build_error_handler_list ( view_name, views ) {
                    // for example showURL.tooltip -> [showURL.tooltip, showURL, module, shell]_error_handler
                    // view_name has form string.string.string...
-                   var list_view_names = [],
-                     view_name_components = view_name.split("."),
-                     error_handler_list;
-                   view_name_components
-                     .reduce(function ( prev, next ) {
-                               var view_name = prev + (prev ? "." : "") + next;
-                               list_view_names.push(view_name);
-                               return view_name;
-                             }, "");
-                   list_view_names.reverse();
-                   // Now we have showURL.tooltip -> [showURL.tooltip, showURL]
+
+                   var list_view_names = get_list_hierarchy(view_name),
+                       error_handler_list;
                    error_handler_list = list_view_names.map(function ( view_name ) {
                      return {
                        view_name     : view_name,
@@ -136,19 +142,21 @@ define(['debug',
                  }
 
                  var current_view = views[view_name],
-                   error_handler_list = build_error_handler_list(view_name, views),
-                   error_handler_result = {},
-                   error_handler_stack = [];
+                     aListHierarchy = get_list_hierarchy(view_name),
+                     parsed_route_views = _.pick.apply(null, _.flatten([parsed_route, aListHierarchy], true)), // TODO : only pick the views = ancestry(view.name)
+                     error_handler_list = build_error_handler_list(view_name, views),
+                     error_handler_result = {},
+                     error_handler_stack = [];
 
                  error_handler_list.some(function execute_error_handler ( hashErrorHandler ) {
                    var error_handler = hashErrorHandler.error_handler,
-                     error_handler_view_name = hashErrorHandler.view_name;
+                       error_handler_view_name = hashErrorHandler.view_name;
 
                    error_handler_result = error_handler.call(current_view,
                                                              hashFailedPromisesReasons,
                                                              error_handler_stack.slice(), // shallow copy the array to disable modifying it
                                                              error_handler_view_name, views[error_handler_view_name],
-                                                             parsed_route_view); // TODO : should be parsed_route for the eh_view_nam
+                                                             parsed_route_views); // TODO : should be parsed_route for the eh_view_nam
                    // If the error_handler result is escalate, escalate to the next error handler, else return
                    // whatever action the error_handler wants to execute
                    if (UT.isErrorSettingViewStateEscalate(error_handler_result)) {
@@ -177,26 +185,29 @@ define(['debug',
                 * @returns hashSetViewStatePromises {Object} : format {view_name1 : {prop1: xx}}
                 */
                function computeViewsStateProperties ( /*OUT*/views, view_list, parsed_route, specs, module ) {
+                 console.log("parsed route", parsed_route);
                  // For each view :
                  // - instantiate the view if it does not yet exist
                  // - set view state and hold the results of the view state handlers
-                 var hashSetViewStatePromises = {} // array containing all promises setting the view state for each view
+                 var hashSetViewStatePromises = {}; // array containing all promises setting the view state for each view
                  view_list.forEach(function create_or_update_views ( view_name ) {
                    var current_view = views[view_name], // The ractive view object if any
-                     parsed_route_view = initialize_parsed_route_view_state(view_name, parsed_route, specs, module.env);
+                       parsed_route_view = initialize_parsed_route_view_state(view_name, parsed_route, specs, module.env);
                    log.info("Processing view : ", view_name);
-                   log.info("State initialized from URL : ", parsed_route_view.state);
+                   log.info("State initialized from URL : ", parsed_route_view);
 
                    if (!current_view) {
                      // view does not exist yet
                      // Create and register that newly created view in registry
                      current_view = views[view_name] = instantiate_view(view_name, module, specs);
                    }
-                   UT._extend(current_view.state, parsed_route_view.state);
+                   // TODO : check if I have to do that or not, these are two different concepts
+                   // and it should already be done by the handler functions
+                   UT._extend(current_view.state, parsed_route_view);
                    log.info("Updating internal state from route for view ", view_name, current_view.state);
                    // TODO : maybe remove that, it should not be needed now that I pass views in paramaters
                    hashSetViewStatePromises[view_name] =
-                   computeViewStateProperties(views, view_name, parsed_route_view, specs, module, shell);
+                   computeViewStateProperties(views, view_name, parsed_route, specs, module, shell);
                  });
 
                  return hashSetViewStatePromises;
@@ -211,7 +222,7 @@ define(['debug',
                 * @param module        :  module definition
                 * @returns {Promise}: resolved or rejected promise with fields view_name, error_handler_result, hashPartialViewState
                 */
-               function computeViewStateProperties ( views, view_name, parsed_route_view, specs, module, shell ) {
+               function computeViewStateProperties ( views, view_name, parsed_route, specs, module, shell ) {
                  /** Quick algorithm:
                   * parsed_route_view hash -> view_state prop hash
                   * view_state prop hash can be promises or values (which are hashed returned by the handler functions)
@@ -220,13 +231,14 @@ define(['debug',
                   */
                  function isThenable ( obj ) {return obj && obj.then && typeof obj.then === "function";}
 
-                 function computeViewStatePropertiesPromises ( view_name, current_view, parsed_route_view, specs, module ) {
+                 function computeViewStatePropertiesPromises ( view_name, current_view, parsed_route, specs, module ) {
                    ////////
-                   var fn_computedHash,
-                     computedHash,
-                   hashPartialViewStateProperties = {},
-                   hashPromises = {};
-                   Object.keys(parsed_route_view.state).forEach(function ( property ) {
+                   var parsed_route_view = parsed_route[view_name],
+                       fn_computedHash,
+                       computedHash,
+                       hashPartialViewStateProperties = {},
+                       hashPromises = {};
+                   Object.keys(parsed_route_view).forEach(function ( property ) {
                      /*  For each property :
                       If property NOT IN spec
                       set view_state.property to the value passed in the url route params related to the view
@@ -249,13 +261,15 @@ define(['debug',
 
                      // If the conversion function results in an exception, then register a failed promise with the exception
                      try {
-                       computedHash = fn_computedHash(module, current_view, parsed_route_view.state);
+                       computedHash = fn_computedHash(module, current_view, parsed_route_view);
                        // Deal with case where conversion function do not return a hash (function just executed for side effect)
                        if (computedHash) {
-                       // NEW : adding optimistic updating of state
+                         // NEW : adding optimistic updating of state
                          if (isThenable(computedHash)) {
                            hashPromises[property] = computedHash.then(function ( hashPartialViewState ) {
-                             setViewState(current_view, hashPartialViewState); return hashPartialViewState});
+                             setViewState(current_view, hashPartialViewState);
+                             return hashPartialViewState
+                           });
                          }
                          else {
                            hashPromises[property] = computedHash;
@@ -267,18 +281,18 @@ define(['debug',
                        // convert the exception to a failed promise to have a common error format
                        log.debug("exception raised", e);
                        hashPromises[property] = RSVP.Promise.reject(
-                         UT._extend(e, {
-                           view_name : view_name, view : current_view,
-                           property  : property, parsed_route_view : parsed_route_view
-                         }));
+                           UT._extend(e, {
+                             view_name : view_name, view : current_view,
+                             property  : property, parsed_route_view : parsed_route_view
+                           }));
                      }
                    });
                    setViewState(current_view, hashPartialViewStateProperties);
                    return hashPromises;
                  }
 
-                 var current_view = views[view_name];
-                 var hashPromises = computeViewStatePropertiesPromises(view_name, current_view, parsed_route_view, specs, module);
+                 var current_view = views[view_name],
+                     hashPromises = computeViewStatePropertiesPromises(view_name, current_view, parsed_route, specs, module);
                  /* Analyze the results of all the handlers. There will be :
                   values, fulfilled  promises, rejected promises (normal, and with exceptions)
                   */
@@ -289,24 +303,24 @@ define(['debug',
                    // those error handlers returns an action field which tells us what to do
                    log.debug("Handlers url state -> view state results:", hashResults);
                    var aProperties = Object.keys(hashResults),
-                     aPromisesProperties = aProperties.filter(function ( property ) {
-                       // testing through duck typing
-                       var keys = Object.keys(hashResults[property]);
-                       return (keys.length === 2 && keys.indexOf("state") > -1);
-                     }),
-                     aFailedPromisesProperties = aPromisesProperties.filter(function ( property ) {
-                       return hashResults[property].state === 'rejected';
-                     }),
-                     hashFailedPromisesReasons = {};
+                       aPromisesProperties = aProperties.filter(function ( property ) {
+                         // testing through duck typing
+                         var keys = Object.keys(hashResults[property]);
+                         return (keys.length === 2 && keys.indexOf("state") > -1);
+                       }),
+                       aFailedPromisesProperties = aPromisesProperties.filter(function ( property ) {
+                         return hashResults[property].state === 'rejected';
+                       }),
+                       hashFailedPromisesReasons = {};
                    aFailedPromisesProperties.forEach(function ( property ) {
                      hashFailedPromisesReasons[property] = hashResults[property].reason;
                    });
 
                    // If there is some failed promise, execute the error_handlers
                    var error_handler_result =
-                     (aFailedPromisesProperties.length > 0)
-                       ? execute_error_handlers(views, view_name, parsed_route_view, hashFailedPromisesReasons)
-                       : undefined;
+                       (aFailedPromisesProperties.length > 0)
+                           ? execute_error_handlers(views, view_name, parsed_route, hashFailedPromisesReasons)
+                           : undefined;
 
                    // Return a rejected promise to indicate that 'setting view state for all views' failed
                    // That means if we cannot implement the route URL fully, we return failure
@@ -320,12 +334,12 @@ define(['debug',
                      // 1. view state properties to be modified are identified. The list of properties is :
                      //    - all properties in aProperties, which corresponding to a value, or a resolved promise...
                      hashPartialViewState = aProperties
-                       .reduce(function ( hashPartialViewState, prop_next ) {
-                                 var result = hashResults[prop_next];
-                                 result.state === 'fulfilled' &&
-                                 UT._extend(hashPartialViewState, result.value);
-                                 return hashPartialViewState;
-                               }, {});
+                         .reduce(function ( hashPartialViewState, prop_next ) {
+                                   var result = hashResults[prop_next];
+                                   result.state === 'fulfilled' &&
+                                   UT._extend(hashPartialViewState, result.value);
+                                   return hashPartialViewState;
+                                 }, {});
                      log.debug("hashPartialViewState", hashPartialViewState);
                    }
                    if (!UT.isErrorSettingViewState(error_handler_result)) {
@@ -399,20 +413,19 @@ define(['debug',
                 NOTE : URL :: {"showUrl":{"state":{"url":"http://xxx","webpage_readable":"","is_tooltip_displayed":false}}} */
                function initialize_parsed_route_view_state ( view_name, parsed_route, specs, env ) {
                  // Completes the state objects with default properties if they are not specified
-                 function complete_state_obj_w_defaults ( /*OUT*/instance_data, specs, env, view ) {
-                   var temp = {};
-                   UT._extend(temp, specs[view]._default_state);
-                   UT._extend(temp, instance_data.state);
-                   UT._extend(temp, env);
-                   instance_data.state = temp;
+                 function complete_state_obj_w_defaults ( instance_data, specs, env, view ) {
+                   return _.extendOwn({},
+                                      specs[view]._default_state,
+                                      instance_data,
+                                      env);
                  }
 
                  var parsed_route_view = parsed_route[view_name] || {};
                  // Deal with the edge case /module/[nothing here], where instance_data is empty
-                 parsed_route_view.state = parsed_route_view.state || {};
+                 // parsed_route_view.state = parsed_route_view.state || {};
 
                  // If there are properties missing in instance_data.state fill them in with default values
-                 complete_state_obj_w_defaults(parsed_route_view, specs, env, view_name);
+                 parsed_route_view = complete_state_obj_w_defaults(parsed_route_view, specs, env, view_name);
                  return parsed_route_view;
                }
 
@@ -424,7 +437,7 @@ define(['debug',
                  if (child_view_path.length > 0) {
                    log.info("Processing view : child view : set props in parent : ", child_view_path);
                    UT.traverse_dir_xpath(views, child_view_path)
-                     .state[child_view_name] = current_view;
+                       .state[child_view_name] = current_view;
                  }
                }
 
@@ -453,10 +466,10 @@ define(['debug',
                !module.initialized && initialize_module(module, router);
 
                var specs = module.specs,
-                 views = module.views = module.views || {},
-                 parsed_route = aStrRoute.length !== 0 ? JSON.parse(aStrRoute) : {},
-                 view_list = initialize_view_list(parsed_route, specs),
-                 hashSetViewStatePromises;
+                   views = module.views = module.views || {},
+                   parsed_route = aStrRoute.length !== 0 ? JSON.parse(aStrRoute) : {},
+                   view_list = initialize_view_list(parsed_route, specs),
+                   hashSetViewStatePromises;
 
                // TODO : add an array with the parsed params for each view, so I can pass it around in error handlers
                log.debug("unparsed route : ", aStrRoute);
@@ -466,7 +479,8 @@ define(['debug',
                // Compute all view state properties from:
                // - the information in the URL (parsed_route)
                // - the specs which contain the handlers
-               hashSetViewStatePromises = computeViewsStateProperties(views, view_list, parsed_route, specs, module);
+               hashSetViewStatePromises =
+               computeViewsStateProperties(/*OUT*/views, view_list, parsed_route, specs, module);
                // Reminder : hashViewsStatePromises resolves as follows :
                // {view_name: {error_handler_result: xx, hashPartialViewState: xx, view_name: xx}}
                // whether error or not
@@ -475,76 +489,88 @@ define(['debug',
                // Reminder : hashSetViewStatePromises :: view_name, error_handler_result, hashPartialViewState
                // TODO : if one promise is rejected, then immediately exit
                RSVP.hash(hashSetViewStatePromises)
-                 .then(function setViewsStates ( hashViewsStateProperties ) {
-                         // Two cases:
-                         // 1. No error encountered, and view state have been optimistically set already
-                         // 2. Some error was encountered but was satifactory solved
-                         //    in the data property, we find a hash {view_name: {prop1: value}}
-                         var view_list = Object.keys(hashViewsStateProperties);
-                         view_list.forEach(function ( view_name ) {
-                           // NOTE : by construction,  error_handler_result and hashPartialViewState are exclusive
-                           var error_handler_result = hashViewsStateProperties[view_name].error_handler_result;
-                           var hashPartialViewState = hashViewsStateProperties[view_name].hashPartialViewState;
-                           // NOTE : check that hashViewStateProperties[view_name] === view_name
-                           var current_view = views[view_name];
-                           if (!error_handler_result) {
-                             // Case : no error encountered
-                             // if (!UT.isErrorSettingViewState(error_handler_result)) {
-                             // TODO : if error_handler_result has some error dealth with i.e. there is a stack
-                             // In principle already done by the handlers which executed correctly
-                             // setViewState(current_view, hashPartialViewState);
-                           }
-                           else {
-                             // case when there is an error handler which resolves the error satisfactorily
-                             // NOTE: The error handler resolves all errors in one go for a particular view
-                             // properties to be set are in data with format data : {view_name : {property: xx}}
-                             var view_list = Object.keys(error_handler_result.data);
-                             view_list.forEach(function setViewsStatePropFromCorrectedError ( view_name ) {
-                               setViewState(views[view_name], error_handler_result.data[view_name]);
+                   .then(function setViewsStates ( hashViewsStateProperties ) {
+                           // Two cases:
+                           // 1. No error encountered, and view state have been optimistically set already
+                           // 2. Some error was encountered but was satifactory solved
+                           //    in the data property, we find a hash {view_name: {prop1: value}}
+                           var view_list = Object.keys(hashViewsStateProperties);
+                           view_list.forEach(function ( view_name ) {
+                             // NOTE : by construction,  error_handler_result and hashPartialViewState are exclusive
+                             var error_handler_result = hashViewsStateProperties[view_name].error_handler_result;
+                             var hashPartialViewState = hashViewsStateProperties[view_name].hashPartialViewState;
+                             // NOTE : check that hashViewStateProperties[view_name] === view_name
+                             var current_view = views[view_name];
+                             if (!error_handler_result) {
+                               // Case : no error encountered
+                               // if (!UT.isErrorSettingViewState(error_handler_result)) {
+                               // TODO : if error_handler_result has some error dealth with i.e. there is a stack
+                               // In principle already done by the handlers which executed correctly
+                               // setViewState(current_view, hashPartialViewState);
+                             }
+                             else {
+                               // case when there is an error handler which resolves the error satisfactorily
+                               // NOTE: The error handler resolves all errors in one go for a particular view
+                               // properties to be set are in data with format data : {view_name : {property: xx}}
+                               var view_list = Object.keys(error_handler_result.data);
+                               view_list.forEach(function setViewsStatePropFromCorrectedError ( view_name ) {
+                                 setViewState(views[view_name], error_handler_result.data[view_name]);
+                               });
+                             }
+                             // Deal with case of nested view i.e. viewX.viewY.viewZ.view
+                             // We register a reference for that view in the parent for easy retrieval
+                             store_child_view_in_parent(views, view_name, current_view);
+                           })
+                         },
+                         function error_handler_set_views_states ( rejected_promise_value ) {
+                           /**
+                            * {showURL : {prop1: value1}, showURL.toolip : {prop1: value1}} --> [{action: , state: }, {}]
+                            * @param stateHash
+                            * @returns {{}}
+                            */
+                           function fromStateHashToRouteHash (stateHash) {
+                             return Object.keys(stateHash).map(function(key){ // The view, i.e. showURL
+                               return {action : key, state : stateHash[key]};
                              });
                            }
-                           // Deal with case of nested view i.e. viewX.viewY.viewZ.view
-                           // We register a reference for that view in the parent for easy retrieval
-                           store_child_view_in_parent(views, view_name, current_view);
-                         })
-                       },
-                       function error_handler_set_views_states ( rejected_promise_value ) {
-                         // TODO
-                         // One of the views could not be displayed as its state cannot be set
-                         // but which one? We need to know to get the action to perform...
-                         var view_name = rejected_promise_value.view_name;
-                         var error_handler_result = rejected_promise_value.error_handler_result;
-                         if (UT.isErrorSettingViewState(error_handler_result)) {
-                           // This view is the one returning error
-                           // But wait, what if we have several such views?? Impossible, as by definition of hash
-                           // the first promise to fail will exit the chain, so we have only one
-                           // Also, by construction, this is a true error (result of error handler cannot be OK)
-                           switch (error_handler_result.action) {
-                             // TODO : continue with the set other state etc. and perform the code here not in computeViewState
-                             // TODO : change the exising error handler in the readerviews
-                             // attention : reason can be an instance of exception (case fn_handler throwing exception
-                             //             reason can be a promise rejected, in which case the reason format will vary)
-                             case UT.config.error.action.PREV_STATE:
-                               // go to the previous state
-                               // TODO
-                               return true;
-                             case UT.config.error.action.CHANGE_STATE:
-                               // go to a given state, described in property 'data'
-                               // TODO
-                               return true;
-                               break;
-                             case UT.config.error.action.THROW_ERR:
-                               // err described in property 'data'
-                               // TODO
-                               return true;
-                               break;
-                             default:
-                               throw "unknown action code found when executing error_handler list";
-                               break;
+                           // TODO
+                           // One of the views could not be displayed as its state cannot be set
+                           // but which one? We need to know to get the action to perform...
+                           var view_name = rejected_promise_value.view_name;
+                           var error_handler_result = rejected_promise_value.error_handler_result;
+                           if (UT.isErrorSettingViewState(error_handler_result)) {
+                             // This view is the one returning error
+                             // But wait, what if we have several such views?? Impossible, as by definition of hash
+                             // the first promise to fail will exit the chain, so we have only one
+                             // Also, by construction, this is a true error (result of error handler cannot be OK)
+                             switch (error_handler_result.action) {
+                               // TODO : continue with the set other state etc. and perform the code here not in computeViewState
+                               // TODO : change the exising error handler in the readerviews
+                               // attention : reason can be an instance of exception (case fn_handler throwing exception
+                               //             reason can be a promise rejected, in which case the reason format will vary)
+                               case UT.config.error.action.PREV_STATE:
+                                 // go to the previous state
+                                 // TODO
+                                 return true;
+                               case UT.config.error.action.CHANGE_STATE:
+                                 // go to a given state, described in property 'data'
+                                 // TODO
+                                 console.log("UT.config.error.action.CHANGE_STATE");
+                                 views[view_name].go (fromStateHashToRouteHash (error_handler_result.data.new_state));
+                                 return true;
+                                 break;
+                               case UT.config.error.action.THROW_ERR:
+                                 // err described in property 'data'
+                                 // TODO
+                                 return true;
+                                 break;
+                               default:
+                                 throw "unknown action code found when executing error_handler list";
+                                 break;
+                             }
                            }
-                         }
-                       })
-                 .catch(RSVP.rethrow); // rethrows any uncaught exceptions raised in the execution of the promise
+                         })
+                   .catch(RSVP.rethrow); // rethrows any uncaught exceptions raised in the execution of the promise
              }
            },
            configure_router      : function configure_shell_level_router ( myRouter ) {

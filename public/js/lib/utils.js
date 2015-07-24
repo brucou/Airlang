@@ -717,10 +717,6 @@ function utilsFactory ( DBG, RSVP ) {
     return aHTMLTokens_split;
   }
 
-  //TEST CODE
-  //window.inspect = inspect;
-  ////////
-
   function getTargetID ( ev ) {
     return ev.target.getAttribute('id');
   }
